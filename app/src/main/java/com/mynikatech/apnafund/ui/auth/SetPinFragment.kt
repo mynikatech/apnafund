@@ -1,0 +1,91 @@
+package com.mynikatech.apnafund.ui.auth
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.Toast
+import androidx.core.widget.addTextChangedListener
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import com.mynikatech.apnafund.databinding.FragmentSetPinBinding
+import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
+import kotlinx.coroutines.launch
+
+class SetPinFragment : Fragment() {
+
+    private lateinit var binding: FragmentSetPinBinding
+    private var userId: Int = -1
+    private val userViewModel: UserViewModel by viewModels()
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
+        binding = FragmentSetPinBinding.inflate(inflater, container, false)
+        arguments?.let {
+            userId = it.getInt("userId")
+        }
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        setupAutoMove(binding.entryPinBoxes)
+        setupAutoMove(binding.confirmPinBoxes)
+
+        binding.buttonRegister.setOnClickListener {
+            val pin = getPinFromBoxes(binding.entryPinBoxes)
+            val confirmPin = getPinFromBoxes(binding.confirmPinBoxes)
+
+            if (pin.length != 4 || confirmPin.length != 4) {
+                showToast("Please enter 4-digit PIN")
+                return@setOnClickListener
+            }
+
+            if (pin != confirmPin) {
+                showToast("PINs do not match")
+                return@setOnClickListener
+            }
+
+            // Save PIN securely
+            lifecycleScope.launch {
+                if (userViewModel.isPINReused(userId, pin)) {
+                    showToast("PIN cannot be same as last three PINs ")
+                    return@launch
+                }
+                userViewModel.changeUserPIN(userId, pin)
+                showToast("PIN set successfully")
+                findNavController().navigateUp() // Or navigate to home
+            }
+        }
+        binding.buttonCancel.setOnClickListener {
+            findNavController().navigateUp()
+        }
+    }
+
+    private fun setupAutoMove(container: ViewGroup) {
+        val boxes = (0 until container.childCount)
+            .map { container.getChildAt(it) as EditText }
+
+        for (i in boxes.indices) {
+            boxes[i].addTextChangedListener {
+                if (it?.length == 1 && i < boxes.lastIndex) {
+                    boxes[i + 1].requestFocus()
+                }
+            }
+        }
+    }
+
+    private fun getPinFromBoxes(container: ViewGroup): String {
+        return (0 until container.childCount)
+            .joinToString("") { (container.getChildAt(it) as EditText).text.toString() }
+    }
+
+    private fun showToast(msg: String) {
+        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+    }
+}

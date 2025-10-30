@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <com.google.android.material.card.MaterialCardView
+        style="@style/ApnaFundCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="4dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <!-- Header Section -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="4dp">
+
+                <TextView
+                    android:id="@+id/text_view_fund_name_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="My Fund Name"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageButton
+                    android:id="@+id/image_edit_fund"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Edit Fund"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="16dp"
+                    android:src="@drawable/ic_edit"
+                    app:layout_constraintBottom_toBottomOf="@id/text_view_fund_name_value"
+                    app:layout_constraintStart_toEndOf="@id/text_view_fund_name_value"
+                    app:layout_constraintTop_toTopOf="@id/text_view_fund_name_value"
+                    app:tint="?attr/colorOnSurface" />
+
+                <TextView
+                    android:id="@+id/text_view_fund_status_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/status_background"
+                    android:paddingHorizontal="4dp"
+                    android:paddingVertical="4dp"
+                    android:text="Active"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    app:layout_constraintBottom_toBottomOf="@id/text_view_fund_name_value"
+                    app:layout_constraintStart_toEndOf="@id/image_edit_fund"
+                    app:layout_constraintTop_toTopOf="@id/text_view_fund_name_value" />
+
+                <ImageButton
+                    android:id="@+id/image_apply_loan"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Apply Loan"
+                    android:paddingStart="4dp"
+                    android:src="@drawable/icon_loan"
+                    app:layout_constraintBottom_toBottomOf="@id/text_view_fund_name_value"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="@id/text_view_fund_name_value" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingTop="4dp">
+
+                <TextView
+                    android:id="@+id/text_view_fund_moderator_header"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:text="Moderator:"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/text_view_fund_moderator_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:textSize="12sp"
+                    android:textStyle="italic"
+                    tools:text="Moderator Name" />
+
+                <TextView
+                    android:id="@+id/text_view_fund_member_details"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:textAlignment="center"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="4dp"
+                    android:textColor="@color/link_colour"
+                    android:textSize="10sp"
+                    android:textStyle="italic"
+                    android:text="View Fund Members" />
+            </LinearLayout>
+
+            <View
+                android:id="@+id/line_fund_details"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="1dp"
+                android:layout_marginBottom="1dp"
+                android:background="@android:color/darker_gray" />
+
+            <LinearLayout
+                android:id="@+id/fund_details_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <GridLayout
+                    android:id="@+id/grid_fund_summ_details"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2"
+                    android:rowCount="8">
+
+                    <TextView
+                        android:id="@+id/label_start_date"
+                        style="@style/FundLabel"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        android:text="@string/text_fund_start_date" />
+
+                    <TextView
+                        android:id="@+id/label_maturity_date"
+                        style="@style/FundLabel"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        android:text="@string/text_fund_maturity_date" />
+
+                    <TextView
+                        android:id="@+id/text_view_fund_start_date_value"
+                        style="@style/FundValue"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        tools:text="02/05/2025" />
+
+                    <TextView
+                        android:id="@+id/text_view_fund_maturity_date_value"
+                        style="@style/FundValue"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        tools:text="02/05/2027" />
+
+                    <TextView
+                        android:id="@+id/label_dep_amount_header"
+                        style="@style/FundLabel"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        android:text="Monthly Contribution" />
+
+                    <TextView
+                        android:id="@+id/label_period"
+                        style="@style/FundLabel"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        android:text="Period" />
+
+                    <TextView
+                        android:id="@+id/text_view_fund_dep_amount_value"
+                        style="@style/FundValue"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        tools:text="2000" />
+
+                    <TextView
+                        android:id="@+id/text_view_fund_period_value"
+                        style="@style/FundValue"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        tools:text="24 Months" />
+                </GridLayout>
+
+                <ImageView
+                    android:id="@+id/imageExpandCollapseFund"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="end"
+                    android:layout_marginStart="8dp"
+                    android:contentDescription="@string/expand_or_collapse"
+                    android:src="@drawable/ic_down_arrow" />
+
+
+                <View
+                    android:id="@+id/line_fund_dep_details"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="1dp"
+                    android:layout_marginBottom="1dp"
+                    android:background="@android:color/darker_gray"
+                    android:visibility="gone" />
+
+                <GridLayout
+                    android:id="@+id/grid_fund_dep_details"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2"
+                    android:rowCount="5"
+                    android:visibility="gone">
+
+                    <TextView
+                        style="@style/FundLabel"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        android:text="Frequency" />
+
+                    <TextView
+                        android:id="@+id/text_view_fund_dep_frequency_value"
+                        style="@style/FundValue"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        tools:text="Monthly" />
+
+                    <TextView
+                        style="@style/FundLabel"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        android:text="Total Expected Deposit:" />
+
+                    <TextView
+                        android:id="@+id/text_view_fund_tot_exp_dep_amount_value"
+                        style="@style/FundValue"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        tools:text="20000" />
+
+                    <TextView
+                        style="@style/FundLabel"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        android:text="Total Current Deposit:" />
+
+                    <TextView
+                        android:id="@+id/text_view_fund_tot_curr_dep_amount_value"
+                        style="@style/FundValue"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        tools:text="12000" />
+
+                    <TextView
+                        style="@style/FundLabel"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        android:text="Total Expected Maturity:" />
+
+                    <TextView
+                        android:id="@+id/text_view_fund_tot_exp_mat_amount_value"
+                        style="@style/FundValue"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        tools:text="22000" />
+
+                    <TextView
+                        style="@style/FundLabel"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        android:text="Group" />
+
+                    <TextView
+                        android:id="@+id/text_view_fund_group_value"
+                        style="@style/FundValue"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_gravity="fill"
+                        android:background="?attr/selectableItemBackground"
+                        android:textColor="@color/link_colour"
+                        tools:text="Chotu Fund" />
+                </GridLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+</LinearLayout>

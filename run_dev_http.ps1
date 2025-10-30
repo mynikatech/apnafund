@@ -1,0 +1,1 @@
+.\run_server.ps1 -Env dev -ListenHost 0.0.0.0 -Port 8080

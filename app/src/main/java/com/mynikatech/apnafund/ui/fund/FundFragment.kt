@@ -1,0 +1,540 @@
+package com.mynikatech.apnafund.ui.fund
+
+import android.app.AlertDialog
+import android.app.DatePickerDialog
+import android.content.Context
+import android.os.Build
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.EditText
+import androidx.annotation.RequiresApi
+import androidx.core.widget.addTextChangedListener
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.mynikatech.apnafund.R
+import com.mynikatech.apnafund.constants.ApnaBankConstants
+import com.mynikatech.apnafund.data.model.FundDetails
+import com.mynikatech.apnafund.data.model.FundWithDetails
+import com.mynikatech.apnafund.data.model.Funds
+import com.mynikatech.apnafund.data.model.GroupMemberWithName
+import com.mynikatech.apnafund.data.model.LoanDetailsWithMemberNames
+import com.mynikatech.apnafund.databinding.DialogAddFundBinding
+import com.mynikatech.apnafund.databinding.FragmentFundBinding
+import com.mynikatech.apnafund.session.SessionManager
+import com.mynikatech.apnafund.ui.loan.AddLoanDialog
+import com.mynikatech.apnafund.ui.viewmodel.FundSharedViewModel
+import com.mynikatech.apnafund.ui.viewmodel.FundViewModel
+import com.mynikatech.apnafund.ui.viewmodel.GroupSharedViewModel
+import com.mynikatech.apnafund.ui.viewmodel.GroupViewModel
+import com.mynikatech.apnafund.ui.viewmodel.LoansViewModel
+import com.mynikatech.apnafund.ui.viewmodel.UserSummaryViewModel
+import com.mynikatech.apnafund.util.ApnaBankDate
+import com.mynikatech.apnafund.util.Converters
+import com.mynikatech.apnafund.util.FundInputValidator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Calendar
+import java.util.Locale
+
+class FundFragment : Fragment() {
+
+    private lateinit var binding: FragmentFundBinding
+
+    private lateinit var adapter: FundAdapter
+
+    private val fundViewModel: FundViewModel by viewModels()
+
+    private val loanViewModel: LoansViewModel by viewModels()
+
+    private val groupViewModel: GroupViewModel by viewModels()
+
+    private val userSummaryViewModel: UserSummaryViewModel by viewModels()
+
+    private val fundSharedViewModel: FundSharedViewModel by activityViewModels()
+
+    private val groupSharedViewModel: GroupSharedViewModel by activityViewModels()
+
+    val isAdmin = SessionManager.isAdmin()
+    private val moderatorGroupId = SessionManager.groupId ?: 0
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        // Inflate the layout for this fragment
+        binding = FragmentFundBinding.inflate(layoutInflater, container, false)
+        val context = activity
+        if (Converters.userHasPrivilege(ApnaBankConstants.ADD_FUND_PRIV))
+            binding.fundFab.visibility = View.VISIBLE
+        else
+            binding.fundFab.visibility = View.GONE
+        binding.fundFab.setOnClickListener {
+            if (context != null)
+                showAddFundDialog(context)
+        }
+        return binding.root
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
+        super.onViewCreated(view, savedInstanceState)
+
+        adapter = FundAdapter(
+            onFundClick = { fund ->
+                fundSharedViewModel.selectFund(fund)
+                val action = FundFragmentDirections
+                    .actionFundFragmentToFundDetailsFragment(
+                        fundId = fund.fundId
+                    )
+                findNavController().navigate(action)
+            },
+            onGroupClick = { groupId ->
+                groupSharedViewModel.setSelectedGroupId(groupId)
+                val action = FundFragmentDirections
+                    .actionFundFragmentToGroupDetailsFragment(
+                        groupId = groupId
+                    )
+                findNavController().navigate(action)
+            },
+            onEditFundClick = { fund ->
+                fundSharedViewModel.selectFund(fund)
+                val hasMadeFirstDeposit = fund.totalCurrentDeposit > 0
+                showAddFundDialog(requireContext(), existingFund = fund, !hasMadeFirstDeposit)
+            },
+            onLoanApply = { fundId ->
+                showApplyLoanDialog(
+                    SessionManager.userId,
+                    fundId,
+                    borrowerName = SessionManager.getFormattedUserName()
+                )
+            },
+            onViewFundMembersClick = { fundId, groupId ->
+                val action = FundFragmentDirections
+                    .actionFundFragmentToFundMemberDetailsFragment(
+                        fundId = fundId,
+                        groupId = groupId
+                    )
+                findNavController().navigate(action)
+            }
+        )
+        binding.recyclerView.adapter = adapter
+        lifecycleScope.launch {
+            val fundWithDetails = fetchAllFunds(adapter)
+            if (fundWithDetails.isEmpty())
+                binding.noFundMessageContainer.visibility = View.VISIBLE
+        }
+        fundSharedViewModel.fundDataRefreshTrigger.observe(viewLifecycleOwner) { shouldRefresh ->
+            if (shouldRefresh == true) {
+                lifecycleScope.launch {
+                    fetchAllFunds(adapter)
+                    fundSharedViewModel.resetRefresh()
+                }// prevent repeated reloads
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun showAddFundDialog(
+        context: Context, existingFund: FundWithDetails? = null,
+        allowEditFinancials: Boolean = true
+    ) {
+
+        val dialogBinding = DialogAddFundBinding.inflate(LayoutInflater.from(context))
+        val dialog = BottomSheetDialog(context)
+        dialog.setContentView(dialogBinding.root)
+        dialog.show()
+        var groupId = -1
+        var moderator = -1
+        dialogBinding.buttonSaveFund.isEnabled = false
+        setupModeratorDropdown(dialogBinding) {
+            moderator = it
+            dialogBinding.buttonSaveFund.isEnabled =
+                validateInputs(dialogBinding, groupId, moderator)
+        }
+        if (existingFund != null) {
+            dialogBinding.buttonSaveFund.text = getString(R.string.text_update_fund)
+            dialogBinding.editTextFundName.setText(existingFund.fundName)
+            dialogBinding.editTextFundStartDate.setText(existingFund.fundStartDate)
+            dialogBinding.editTextPeriod.setText(existingFund.fundPeriod.toString())
+            dialogBinding.editTextDepFrequency.setText(existingFund.depositionFrequency)
+            dialogBinding.editTextDepAmount.setText(existingFund.recurringDepositAmount.toString())
+            dialogBinding.editTextLoanIntRate.setText(existingFund.loanInterestRate.toString())
+            dialogBinding.editTextLateFeeRate.setText(existingFund.lateFeeRate.toString())
+            dialogBinding.editTextDepositLastDate.setText(existingFund.monthlyDepDateBy.toString())
+            moderator = existingFund.moderator
+            groupId = existingFund.groupId
+
+            dialogBinding.apply {
+                editTextFundStartDate.isEnabled = allowEditFinancials
+                editTextPeriod.isEnabled = allowEditFinancials
+                editTextDepAmount.isEnabled = allowEditFinancials
+                editTextLoanIntRate.isEnabled = allowEditFinancials
+                editTextLateFeeRate.isEnabled = allowEditFinancials
+                editTextDepositLastDate.isEnabled = allowEditFinancials
+                editTextDepFrequency.isEnabled = allowEditFinancials
+                //gray them out
+                val alpha = if (allowEditFinancials) 1f else 0.5f
+                editTextFundStartDate.alpha = alpha
+                editTextPeriod.alpha = alpha
+                editTextDepAmount.alpha = alpha
+                editTextLoanIntRate.alpha = alpha
+                editTextLateFeeRate.alpha = alpha
+                editTextDepositLastDate.alpha = alpha
+                editTextDepFrequency.alpha = alpha
+            }
+        }
+        lifecycleScope.launch {
+            groupViewModel.fetchAllGroups().collectLatest { groups ->
+                val groupNames = groups.map { it.groupName }
+                val idToIndex = groups.mapIndexed { idx, g -> g.groupId to idx }.toMap()
+                val adapter = ArrayAdapter(
+                    context,
+                    R.layout.dropdown_item_apnabank,
+                    groupNames
+                )
+                dialogBinding.editTextAutoGroup.setAdapter(adapter)
+
+                if (existingFund != null) {
+                    idToIndex[existingFund.groupId]?.let { idx ->
+                        dialogBinding.editTextAutoGroup.setText(groupNames[idx], false)
+                        groupId = existingFund.groupId
+                        dialogBinding.buttonSaveFund.isEnabled =
+                            validateInputs(dialogBinding, groupId, moderator)
+                    }
+                } else if (!isAdmin) {
+                    idToIndex[moderatorGroupId]?.let { idx ->
+                        dialogBinding.editTextAutoGroup.setText(groupNames[idx], false)
+                        groupId = moderatorGroupId
+                        dialogBinding.buttonSaveFund.isEnabled =
+                            validateInputs(dialogBinding, groupId, moderator)
+                        refreshModeratorDropdown(
+                            groupId,
+                            dialogBinding,
+                            context,
+                            existingFund,
+                            defaultModerator = moderator
+                        ) {
+                            moderator = it
+                            dialogBinding.buttonSaveFund.isEnabled =
+                                validateInputs(dialogBinding, groupId, moderator)
+                        }
+                    }
+                    dialogBinding.editTextAutoGroup.isEnabled = false
+                }
+                dialogBinding.editTextAutoGroup.threshold = 0
+                dialogBinding.editTextAutoGroup.setOnClickListener {
+                    dialogBinding.editTextAutoGroup.showDropDown()
+                }
+                dialogBinding.editTextAutoGroup.setOnItemClickListener { _, _, position, _ ->
+                    groupId = groups[position].groupId
+                    dialogBinding.buttonSaveFund.isEnabled =
+                        validateInputs(dialogBinding, groupId, moderator)
+                    refreshModeratorDropdown(
+                        groupId,
+                        dialogBinding,
+                        context,
+                        existingFund,
+                        defaultModerator = moderator
+                    ) {
+                        moderator = it
+                        dialogBinding.buttonSaveFund.isEnabled =
+                            validateInputs(dialogBinding, groupId, moderator)
+                    }
+                }
+                dialogBinding.editTextAutoGroup.addTextChangedListener {
+                    if (it.isNullOrBlank()) {
+                        groupId = 0
+                        dialogBinding.buttonSaveFund.isEnabled =
+                            validateInputs(dialogBinding, groupId, moderator)
+                    }
+                }
+                dialogBinding.editTextFundStartDate.setOnClickListener {
+                    showDatePickerDialog(dialogBinding.editTextFundStartDate)
+                }
+            }
+        }
+        // add TextChangeListener
+        dialogBinding.editTextFundName.addTextChangedListener {
+            dialogBinding.buttonSaveFund.isEnabled =
+                validateInputs(dialogBinding, groupId, moderator)
+        }
+        dialogBinding.editTextFundStartDate.addTextChangedListener {
+            dialogBinding.buttonSaveFund.isEnabled =
+                validateInputs(dialogBinding, groupId, moderator)
+        }
+        dialogBinding.editTextPeriod.addTextChangedListener {
+            dialogBinding.buttonSaveFund.isEnabled =
+                validateInputs(dialogBinding, groupId, moderator)
+        }
+        dialogBinding.editTextDepFrequency.addTextChangedListener {
+            dialogBinding.buttonSaveFund.isEnabled =
+                validateInputs(dialogBinding, groupId, moderator)
+        }
+        dialogBinding.editTextDepAmount.addTextChangedListener {
+            dialogBinding.buttonSaveFund.isEnabled =
+                validateInputs(dialogBinding, groupId, moderator)
+        }
+        dialogBinding.editTextLoanIntRate.addTextChangedListener {
+            dialogBinding.buttonSaveFund.isEnabled =
+                validateInputs(dialogBinding, groupId, moderator)
+        }
+        dialogBinding.editTextLateFeeRate.addTextChangedListener {
+            dialogBinding.buttonSaveFund.isEnabled =
+                validateInputs(dialogBinding, groupId, moderator)
+        }
+        dialogBinding.editTextDepositLastDate.addTextChangedListener {
+            dialogBinding.buttonSaveFund.isEnabled =
+                validateInputs(dialogBinding, groupId, moderator)
+        }
+
+        dialogBinding.buttonSaveFund.setOnClickListener {
+            lifecycleScope.launch {
+                // add Save Fund code
+                // Calculate the Maturity Date from Period
+                val maturityDate = ApnaBankDate.calculateMatDate(
+                    dialogBinding.editTextFundStartDate.text.toString().trim(),
+                    dialogBinding.editTextPeriod.text.toString().trim().toDouble()
+                )
+                var recalculateFinance = false
+                // check if fund period or deposit amount has been updated, if so recalculate everything
+                val fundPeriod = dialogBinding.editTextPeriod.text.toString().trim().toDouble()
+                val fundName = dialogBinding.editTextFundName.text.toString().trim()
+                val recurringDepositAmount = dialogBinding.editTextDepAmount.text.toString().trim()
+                    .toDouble()
+                if (existingFund?.fundPeriod != fundPeriod || existingFund.recurringDepositAmount != recurringDepositAmount)
+                    recalculateFinance = true
+                val fundToSave = Funds(
+                    fundId = existingFund?.fundId ?: 0,
+                    fundName = fundName,
+                    fundStartDate = dialogBinding.editTextFundStartDate.text.toString().trim(),
+                    fundMaturityDate = maturityDate.trim(),
+                    fundPeriod = dialogBinding.editTextPeriod.text.toString().trim().toDouble(),
+                    depositionFrequency = dialogBinding.editTextDepFrequency.text.toString().trim(),
+                    recurringDepositAmount = dialogBinding.editTextDepAmount.text.toString().trim()
+                        .toDouble(),
+                    loanInterestRate = dialogBinding.editTextLoanIntRate.text.toString().trim()
+                        .toDouble(),
+                    lateFeeRate = dialogBinding.editTextLateFeeRate.text.toString().trim()
+                        .toDouble(),
+                    monthlyDepDateBy = dialogBinding.editTextDepositLastDate.text.toString()
+                        .toInt(),
+                    groupId = groupId,
+                    moderator = moderator,
+                    fundStatus = existingFund?.fundStatus ?: "ACTIVE",
+                    fundCode = Converters.generateFundCode(fundName)
+                )
+                val fundDetailsToSave = FundDetails(
+                    totalExpectedDeposit = existingFund?.totalExpectedDeposit ?: 0.0,
+                    totalCurrentDeposit = existingFund?.totalCurrentDeposit ?: 0.0,
+                    totalCurrentLateFee = existingFund?.totalCurrentLateFee ?: 0.0,
+                    totalCurrentInterestCollected = existingFund?.totalCurrentInterestCollected
+                        ?: 0.0,
+                    totalExpectedMaturityAmount = existingFund?.totalExpectedMaturityAmount
+                        ?: 0.0, // defaulted as no loans interest or fee, this will change
+                    totalCurrAmount = existingFund?.totalCurrAmount ?: 0.0,
+                    fundDetailsId = existingFund?.fundDetailsId ?: 0,
+                    fundId = existingFund?.fundId ?: 0
+
+                )
+                val newFundId = fundViewModel.saveOrUpdateFund(
+                    fundToSave,
+                    fundDetailsToSave,
+                    groupId,
+                    recalculateFinance
+                )
+                fetchAllFunds(adapter)
+                // set the funds in the User summary screen
+                val userDetails = userSummaryViewModel.getUserDetails(SessionManager.userId)
+                userSummaryViewModel.userFunds.postValue(userDetails!!.userFunds)
+
+                binding.noFundMessageContainer.visibility = View.GONE
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Fund update/created Successfully")
+                    .setMessage("Do you want to add/update members now?")
+                    .setPositiveButton("Yes") { _, _ ->
+                        val action = FundFragmentDirections
+                            .actionFundFragmentToFundMemberDetailsFragment(fundId = newFundId)
+                        findNavController().navigate(action)
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+                dialog.dismiss()
+            }
+
+        }
+        dialogBinding.buttonCancelFund.setOnClickListener {
+            dialog.dismiss()
+        }
+    }
+
+
+    private fun validateInputs(
+        dialogBinding: DialogAddFundBinding,
+        groupId: Int,
+        moderator: Int
+    ): Boolean {
+        return FundInputValidator.isAllInputValid(
+            fundName = dialogBinding.editTextFundName.text?.toString(),
+            startDate = dialogBinding.editTextFundStartDate.text?.toString(),
+            period = dialogBinding.editTextPeriod.text?.toString(),
+            depFreq = dialogBinding.editTextDepFrequency.text?.toString(),
+            depAmount = dialogBinding.editTextDepAmount.text?.toString(),
+            loanRate = dialogBinding.editTextLoanIntRate.text?.toString(),
+            lateFee = dialogBinding.editTextLateFeeRate.text?.toString(),
+            depLastDate = dialogBinding.editTextDepositLastDate.text?.toString(),
+            groupId = groupId,
+            moderator = moderator
+        )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private suspend fun fetchAllFunds(adapter: FundAdapter): List<FundWithDetails> {
+        val sortedFundWithDetails: List<FundWithDetails>
+        val fundsWithDetails: List<FundWithDetails> = fundViewModel.fetchAllFundsWithDetails(
+            isAdmin,
+            moderatorGroupId
+        )
+        // Sort the funds based on status and then start dates
+        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+        sortedFundWithDetails = withContext(Dispatchers.Default) {
+            fundsWithDetails.sortedWith(
+                compareBy<FundWithDetails> { it.fundStatus != "ACTIVE" }
+                    .thenByDescending { LocalDate.parse(it.fundStartDate, formatter) }
+            )
+        }
+        adapter.setFundsWithDetails(sortedFundWithDetails)
+
+        return sortedFundWithDetails
+    }
+
+    private fun showDatePickerDialog(targetEditText: EditText) {
+        val calendar = Calendar.getInstance()
+
+        val datePickerDialog = DatePickerDialog(
+            requireContext(),
+            { _, year, month, dayOfMonth ->
+                // Format and set the date (dd/MM/yyyy)
+                val dateStr = String.format(
+                    Locale.getDefault(),
+                    "%02d/%02d/%04d",
+                    dayOfMonth,
+                    month + 1,
+                    year
+                )
+                targetEditText.setText(dateStr)
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+        datePickerDialog.show()
+    }
+
+    private fun showApplyLoanDialog(
+        borrowerUserId: Int? = null,
+        fundId: Int,
+        borrowerName: String? = null,
+        existingLoan: LoanDetailsWithMemberNames? = null,
+        allowEditLoan: Boolean = true
+    ) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val fund = userSummaryViewModel.getFund(fundId)!!
+            val fundRateOfInterest = fund.loanInterestRate
+            val members = fundViewModel.getFundMembersWithNamesForFund(fundId)
+            val borrowerList = members.map { it.userId to "${it.firstName} ${it.lastName}" }
+            //Get current available amount in the Fund display to the user and also add a validation
+            val totalAmountAvailable = userSummaryViewModel.getTotalAmountAvailableforFund(fundId)
+            val dialog = AddLoanDialog(
+                borrowerName = borrowerName,
+                totalAmountAvailable = totalAmountAvailable ?: 0.0,
+                rateOfInterest = fundRateOfInterest,
+                fundMaturityDate = fund.fundMaturityDate,
+                existingLoan = existingLoan,
+                allowEditLoan = allowEditLoan,
+                borrowerUserId = borrowerUserId,
+                borrowerList = borrowerList
+            ) { loanAmount, issueDate, period, loanMaturityDate, borrowerUserId ->
+                if (existingLoan != null) {
+                    existingLoan.loanId?.let {
+                        loanViewModel.updateLoan(
+                            loanId = it,
+                            loanAmount = loanAmount,
+                            issueDate = issueDate,
+                            period = period.toDouble(),
+                            maturityDate = loanMaturityDate,
+                            existingloan = existingLoan
+                        )
+                    }
+                } else {
+                    userSummaryViewModel.applyLoan(
+                        userId = borrowerUserId,
+                        fundId = fundId,
+                        loanAmount = loanAmount,
+                        issueDate = issueDate,
+                        period = period.toDouble(),
+                        rateOfInt = fundRateOfInterest,
+                        maturityDate = loanMaturityDate
+                    )
+                }
+            }
+            dialog.show(parentFragmentManager, "AddLoanDialog")
+        }
+    }
+
+    private fun setupModeratorDropdown(
+        dialogBinding: DialogAddFundBinding,
+        onModeratorSelected: (Int) -> Unit
+    ) {
+        dialogBinding.editTextModerator.setOnItemClickListener { parent, _, position, _ ->
+            val selectedName = parent.getItemAtPosition(position) as String
+            val user = dialogBinding.editTextModerator.tag as? Map<String, GroupMemberWithName>
+            onModeratorSelected(user?.get(selectedName)?.userId ?: -1)
+        }
+
+        dialogBinding.editTextModerator.setOnClickListener {
+            dialogBinding.editTextModerator.showDropDown()
+        }
+    }
+
+    private fun refreshModeratorDropdown(
+        groupId: Int,
+        dialogBinding: DialogAddFundBinding,
+        context: Context,
+        existingFund: FundWithDetails?,
+        defaultModerator: Int?,
+        onModeratorSelected: (Int) -> Unit
+    ) {
+        lifecycleScope.launch {
+            val groupMembers = groupViewModel.fetchGroupMembersforGrpWithNames(groupId)
+            val nameMap = groupMembers.associateBy { "${it.firstName} ${it.lastName}" }
+            val nameList = nameMap.keys.toList()
+
+            val adapter = ArrayAdapter(context, R.layout.dropdown_item_apnabank, nameList)
+            dialogBinding.editTextModerator.setAdapter(adapter)
+            dialogBinding.editTextModerator.tag = nameMap
+
+            // Pre-select if editing existing fund
+            val preselectUserId = existingFund?.moderator ?: defaultModerator
+            val preselectUser = groupMembers.find { it.userId == preselectUserId }
+            if (preselectUser != null) {
+                val name = "${preselectUser.firstName} ${preselectUser.lastName}"
+                dialogBinding.editTextModerator.setText(name, false)
+                onModeratorSelected(preselectUser.userId)
+            }
+        }
+    }
+}

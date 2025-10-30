@@ -1,0 +1,40 @@
+Reference Database: apnafund_test_user @ jdbc:postgresql://localhost:5432/ApnaFund?currentSchema=ApnaFundTest (Default Schema: ApnaFundTest)
+Comparison Database: apnafund_dev_user @ jdbc:postgresql://localhost:5432/ApnaFund?currentSchema=ApnaFundDev (Default Schema: ApnaFundDev)
+Compared Schemas: ApnaFundTest -> ApnaFundDev
+Product Name: EQUAL
+Product Version: EQUAL
+Missing Foreign Key(s): NONE
+Unexpected Foreign Key(s): NONE
+Changed Foreign Key(s): NONE
+Missing Index(s): 
+     databasechangeloglock_pkey UNIQUE  ON ApnaFundTest.databasechangeloglock(id)
+     idx_uph_changedat ON ApnaFundTest.user_password_history(changedAt)
+     idx_uph_user ON ApnaFundTest.user_password_history(userId)
+     idx_users_email_lower ON ApnaFundTest.users(lower(emailId))
+Unexpected Index(s): 
+     uq_deposits_fund_user_month_year UNIQUE  ON ApnaFundDev.deposits(fundId, depositorId, depositMonth, depositYear)
+     uq_loan_emis_loan_month_year UNIQUE  ON ApnaFundDev.loan_emi(loanId, emiMonth, emiYear)
+     users_emailid_key UNIQUE  ON ApnaFundDev.users(emailId)
+Changed Index(s): NONE
+Missing Primary Key(s): 
+     databasechangeloglock_pkey on ApnaFundTest.databasechangeloglock(id)
+Unexpected Primary Key(s): NONE
+Changed Primary Key(s): NONE
+Missing Sequence(s): NONE
+Unexpected Sequence(s): NONE
+Changed Sequence(s): NONE
+Missing Table(s): 
+     databasechangelog
+     databasechangeloglock
+Unexpected Table(s): NONE
+Changed Table(s): NONE
+Missing Unique Constraint(s): 
+     uq_type_code on type(typeCode)
+Unexpected Unique Constraint(s): 
+     uq_deposits_fund_user_month_year on deposits(fundId, depositorId, depositMonth, depositYear)
+     uq_loan_emis_loan_month_year on loan_emi(loanId, emiMonth, emiYear)
+     users_emailid_key on users(emailId)
+Changed Unique Constraint(s): NONE
+Missing View(s): NONE
+Unexpected View(s): NONE
+Changed View(s): NONE

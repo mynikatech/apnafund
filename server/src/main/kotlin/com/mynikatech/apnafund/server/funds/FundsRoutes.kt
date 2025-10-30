@@ -1,0 +1,331 @@
+package com.mynikatech.apnafund.server.funds
+
+import com.mynikatech.apnafund.net.dto.AddFundWithDetailsRequest
+import com.mynikatech.apnafund.net.dto.FundDetailsDto
+import com.mynikatech.apnafund.net.dto.FundMembersDto
+import com.mynikatech.apnafund.net.dto.FundsDto
+import com.mynikatech.apnafund.net.dto.UsersDto
+import com.mynikatech.apnafund.server.api.respondError
+import com.mynikatech.apnafund.server.api.respondOk
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.put
+import io.ktor.server.routing.route
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
+
+data class UpdateWithDetailsRequest(
+    val fund: FundsDto,
+    val details: FundDetailsDto
+)
+
+fun Route.fundsRoutes(sql: FundsSql) = route("/funds") {
+
+    // ---- Funds (DTO/basic) ----
+    get("get/all") { call.respondOk(sql.getAllFunds()) }
+
+    get("get/{id}") {
+        val id = call.parameters["id"]?.toIntOrNull()
+            ?: return@get call.respondError(HttpStatusCode.BadRequest, "validation", "id required")
+        val dto = sql.getFund(id).firstOrNull()
+        if (dto != null) call.respondOk(dto)
+        else call.respondError(HttpStatusCode.NotFound, "not_found", "Fund not found")
+    }
+
+    post("add") {
+        val dto = call.receive<FundsDto>()
+        if (dto.fundName.isNullOrBlank())
+            return@post call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "fundName required"
+            )
+        val id = sql.addFund(dto)
+        call.respondOk(id, HttpStatusCode.Created)
+    }
+
+    put("update/{id}") {
+        val id = call.parameters["id"]?.toIntOrNull()
+            ?: return@put call.respondError(HttpStatusCode.BadRequest, "validation", "id required")
+        val dto = call.receive<FundsDto>()
+        val ok = sql.updateFund(
+            id = id,
+            fundName = dto.fundName,
+            fundStartDate = dto.fundStartDate,
+            fundMaturityDate = dto.fundMaturityDate,
+            fundPeriod = dto.fundPeriod,
+            depositionFrequency = dto.depositionFrequency,
+            moderator = dto.moderator,
+            recurringDepositAmount = dto.recurringDepositAmount,
+            fundStatus = dto.fundStatus,
+            loanInterestRate = dto.loanInterestRate,
+            lateFeeRate = dto.lateFeeRate,
+            monthlyDepDateBy = dto.monthlyDepDateBy,
+            groupId = dto.groupId,
+            fundCode = dto.fundCode
+        )
+        if (!ok) return@put call.respondError(
+            HttpStatusCode.NotFound,
+            "not_found",
+            "Fund not found"
+        )
+        call.respondOk(Unit, HttpStatusCode.NoContent)
+    }
+
+    delete("delete/{id}") {
+        val id = call.parameters["id"]?.toIntOrNull()
+            ?: return@delete call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "id required"
+            )
+        call.respondOk(sql.deleteFund(id)) // Boolean body, but wrapped in respondOk for consistency
+    }
+
+    // ---- Funds (domain queries) ----
+    get("get/active") { call.respondOk(sql.getAllActiveFunds()) }
+
+    get("get/by-code") {
+        val code = call.request.queryParameters["fundCode"]
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "fundCode required"
+            )
+        call.respondOk(sql.getFundIdByCode(code))
+    }
+
+    get("get/active/group/{groupId}") {
+        val gid = call.parameters["groupId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "groupId required"
+            )
+        call.respondOk(sql.getAllActiveFundsForGroup(gid))
+    }
+
+    get("get/group/{groupId}") {
+        val gid = call.parameters["groupId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "groupId required"
+            )
+        call.respondOk(sql.getAllFundsForGroup(gid))
+    }
+
+    // ---- Funds + Details projections ----
+    get("get/with-details/all") { call.respondOk(sql.allWithDetails()) }
+
+    get("get/with-details/group/{groupId}") {
+        val gid = call.parameters["groupId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "groupId required"
+            )
+        call.respondOk(sql.allWithDetailsForGroup(gid))
+    }
+
+    get("get/with-details/{fundId}") {
+        val fid = call.parameters["fundId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "fundId required"
+            )
+        call.respondOk(sql.getFundWithDetails(fid))
+    }
+
+    // ---- Rate of interest ----
+    get("roi/get/{fundId}") {
+        val fid = call.parameters["fundId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "fundId required"
+            )
+        call.respondOk(sql.getRateOfInterestForFund(fid))
+    }
+
+    // ---- Members ----
+    get("members/get/{fundId}") {
+        val fid = call.parameters["fundId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "fundId required"
+            )
+        call.respondOk(sql.getFundMembers(fid))
+    }
+
+    get("members/get/with-names/{fundId}") {
+        val fundId = call.parameters["fundId"]?.toIntOrNull()
+            ?: return@get call.respond(HttpStatusCode.BadRequest, "fundId required")
+        val rows = sql.getFundMembersWithNamesForFund(fundId)
+        call.respondOk(rows)
+    }
+
+    post("members/add/one") {
+        val body = call.receive<FundMembersDto>()
+        val id = sql.addFundMember(body)
+        call.respondOk(id)
+    }
+
+    post("members/add/batch") {
+
+        val items: List<FundMembersDto> = call.receive()
+
+        if (items.isEmpty()) {
+            return@post call.respondError(HttpStatusCode.BadRequest, "validation", "No members provided")
+        }
+
+        val json = Json { explicitNulls = false }
+        val payload: String = json.encodeToString(ListSerializer(FundMembersDto.serializer()), items)
+
+        val ids: List<Int> = sql.addFundMembersBatch(payload)
+
+        call.respondOk(ids, HttpStatusCode.Created)
+    }
+
+    delete("members/delete/{fundMemberId}") {
+        val fmId = call.parameters["fundMemberId"]?.toIntOrNull()
+            ?: return@delete call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "fundMemberId required"
+            )
+        call.respondOk(sql.removeFundMember(fmId))
+    }
+
+    // ---- Details ----
+    get("details/get/{fundId}") {
+        val fid = call.parameters["fundId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "fundId required"
+            )
+        val d = sql.getFundDetails(fid).firstOrNull()
+        if (d != null) call.respondOk(d) else call.respondError(
+            HttpStatusCode.NotFound,
+            "not_found",
+            "Details not found"
+        )
+    }
+
+    post("details/insert") {
+        val body = call.receive<FundDetailsDto>()
+        sql.insertFundDetails(body)
+        call.respondOk(Unit, HttpStatusCode.NoContent)
+    }
+
+    put("details/update") {
+        val body = call.receive<FundDetailsDto>()
+        sql.updateFundDetails(body)
+        call.respondOk(Unit, HttpStatusCode.NoContent)
+    }
+
+    post("details/upsert") {
+        val body = call.receive<FundDetailsDto>()
+        call.respondOk(sql.upsertDetails(body))
+    }
+
+    // ---- Available amounts / eligible members ----
+    get("available-amount/get/{fundId}") {
+        val fid = call.parameters["fundId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "fundId required"
+            )
+        call.respondOk(sql.availableAmount(fid))
+    }
+
+    get("available-members/get") {
+        val gid = call.request.queryParameters["groupId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "groupId required"
+            )
+        val fid = call.request.queryParameters["fundId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "fundId required"
+            )
+        val rows: List<UsersDto> = sql.availableMembers(gid, fid)
+        call.respondOk(rows)
+    }
+
+    // ---- Atomic multi-update ----
+    put("update/with-details") {
+        val body = call.receive<UpdateWithDetailsRequest>()
+        val ok = sql.updateFund(
+            id = body.fund.fundId!!,
+            fundName = body.fund.fundName,
+            fundStartDate = body.fund.fundStartDate,
+            fundMaturityDate = body.fund.fundMaturityDate,
+            fundPeriod = body.fund.fundPeriod,
+            depositionFrequency = body.fund.depositionFrequency,
+            moderator = body.fund.moderator,
+            recurringDepositAmount = body.fund.recurringDepositAmount,
+            fundStatus = body.fund.fundStatus,
+            loanInterestRate = body.fund.loanInterestRate,
+            lateFeeRate = body.fund.lateFeeRate,
+            monthlyDepDateBy = body.fund.monthlyDepDateBy,
+            groupId = body.fund.groupId,
+            fundCode = body.fund.fundCode
+        )
+        sql.upsertDetails(body.details)
+        if (!ok) return@put call.respondError(
+            HttpStatusCode.NotFound,
+            "not_found",
+            "Fund not found"
+        )
+        call.respondOk(Unit, HttpStatusCode.NoContent)
+    }
+
+    get("members/check/{fundId}") {
+        val fundId = call.parameters["fundId"]?.toIntOrNull()
+            ?: return@get call.respond(HttpStatusCode.BadRequest, "fundId required")
+        val userId = call.request.queryParameters["userId"]?.toIntOrNull()
+            ?: return@get call.respond(HttpStatusCode.BadRequest, "userId required")
+        val exists = sql.checkIfFundMemberAlreadyAdded(userId, fundId)
+        call.respondOk(exists)
+    }
+
+    post("add/with-details") {
+        val req = call.receive<AddFundWithDetailsRequest>()
+
+        // minimal validation (add more if you need)
+        if (req.fund.groupId == null) {
+            return@post call.respondError(
+                io.ktor.http.HttpStatusCode.BadRequest,
+                "validation",
+                "groupId required on fund"
+            )
+        }
+
+        // One DB call that does both inserts atomically
+        val json = Json { explicitNulls = false }
+
+        // Option A: pass explicit serializers (no extra import needed)
+        val fundJson = json.encodeToString(FundsDto.serializer(), req.fund)
+        val detailsJson = json.encodeToString(FundDetailsDto.serializer(), req.details)
+        val newId = sql.addFundWithDetails(
+            fundJson, detailsJson
+        )
+
+        call.respondOk(newId, HttpStatusCode.Created)
+    }
+}
+
+

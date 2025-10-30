@@ -1,0 +1,1 @@
+openssl pkcs12 -export -inkey ".\10.0.2.2+3-key.pem" -in ".\10.0.2.2+3.pem" -out ".\dev-keystore.p12" -name "local-dev" -passout pass:changeit

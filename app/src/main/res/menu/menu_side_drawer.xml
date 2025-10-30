@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_PIN"
+        android:title="Change PIN"
+        android:icon="@drawable/ic_pin_lock" />
+    <item
+        android:id="@+id/menu_theme"
+        android:title="Change Theme"
+        android:icon="@drawable/ic_themes" />
+    <item
+        android:id="@+id/menu_profile"
+        android:title="Edit Profile"
+        android:icon="@drawable/ic_profile" />
+    <item
+        android:id="@+id/menu_feedback"
+        android:title="Send Feedback"
+        android:icon="@drawable/ic_feedback" />
+    <item
+        android:id="@+id/menu_share"
+        android:title="Share App"
+        android:icon="@drawable/ic_share" />
+    <item
+        android:id="@+id/menu_logout"
+        android:title="Logout"
+        android:icon="@drawable/ic_logout" />
+</menu>

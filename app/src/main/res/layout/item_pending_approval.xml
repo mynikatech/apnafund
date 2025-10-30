@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/card_pending_item"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:orientation="vertical">
+
+        <!-- Moderator Name -->
+        <TextView
+            android:id="@+id/text_moderator_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Moderator: Sunil Agarwal"
+            android:textAppearance="?attr/textAppearanceSubtitle1"
+            android:textStyle="bold" />
+
+        <!-- Group Name -->
+        <TextView
+            android:id="@+id/text_group_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Group: Powai Residents Group"
+            android:textAppearance="?attr/textAppearanceBody2"
+            android:layout_marginTop="2dp" />
+
+        <!-- Description (optional) -->
+        <TextView
+            android:id="@+id/text_group_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Description: Fund for community welfare."
+            android:textAppearance="?attr/textAppearanceCaption"
+            android:layout_marginTop="2dp" />
+
+        <!-- Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <Button
+                android:id="@+id/button_reject"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Reject"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@android:color/holo_red_light"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/button_approve"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Approve"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@android:color/holo_green_dark" />
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

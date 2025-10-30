@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/userSummaryFragment"
+        android:icon="@drawable/ic_home"
+        android:title="Home"/>
+    <item android:id="@+id/fundFragment"
+        android:icon="@drawable/ic_fund_filled"
+        android:title="Funds"/>
+    <item android:id="@+id/adminFragment"
+        android:icon="@drawable/ic_admin"
+        android:title="Admin"/>
+    <item android:id="@+id/settingsFragment"
+        android:icon="@drawable/ic_hamburger"
+        android:title="Settings"/>
+</menu>

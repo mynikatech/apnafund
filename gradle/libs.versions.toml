@@ -1,0 +1,107 @@
+[versions]
+agp = "8.9.3"
+fragmentKtxVersion = "1.8.8"
+kotlin = "2.0.21"
+coreKtx = "1.16.0"
+junit = "4.13.2"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+appcompat = "1.7.1"
+material = "1.12.0"
+activity = "1.10.1"
+constraintlayout = "2.2.1"
+ksp ="2.0.21-1.0.27"
+roomCompilerVersion = "2.7.2"
+viewModel = "2.9.1"
+cardview = "1.0.0"
+places = "4.3.1"
+navFragment = "2.9.0"
+mockito-core = "5.11.0"
+mockito-kotlin = "5.2.1"
+coroutines = "1.7.3"
+arch-core = "2.2.0"
+firebase-auth = "22.3.0"
+google-auth = "20.6.0"
+google-services = "4.3.15"
+play-services-auth = "20.6.0"
+amplify = "1.35.2"
+firebaseStorage = "22.0.0"
+ktorVer = "3.0.1"                    # Ktor 3.x for Kotlin 2.0
+kotlinx-serialization = "1.7.1"
+logback = "1.5.6"
+postgres = "42.7.3"
+hikari = "5.1.0"
+flyway = "10.15.0"
+exposed = "0.59.0"
+jdbiVer= "3.49.5"
+ktorHttps = "3.3.0"
+liquibaseVer = "4.29.2"
+liquibaseGradVer = "2.2.0"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-fragment-ktx-v187 = { module = "androidx.fragment:fragment-ktx", version.ref = "fragmentKtxVersion" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomCompilerVersion" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomCompilerVersion" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompilerVersion" }
+androidx-viewmodel-lifecycle = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", name = "viewmodel", version.ref = "viewModel"}
+androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
+places = { group = "com.google.android.libraries.places", name = "places", version.ref = "places" }
+navigation-fragment = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navFragment"}
+navigation-ui = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navFragment"}
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito-core" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
+coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+arch-core-testing = { module = "androidx.arch.core:core-testing", version.ref = "arch-core" }
+firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx", version.ref = "firebase-auth" }
+google-play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "google-auth" }
+firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebase-auth" }
+amplify = { module = "com.amplifyframework:core", version.ref = "amplify" }
+firebase-storage = { group = "com.google.firebase", name = "firebase-storage", version.ref = "firebaseStorage" }
+ktor-server-netty               = { module = "io.ktor:ktor-server-netty",                 version.ref = "ktorVer" }
+ktor-server-hsts                = { module = "io.ktor:ktor-server-hsts",                  version.ref = "ktorVer" }
+ktor-server-content-negotiation  = { module = "io.ktor:ktor-server-content-negotiation",  version.ref = "ktorVer" }
+ktor-server-forwarded-header = { module = "io.ktor:ktor-server-forwarded-header", version.ref = "ktorVer" }
+ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktorVer" }
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktorVer" }
+ktor-serialization-kotlinx-json  = { module = "io.ktor:ktor-serialization-kotlinx-json",   version.ref = "ktorVer" }
+kotlinx-serialization-json       = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+liquibase = {module = "org.liquibase:liquibase-core", version.ref = "liquibaseVer"}
+# Logging
+logback-classic                  = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+# DB stack
+postgresql                       = { module = "org.postgresql:postgresql", version.ref = "postgres" }
+hikari                           = { module = "com.zaxxer:HikariCP",       version.ref = "hikari" }
+flyway-core                      = { module = "org.flywaydb:flyway-core",  version.ref = "flyway" }
+exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
+exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
+exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposed" }
+ktor-client-android              = { module = "io.ktor:ktor-client-android",             version.ref = "ktorVer" }
+ktor-client-content-negotiation  = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorVer" }
+ktor-client-logging              = { module = "io.ktor:ktor-client-logging",             version.ref = "ktorVer" }
+jdbi-core = {module= "org.jdbi:jdbi3-core", version.ref="jdbiVer"}
+jdbi-kotlin = {module= "org.jdbi:jdbi3-kotlin", version.ref="jdbiVer"}
+jdbi-sqlobject = {module= "org.jdbi:jdbi3-sqlobject", version.ref="jdbiVer"}
+jdbi-kotlin-sqlobject = {module= "org.jdbi:jdbi3-kotlin-sqlobject", version.ref="jdbiVer"}
+ktor-server-call-id      = { module = "io.ktor:ktor-server-call-id", version.ref = "ktorVer" }
+ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktorVer" }
+
+exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
+exposed-java-time = { module = "org.jetbrains.exposed:exposed-java-time", version.ref = "exposed" }
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+devtools-ksp = {id = "com.google.devtools.ksp", version.ref = "ksp"}
+navigation-safeargs = {id = "androidx.navigation.safeargs.kotlin", version.ref = "navFragment" }
+google-services = { id = "com.google.gms.google-services", version.ref = "google-services"}
+kotlin-jvm  = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ktor-io = { id = "io.ktor.plugin", version.ref = "ktorVer" }
+liquibase-gradle = { id = "org.liquibase.gradle", version.ref = "liquibaseGradVer"}

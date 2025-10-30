@@ -1,0 +1,1 @@
+.\run_server.ps1 -UseHttps -HttpsPort 8443 -KeystorePath .\dev-keystore.p12 -KeystoreType PKCS12 -KeyAlias local-dev -KeystorePassword changeit

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="6dp">
+
+    <AutoCompleteTextView
+        android:id="@+id/dropdown_fund"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Select Fund" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <AutoCompleteTextView
+            android:id="@+id/dropdown_month"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Month" />
+
+        <AutoCompleteTextView
+            android:id="@+id/dropdown_year"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:hint="Year" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/text_view_loan_emi"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Loan EMI Entries"
+        android:textAlignment="center"
+        android:textColor="@color/purple"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_weight="1">
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="8dp"
+            android:layout_weight="1">
+
+            <TableLayout
+                android:id="@+id/table_loan_emi_entries"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:stretchColumns="1,2,3,4">
+
+                <TableRow>
+
+                    <TextView
+                        android:text="Member Name"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:text="EMI Amount"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:text="Late Fee"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:text="Prepay"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:text="Date"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:text="Edit"
+                        android:textStyle="bold" />
+                </TableRow>
+            </TableLayout>
+        </HorizontalScrollView>
+    </ScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_save_loan_emi"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Save Loan EMI" />
+
+</LinearLayout>

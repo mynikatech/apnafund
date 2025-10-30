@@ -1,0 +1,199 @@
+databaseChangeLog:
+  # You can override this via liquibase.properties per environment (dev/prod)
+  - property:
+      name: schemaName
+      value: ${appSchemaName}
+
+  # 1) Core tables (create base tables first)
+  - changeSet:
+      id: 000-set-search-path
+      author: devuser
+      labels: baseline
+      changes:
+        - sql:
+            sql: SET search_path TO "${schemaName}", pg_catalog;
+
+  - changeSet:
+      id: 010-tables
+      author: devuser
+      labels: baseline
+      changes:
+        - sqlFile:
+            path: sql/010-tables.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: false
+            endDelimiter: ";"
+            expandExpressions: true
+
+  # 2) Objects in dependency order (adjust as needed)
+  - changeSet:
+      id: 020-index
+      author: devuser
+      labels: baseline
+      changes:
+        - sqlFile:
+            path: sql/020-index.sql
+            expandExpressions: true
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 030-types
+      author: devuser
+      labels: baseline
+      changes:
+        - sqlFile:
+            path: sql/030-types.sql
+            expandExpressions: true
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 040-roles
+      author: devuser
+      labels: baseline
+      changes:
+        - sqlFile:
+            path: sql/040-roles.sql
+            expandExpressions: true
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 050-admin
+      author: devuser
+      labels: baseline
+      changes:
+        - sqlFile:
+            path: sql/050-admin.sql
+            expandExpressions: true
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 060-users
+      author: devuser
+      labels: baseline
+      changes:
+        - sqlFile:
+            path: sql/060-users.sql
+            expandExpressions: true
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 070-fund
+      author: devuser
+      labels: baseline
+      changes:
+        - sqlFile:
+            path: sql/070-fund.sql
+            expandExpressions: true
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 080-deposit
+      author: devuser
+      labels: baseline
+      changes:
+        - sqlFile:
+            path: sql/080-deposit.sql
+            expandExpressions: true
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 090-group
+      author: devuser
+      labels: baseline
+      changes:
+        - sqlFile:
+            path: sql/090-group.sql
+            expandExpressions: true
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 100-loans
+      author: devuser
+      labels: baseline
+      changes:
+        - sqlFile:
+            path: sql/100-loans.sql
+            expandExpressions: true
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 110-notifications
+      author: devuser
+      labels: baseline
+      changes:
+        - sqlFile:
+            path: sql/110-notifications.sql
+            expandExpressions: true
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 120-password
+      author: devuser
+      labels: baseline
+      changes:
+        - sqlFile:
+            path: sql/120-password.sql
+            expandExpressions: true
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 130-pin
+      author: devuser
+      labels: baseline
+      changes:
+        - sqlFile:
+            path: sql/130-pin.sql
+            expandExpressions: true
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  # 3) Baseline seed for all envs
+  - changeSet:
+      id: 200-dml-setup
+      author: devuser
+      labels: baseline
+      context: "all"
+      changes:
+        - sqlFile:
+            path: sql/200-dml-setup.sql
+            expandExpressions: true
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
