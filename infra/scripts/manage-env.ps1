@@ -1,0 +1,100 @@
+<#
+.SYNOPSIS
+  Unified Terraform environment manager for ApnaFund infrastructure.
+.DESCRIPTION
+  Handles bootstrap, dev, test, and prod Terraform actions with logging,
+  without changing the user's working directory.
+.PARAMETER Env
+  One of: bootstrap, dev, test, prod
+.PARAMETER Action
+  One of: deploy, destroy, plan, validate
+#>
+
+param(
+    [Parameter(Mandatory)][ValidateSet("bootstrap", "dev", "test", "prod")] [string]$Env,
+    [Parameter(Mandatory)][ValidateSet("deploy", "destroy", "plan", "validate")] [string]$Action
+)
+
+# --- Setup -------------------------------------------------------------
+$root = Split-Path -Parent $PSScriptRoot
+$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+$logDir = Join-Path $root "logs"
+if (!(Test-Path $logDir)) { New-Item -ItemType Directory -Force -Path $logDir | Out-Null }
+$logFile = Join-Path $logDir "$Env-$Action-$timestamp.log"
+
+# Determine working directory
+if ($Env -eq "bootstrap") {
+    $workDir = Join-Path $root "global\bootstrap"
+} else {
+    $workDir = Join-Path $root "envs\$Env"
+}
+
+Write-Host "=== Running Terraform $Action for environment: $Env ===" -ForegroundColor Cyan
+Write-Host "Working directory: $workDir" -ForegroundColor DarkGray
+Write-Host "Log file: $logFile" -ForegroundColor DarkGray
+Write-Host ""
+
+# --- Helper: run terraform safely without leaving scripts dir ----------
+function Run-Terraform($cmd) {
+    Write-Host ">>> $cmd" -ForegroundColor Yellow
+    Push-Location $workDir
+    try {
+        Invoke-Expression "$cmd 2>&1 | Tee-Object -FilePath $logFile -Append"
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Command failed: $cmd" -ForegroundColor Red
+            Write-Host "Check log file: $logFile" -ForegroundColor Red
+            exit 1
+        }
+    }
+    finally {
+        Pop-Location
+    }
+}
+
+# --- Actions -----------------------------------------------------------
+if ($Env -eq "bootstrap") {
+    switch ($Action) {
+        "plan" {
+            Run-Terraform "terraform init -backend=false"
+            Run-Terraform "terraform plan"
+        }
+        "deploy" {
+            Run-Terraform "terraform init -backend=false"
+            Run-Terraform "terraform apply -auto-approve"
+        }
+        "destroy" {
+            Run-Terraform "terraform init -backend=false"
+            Run-Terraform "terraform destroy -auto-approve"
+        }
+        "validate" {
+            Run-Terraform "terraform init -backend=false"
+            Run-Terraform "terraform validate"
+        }
+    }
+}
+else {
+    switch ($Action) {
+        "plan" {
+            Run-Terraform "terraform init -reconfigure -backend-config=$workDir\backend.hcl"
+            Run-Terraform "terraform plan"
+        }
+        "deploy" {
+            Run-Terraform "terraform init -reconfigure -backend-config=$workDir\backend.hcl"
+            Run-Terraform "terraform plan -out=tfplan"
+            Run-Terraform "terraform apply tfplan"
+        }
+        "destroy" {
+            Run-Terraform "terraform init -reconfigure -backend-config=$workDir\backend.hcl"
+            Run-Terraform "terraform destroy -auto-approve"
+        }
+        "validate" {
+            Run-Terraform "terraform init -reconfigure -backend-config=$workDir\backend.hcl"
+            Run-Terraform "terraform validate"
+        }
+    }
+}
+
+Write-Host ""
+Write-Host "=== Terraform $Action for $Env completed successfully! ===" -ForegroundColor Green
+Write-Host "Log file saved at: $logFile" -ForegroundColor DarkGray
+Write-Host "Returned to: $PSScriptRoot" -ForegroundColor DarkGray
