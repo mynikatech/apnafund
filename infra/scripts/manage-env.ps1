@@ -39,7 +39,7 @@ function Run-Terraform($cmd) {
     Write-Host ">>> $cmd" -ForegroundColor Yellow
     Push-Location $workDir
     try {
-        Invoke-Expression "$cmd 2>&1 | Tee-Object -FilePath $logFile -Append"
+        & cmd.exe /c "$cmd 2>&1"
         if ($LASTEXITCODE -ne 0) {
             Write-Host "Command failed: $cmd" -ForegroundColor Red
             Write-Host "Check log file: $logFile" -ForegroundColor Red
@@ -50,6 +50,9 @@ function Run-Terraform($cmd) {
         Pop-Location
     }
 }
+# Precompute absolute paths for clarity
+$backendCfg = Join-Path $workDir "backend.hcl"
+$tfvarsFile = Join-Path $workDir "$Env.tfvars"
 
 # --- Actions -----------------------------------------------------------
 if ($Env -eq "bootstrap") {
@@ -75,20 +78,20 @@ if ($Env -eq "bootstrap") {
 else {
     switch ($Action) {
         "plan" {
-            Run-Terraform "terraform init -reconfigure -backend-config=$workDir\backend.hcl"
-            Run-Terraform "terraform plan"
+            Run-Terraform "terraform init -reconfigure -backend-config=`"$backendCfg`""
+            Run-Terraform "terraform plan -lock-timeout=60s -var-file=`"$tfvarsFile`""
         }
         "deploy" {
-            Run-Terraform "terraform init -reconfigure -backend-config=$workDir\backend.hcl"
-            Run-Terraform "terraform plan -out=tfplan"
+            Run-Terraform "terraform init -reconfigure -backend-config=`"$backendCfg`""
+            Run-Terraform "terraform plan -lock-timeout=60s -var-file=`"$tfvarsFile`" -out=tfplan"
             Run-Terraform "terraform apply tfplan"
         }
         "destroy" {
-            Run-Terraform "terraform init -reconfigure -backend-config=$workDir\backend.hcl"
-            Run-Terraform "terraform destroy -auto-approve"
+            Run-Terraform "terraform init -reconfigure -backend-config=`"$backendCfg`""
+            Run-Terraform "terraform destroy -lock-timeout=60s -var-file=`"$tfvarsFile`" -auto-approve"
         }
         "validate" {
-            Run-Terraform "terraform init -reconfigure -backend-config=$workDir\backend.hcl"
+            Run-Terraform "terraform init -reconfigure -backend-config=`"$backendCfg`""
             Run-Terraform "terraform validate"
         }
     }

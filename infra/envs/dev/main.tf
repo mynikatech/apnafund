@@ -1,4 +1,8 @@
 ############################################
+# Terraform & Providers are in provider.tf
+############################################
+
+############################################
 # IAM Deploy Role (module)
 ############################################
 module "iam_deploy_role" {
@@ -10,18 +14,55 @@ module "iam_deploy_role" {
 ############################################
 # Networking: default VPC + a default subnet
 ############################################
-data "aws_vpc" "default" {
-  default = true
-}
+data "aws_vpc" "default" { default = true }
 
 data "aws_availability_zones" "available" {
   state = "available"
 }
-# Pick any default subnet in one AZ (good enough for dev)
+
 data "aws_subnet" "default" {
   vpc_id            = data.aws_vpc.default.id
   availability_zone = data.aws_availability_zones.available.names[0]
   default_for_az    = true
+}
+
+############################################
+# S3: Config bucket (holds startup scripts)
+############################################
+resource "aws_s3_bucket" "config" {
+  bucket = var.config_bucket
+  tags   = { Env = "dev", App = "ApnaFund" }
+}
+
+# Strongly recommended: block public access
+resource "aws_s3_bucket_public_access_block" "config" {
+  bucket                  = aws_s3_bucket.config.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# (Optional) versioning for safe rollbacks
+resource "aws_s3_bucket_versioning" "config" {
+  bucket = aws_s3_bucket.config.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Ownership controls + private ACL (new S3 requirements)
+resource "aws_s3_bucket_ownership_controls" "config" {
+  bucket = aws_s3_bucket.config.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_acl" "config" {
+  depends_on = [aws_s3_bucket_ownership_controls.config]
+  bucket     = aws_s3_bucket.config.id
+  acl        = "private"
 }
 
 ############################################
@@ -37,19 +78,14 @@ resource "aws_key_pair" "dev_keypair" {
   public_key = tls_private_key.dev_key.public_key_openssh
 }
 
-# Save private key locally for SSH
 resource "local_file" "dev_key_private" {
-  filename = "${path.module}/apnafund-dev-key.pem"
-  content  = tls_private_key.dev_key.private_key_pem
+  filename        = "${path.module}/apnafund-dev-key.pem"
+  content         = tls_private_key.dev_key.private_key_pem
   file_permission = "0600"
 }
 
 ############################################
 # Security Group
-# - SSH (22) only from your IP
-# - HTTP (80) open
-# - HTTPS (443) open
-# - 8443 only from your IP (optional app/admin)
 ############################################
 resource "aws_security_group" "dev_server_sg" {
   name        = "apnafund-dev-sg"
@@ -80,14 +116,6 @@ resource "aws_security_group" "dev_server_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    description = "App port (8443) from admin IP"
-    from_port   = 8443
-    to_port     = 8443
-    protocol    = "tcp"
-    cidr_blocks = [var.admin_ip]
-  }
-
   egress {
     description = "Allow all outbound"
     from_port   = 0
@@ -96,14 +124,11 @@ resource "aws_security_group" "dev_server_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = "ApnaFund Dev Server SG"
-    Env  = "dev"
-  }
+  tags = { Name = "ApnaFund Dev Server SG", Env = "dev" }
 }
 
 ############################################
-# Instance Profile (EC2 assumes deployRole)
+# Instance Profile
 ############################################
 resource "aws_iam_instance_profile" "deploy_profile" {
   name = "deployRoleProfile"
@@ -114,13 +139,38 @@ resource "aws_iam_instance_profile" "deploy_profile" {
 # AMI lookup: Amazon Linux 2023 (x86_64)
 ############################################
 data "aws_ami" "amazon_linux" {
-  most_recent = true
+  # PIN (avoids replacement on AMI bumps). Use your known-good AMI below:
   owners      = ["amazon"]
-
+  most_recent = false
   filter {
-    name   = "name"
-    values = ["al2023-ami-*-x86_64"]
+    name = "image-id"
+    values = [var.ami_id]
   }
+}
+
+############################################
+# Allow reading startup.sh from the config bucket
+############################################
+data "aws_iam_policy_document" "config_bucket_read" {
+  statement {
+    sid     = "ReadEnvStartup"
+    effect  = "Allow"
+    actions = ["s3:GetObject","s3:GetObjectVersion","s3:ListBucket"]
+    resources = [
+      "arn:aws:s3:::${var.config_bucket}",
+      "arn:aws:s3:::${var.config_bucket}/apnafund/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "config_bucket_read" {
+  name   = "ApnaFundConfigBucketRead"
+  policy = data.aws_iam_policy_document.config_bucket_read.json
+}
+
+resource "aws_iam_role_policy_attachment" "attach_config_bucket_read" {
+  role       = module.iam_deploy_role.role_name
+  policy_arn = aws_iam_policy.config_bucket_read.arn
 }
 
 ############################################
@@ -133,7 +183,15 @@ resource "aws_instance" "dev_server" {
   vpc_security_group_ids = [aws_security_group.dev_server_sg.id]
   iam_instance_profile   = aws_iam_instance_profile.deploy_profile.name
   key_name               = aws_key_pair.dev_keypair.key_name
+  user_data              = file("${path.module}/user_data.sh")
 
+  # Make these available to the script via EC2 env (IMDS not for env, so we use shell vars block)
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = "required"
+  }
+
+  # Root volume
   root_block_device {
     volume_type = "gp3"
     volume_size = 30
@@ -146,41 +204,43 @@ resource "aws_instance" "dev_server" {
 }
 
 ############################################
-# OPTIONAL: Elastic IP (commented for dev)
-# Uncomment these blocks when you want a stable IP.
+# Optional: dedicated EBS for Postgres data
 ############################################
-# resource "aws_eip" "dev_eip" {
-#   vpc = true
-#   tags = {
-#     Name = "ApnaFund Dev EIP"
-#     Env  = "dev"
-#   }
-# }
-#
-# resource "aws_eip_association" "dev_eip_assoc" {
-#   instance_id   = aws_instance.dev_server.id
-#   allocation_id = aws_eip.dev_eip.id
-# }
+resource "aws_ebs_volume" "pg_data" {
+  availability_zone = aws_instance.dev_server.availability_zone
+  size              = 20
+  type              = "gp3"
+  encrypted         = true
+  tags = { Name = "apnafund-dev-pg-data", Env = "dev" }
+}
+
+resource "aws_volume_attachment" "pg_data_attach" {
+  device_name = "/dev/xvdf"
+  instance_id = aws_instance.dev_server.id
+  volume_id   = aws_ebs_volume.pg_data.id
+}
+
+############################################
+# Attach SSM core (Session Manager)
+############################################
+resource "aws_iam_role_policy_attachment" "attach_ssm_core" {
+  role       = module.iam_deploy_role.role_name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+# Give user-data access to its config (via instance tags → NOT used in script; bucket/key are hard-coded above)
+# You can also pass as TF vars and substitute into user_data.sh via sed/template if you prefer.
 
 ############################################
 # Outputs
 ############################################
-output "deploy_role_arn" {
-  description = "ARN of the deploy role"
-  value       = module.iam_deploy_role.role_arn
+output "deploy_role_arn"         {
+  value = module.iam_deploy_role.role_arn
 }
-
-output "dev_instance_public_ip" {
-  description = "Public IP of the dev EC2 instance"
-  value       = aws_instance.dev_server.public_ip
+output "dev_instance_public_ip"  {
+  value = aws_instance.dev_server.public_ip
 }
-
 output "dev_instance_public_dns" {
-  description = "Public DNS of the dev EC2 instance"
-  value       = aws_instance.dev_server.public_dns
+  value = aws_instance.dev_server.public_dns
 }
 
-output "dev_security_group_id" {
-  description = "Security group ID for the dev instance"
-  value       = aws_security_group.dev_server_sg.id
-}

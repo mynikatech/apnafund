@@ -107,3 +107,28 @@ output "state_bucket_name" {
 output "state_lock_table_name" {
   value = aws_dynamodb_table.locks.name
 }
+
+# Ensure caller identity is available
+# Parameters required by the deploy policy and module
+
+# 1) Create the deploy policy (file: iam-deploy-policy.tf included above)
+# (Make sure iam-deploy-policy.tf is in this directory)
+
+# 2) Create the jenkins deploy role using the module
+module "jenkins_deploy_role" {
+  source = "../../modules/iam/jenkins-deploy-role"  # adjust path
+  role_name = var.jenkins_deploy_role_name
+  trusted_principals = [ aws_iam_user.jenkins_bot.arn ]    # this references the user created below
+  managed_policy_arns = [ aws_iam_policy.apnafund_deploy_policy.arn ]
+}
+
+# 3) create jenkins-bot user and user policy
+# (Replace iam-jenkins-bootstrap.tf will create aws_iam_user.jenkins_bot and the user policy.)
+# Note: referencing aws_iam_user.jenkins_bot.arn inside module.trusted_principals is OK — Terraform resolves the graph.
+
+# 4) outputs
+output "jenkins_deploy_role_arn" {
+  value = module.jenkins_deploy_role.role_arn
+}
+
+

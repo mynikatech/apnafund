@@ -33,3 +33,11 @@ variable "backend_access_principal_name" {
   type        = string
   default     = "YOUR_ROLE_NAME_HERE" # e.g., TerraformRunnerRole or whatever STS shows after assumed-role/
 }
+
+variable "jenkins_deploy_role_name" {
+  default = "ApnaFundJenkinsDeployRole"
+}
+variable "create_jenkins_access_key" {
+  type = bool
+  default = false
+}
