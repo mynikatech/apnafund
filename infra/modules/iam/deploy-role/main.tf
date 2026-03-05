@@ -19,10 +19,14 @@ resource "aws_iam_role" "this" {
   })
 }
 
-# Optional AdministratorAccess attachment
-resource "aws_iam_role_policy_attachment" "admin" {
-  count = var.attach_admin ? 1 : 0
-
-  role       = aws_iam_role.this.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+resource "aws_iam_role_policy" "inline" {
+  name   = "${var.role_name}-policy"
+  role   = aws_iam_role.this.id
+  policy = var.inline_policy
 }
+
+resource "aws_iam_instance_profile" "this" {
+  name = "${var.role_name}-instance-profile"
+  role = aws_iam_role.this.name
+}
+

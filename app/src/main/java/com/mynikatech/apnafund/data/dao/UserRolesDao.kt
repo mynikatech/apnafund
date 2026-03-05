@@ -82,17 +82,20 @@ interface UserRolesDao {
     suspend fun getUserProfile(userId: Int): List<UserProfile>
 
     @Query("""
-    SELECT u.userId, g.groupId, 
-           u.firstName || ' ' || u.lastName AS moderatorName, 
-           g.groupName, 
-           g.description AS groupDescription
-    FROM USERS u
-    INNER JOIN USER_ROLES ur ON u.userId = ur.userId
-    INNER JOIN ROLES r ON ur.roleId = r.roleId
-    INNER JOIN 'GROUPS' g ON g.moderator = u.userId
-    WHERE r.roleCode = 'MODERATOR'
-      AND ur.status = 'PENDING'
-      AND g.status = 'PENDING'
+    SELECT
+        u."userId",
+        g."groupId",
+        g."groupName",
+        u."firstName" || ' ' || u."lastName" AS "moderatorName",
+        u."emailId",
+        g."description" AS "groupDescription"
+    FROM "users" u
+    INNER JOIN "user_roles" ur ON u."userId" = ur."userId"
+    INNER JOIN "roles" r       ON ur."roleId" = r."roleId"
+    INNER JOIN "groups" g      ON g."moderator" = u."userId"
+    WHERE r."roleCode" = 'MODERATOR'
+      AND ur."status" = 'PENDING'
+      AND g."status"  = 'PENDING';
 """)
     suspend fun getPendingModeratorRequests(): List<PendingModeratorRequest>
 

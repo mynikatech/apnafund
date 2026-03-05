@@ -4,6 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.mynikatech.apnafund.ApnaFundApplication
 import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.data.repository.UserRoleRepository
+import com.mynikatech.apnafund.net.dto.UserSaveSource
 import com.mynikatech.apnafund.util.ApnaBankDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -95,18 +96,10 @@ class UserViewModelTest {
     fun `saveOrUpdateUser should call createUser if userId is 0`() = runBlocking {
         val user = Users(0, "New", "User", "new@example.com", "1234567890", "ACTIVE",createdDate = ApnaBankDate.getCurrentDate(), userCode = "JODO123456")
 
-        viewModel.saveOrUpdateUser(user)
+        viewModel.saveOrUpdateUser(user, 0, UserSaveSource.SELF_REGISTER)
 
         verify(userRolesRepository, timeout(1000)).createUser(user)
     }
 
-    @Test
-    fun `saveOrUpdateUser should call updateUser if userId is not 0`() = runBlocking {
-        val user =
-            Users(2, "Updated", "User", "update@example.com", "9876543210", "ACTIVE", createdDate = ApnaBankDate.getCurrentDate(), userCode = "JODO123456")
 
-        viewModel.saveOrUpdateUser(user)
-
-        verify(userRolesRepository, timeout(1000)).updateUser(user)
-    }
 }

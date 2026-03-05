@@ -19,7 +19,9 @@ class PreferencesHelper(context: Context) {
         firstName: String,
         lastName: String,
         emailId: String,
-        phoneNumber: String
+        phoneNumber: String,
+        firebaseUid: String,
+        groupName: String
     ) {
         prefs.edit().apply {
             putInt("user_id", userId)
@@ -28,12 +30,13 @@ class PreferencesHelper(context: Context) {
             putString("role_names", JSONArray(roleNames).toString())
             putInt("group_id", groupId ?: -1)
             putString("token", token)
+            putString("groupName", groupName)
             putBoolean("is_pin_set", isPinSet)
-            putBoolean("is_logged_in", true)
             putString("first_name", firstName)
             putString("last_name", lastName)
             putString("email_id", emailId)
             putString("phone_number", phoneNumber)
+            putString("firebaseUid", firebaseUid)
             apply()
         }
 
@@ -43,12 +46,13 @@ class PreferencesHelper(context: Context) {
         SessionManager.roleNames = roleNames
         SessionManager.groupId = groupId
         SessionManager.token = token
-        SessionManager.isLoggedIn = true
         SessionManager.isPinSet = isPinSet
         SessionManager.firstName = firstName
         SessionManager.lastName = lastName
         SessionManager.emailId = emailId
         SessionManager.phoneNumber = phoneNumber
+        SessionManager.firebaseUid = firebaseUid
+        SessionManager.groupName = groupName
     }
 
     fun loadSession() {
@@ -60,12 +64,14 @@ class PreferencesHelper(context: Context) {
         val groupIdStored = prefs.getInt("group_id", -1)
         SessionManager.groupId = if (groupIdStored != -1) groupIdStored else null
         SessionManager.token = prefs.getString("token", null)
-        SessionManager.isLoggedIn = prefs.getBoolean("is_logged_in", false)
+        SessionManager.isLoggedIn = SessionManager.userId > 0
         SessionManager.isPinSet = prefs.getBoolean("is_pin_set", false)
         SessionManager.firstName = prefs.getString("first_name", "") ?: ""
         SessionManager.lastName = prefs.getString("last_name", "") ?: ""
         SessionManager.emailId = prefs.getString("email_id", "") ?: ""
         SessionManager.phoneNumber = prefs.getString("phone_number", "") ?: ""
+        SessionManager.firebaseUid = prefs.getString("firebaseUid", "") ?: ""
+        SessionManager.groupName = prefs.getString("groupName", "") ?: ""
 
 
     }
@@ -90,10 +96,8 @@ class PreferencesHelper(context: Context) {
     }
 
     fun isLoggedIn(): Boolean {
-        val value = prefs.getBoolean("is_logged_in", false)
-        return value
+        return prefs.getInt("user_id", -1) > 0
     }
-
     fun getUserId(): Int {
         val value = prefs.getInt("user_id", -1)
         return value

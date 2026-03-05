@@ -22,7 +22,9 @@ class FundAdapter(
     private val onGroupClick: (groupId: Int) -> Unit,
     private val onEditFundClick: (FundWithDetails) -> Unit,
     private val onLoanApply: (fundId: Int) -> Unit,
-    private val onViewFundMembersClick: (fundId: Int, groupId: Int) -> Unit
+    private val onViewFundMembersClick: (fundId: Int, groupId: Int) -> Unit,
+    private val onCloseFundClick: (FundWithDetails) -> Unit,
+    private val onFundLoansClick: (FundWithDetails) -> Unit
 ) : RecyclerView.Adapter<FundAdapter.ViewHolder>() {
 
 
@@ -94,6 +96,24 @@ class FundAdapter(
                     )
                 }
 
+                val canCloseFund =
+                    Converters.userHasPrivilege(ApnaBankConstants.ADD_FUND_PRIV)
+
+                imageCloseFund.visibility =
+                    if (canCloseFund && !isClosed)
+                        View.VISIBLE
+                    else
+                        View.GONE
+
+                imageCloseFund.isEnabled = !isClosed
+                imageCloseFund.alpha = if (isClosed) 0.4f else 1f
+
+                imageCloseFund.setOnClickListener {
+                    if (!isClosed) {
+                        onCloseFundClick(fundWithDetails)
+                    }
+                }
+
                 // 4) Enable or disable the edit icon
                 imageEditFund.isEnabled = !isClosed
                 imageEditFund.alpha = if (isClosed) 0.4f else 1f  // visual hint
@@ -114,6 +134,17 @@ class FundAdapter(
                     onViewFundMembersClick(fundWithDetails.fundId, fundWithDetails.groupId)
 
                 }
+                textViewFundLoansSummary.setOnClickListener {
+                    onFundLoansClick(fundWithDetails)
+                }
+                // Disable if no loans to implement TBD
+                /*if (fundWithDetails.totalLoans == 0) {
+                    textViewFundLoansSummary.alpha = 0.4f
+                    textViewFundLoansSummary.isClickable = false
+                } else {
+                    textViewFundLoansSummary.alpha = 1.0f
+                   textViewFundLoansSummary.isClickable = true
+                }*/
                 // get Fund moderator full name from moderator user Id
 
                 textViewFundModeratorValue.text =

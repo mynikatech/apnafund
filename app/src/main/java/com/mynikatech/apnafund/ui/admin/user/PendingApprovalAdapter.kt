@@ -3,35 +3,41 @@ package com.mynikatech.apnafund.ui.admin.user
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.mynikatech.apnafund.ApnaFundApplication
-import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.databinding.ItemPendingApprovalBinding
-import com.mynikatech.apnafund.data.model.PendingModeratorRequest
+import com.mynikatech.apnafund.net.dto.PendingApprovalDto
+
 
 class PendingApprovalAdapter(
-    private var items: List<PendingModeratorRequest>,
+    private var items: List<PendingApprovalDto>,
     private val listener: OnActionClickListener
 ) : RecyclerView.Adapter<PendingApprovalAdapter.PendingViewHolder>() {
 
     interface OnActionClickListener {
-        fun onApproveClicked(userId: Int, roleId: Int, groupId: Int)
-        fun onRejectClicked(userId: Int, roleId: Int, groupId: Int)
+        fun onApproveClicked(item: PendingApprovalDto)
+        fun onRejectClicked(item: PendingApprovalDto)
     }
 
-    inner class PendingViewHolder(private val binding: ItemPendingApprovalBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+    inner class PendingViewHolder(
+        private val binding: ItemPendingApprovalBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(request: PendingModeratorRequest) {
-            binding.textModeratorName.text = "Moderator: ${request.moderatorName}"
-            binding.textGroupName.text = "Group: ${request.groupName}"
-            binding.textGroupDescription.text = "Description: ${request.groupDescription ?: "N/A"}"
-            val moderatorRoleId = ApnaFundApplication.rolesMap[ApnaBankConstants.ROLE_MODERATOR]
+        fun bind(item: PendingApprovalDto) {
+
+            binding.textModeratorName.text =
+                "${item.subtitle}: ${item.requesterName}"
+
+            binding.textGroupName.text =
+                item.title
+
+            binding.textGroupDescription.text =
+                item.description ?: "N/A"
+
             binding.buttonApprove.setOnClickListener {
-                listener.onApproveClicked(request.userId, moderatorRoleId!!,request.groupId)
+                listener.onApproveClicked(item)
             }
 
             binding.buttonReject.setOnClickListener {
-                listener.onRejectClicked(request.userId, moderatorRoleId!!, request.groupId)
+                listener.onRejectClicked(item)
             }
         }
     }
@@ -49,7 +55,7 @@ class PendingApprovalAdapter(
 
     override fun getItemCount(): Int = items.size
 
-    fun updateList(newItems: List<PendingModeratorRequest>) {
+    fun updateList(newItems: List<PendingApprovalDto>) {
         items = newItems
         notifyDataSetChanged()
     }

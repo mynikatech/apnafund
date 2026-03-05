@@ -116,6 +116,7 @@ interface LoansDao {
         l.maturityDate,
         l.rateOfInterest,
         l.status,
+        l.workflowStatus,
 
         d.emiInterest,
         d.currPrincipal,

@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-2026-01-13-get-pending-moderator-requests
+      author: sunil
+      changes:
+        - sql: |
+              CREATE OR REPLACE FUNCTION test_new_proc1()
+              RETURNS void LANGUAGE plpgsql AS $$
+              BEGIN
+              RAISE NOTICE 'Test new procedure ran!';
+              END $$;

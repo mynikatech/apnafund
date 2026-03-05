@@ -1,12 +1,15 @@
 package com.mynikatech.apnafund.server.funds
 
 import com.mynikatech.apnafund.net.dto.AddFundWithDetailsRequest
+import com.mynikatech.apnafund.net.dto.CloseFundRequest
 import com.mynikatech.apnafund.net.dto.FundDetailsDto
 import com.mynikatech.apnafund.net.dto.FundMembersDto
 import com.mynikatech.apnafund.net.dto.FundsDto
 import com.mynikatech.apnafund.net.dto.UsersDto
 import com.mynikatech.apnafund.server.api.respondError
 import com.mynikatech.apnafund.server.api.respondOk
+import com.mynikatech.apnafund.server.notifications.NotificationService
+import com.mynikatech.apnafund.server.users.UsersSql
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -16,6 +19,9 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
@@ -24,7 +30,8 @@ data class UpdateWithDetailsRequest(
     val details: FundDetailsDto
 )
 
-fun Route.fundsRoutes(sql: FundsSql) = route("/funds") {
+fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
+                      userSql: UsersSql) = route("/funds") {
 
     // ---- Funds (DTO/basic) ----
     get("get/all") { call.respondOk(sql.getAllFunds()) }
@@ -175,6 +182,19 @@ fun Route.fundsRoutes(sql: FundsSql) = route("/funds") {
     post("members/add/one") {
         val body = call.receive<FundMembersDto>()
         val id = sql.addFundMember(body)
+        // Fetch full member details for email
+        val member = userSql.getUsersBasicByIds(intArrayOf(body.userId))
+
+        val fund = sql.getFund(body.fundId).firstOrNull()
+        if (null != fund) {
+            CoroutineScope(Dispatchers.IO).launch {
+                notificationService.notifyFundMembersAdded(
+                    fundId = body.fundId,
+                    fundName = fund.fundName,
+                    newMembers = member
+                )
+            }
+        }
         call.respondOk(id)
     }
 
@@ -183,14 +203,34 @@ fun Route.fundsRoutes(sql: FundsSql) = route("/funds") {
         val items: List<FundMembersDto> = call.receive()
 
         if (items.isEmpty()) {
-            return@post call.respondError(HttpStatusCode.BadRequest, "validation", "No members provided")
+            return@post call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "No members provided"
+            )
         }
 
         val json = Json { explicitNulls = false }
-        val payload: String = json.encodeToString(ListSerializer(FundMembersDto.serializer()), items)
+        val payload: String =
+            json.encodeToString(ListSerializer(FundMembersDto.serializer()), items)
 
         val ids: List<Int> = sql.addFundMembersBatch(payload)
 
+        // Fetch member details
+        val fundMemberIds = items.map { it.userId }.toIntArray()
+        val members = userSql.getUsersBasicByIds(fundMemberIds)
+
+        val fundId = items.first().fundId
+        val fundDetails = sql.getFund(fundId).firstOrNull()
+        if( null != fundDetails) {
+            call.application.launch {
+                notificationService.notifyFundMembersAdded(
+                    fundId = items.first().fundId,
+                    fundName = fundDetails.fundName,
+                    newMembers = members
+                )
+            }
+        }
         call.respondOk(ids, HttpStatusCode.Created)
     }
 
@@ -324,7 +364,90 @@ fun Route.fundsRoutes(sql: FundsSql) = route("/funds") {
             fundJson, detailsJson
         )
 
+        // 🔔 Trigger fund created notification (async)
+        call.application.launch {
+            notificationService.notifyFundCreated(
+                fundId = newId,
+                fundName = req.fund.fundName,
+                groupId = req.fund.groupId!!
+            )
+        }
+
         call.respondOk(newId, HttpStatusCode.Created)
+    }
+
+    post("/{fundId}/close") {
+
+        val fundId =
+            call.parameters["fundId"]?.toIntOrNull()
+
+        if (fundId == null) {
+            call.respondError(
+                HttpStatusCode.BadRequest,
+                type = "INVALID_ID",
+                message = "Invalid fund id"
+            )
+            return@post
+        }
+
+        val request =
+            call.receive<CloseFundRequest>()
+
+        try {
+
+            // ---------- CLOSE FUND ----------
+            val closed =
+                sql.closeFund(
+                    fundId,
+                    request.closedBy,
+                    request.reason
+                )
+
+            if (!closed) {
+                call.respondError(
+                    status = HttpStatusCode.Conflict,
+                    type = "FUND_CLOSE_FAILED",
+                    message = "Fund already closed or not found"
+                )
+                return@post
+            }
+
+            // ---------- FETCH DETAILS FOR NOTIFICATION ----------
+            val fund =
+                sql.getFund(fundId).firstOrNull()
+
+            val closedByUser =
+                userSql.getUserById(request.closedBy)
+
+            // ---------- TRIGGER NOTIFICATIONS ----------
+            if( null != fund) {
+                notificationService.notifyFundClosed(
+                    fundId = fundId,
+                    fundName = fund.fundName,
+                    closedByName = closedByUser.fullName ?: "Moderator",
+                    reason = request.reason
+                )
+            } else
+            {
+                // no fund to close.
+            }
+
+            // ---------- RESPONSE ----------
+            call.respondOk(
+                data = mapOf(
+                    "fundId" to fundId,
+                    "status" to "CLOSED"
+                )
+            )
+
+        } catch (e: Exception) {
+
+            call.respondError(
+                status = HttpStatusCode.InternalServerError,
+                type = "SERVER_ERROR",
+                message = "Unable to close fund"
+            )
+        }
     }
 }
 

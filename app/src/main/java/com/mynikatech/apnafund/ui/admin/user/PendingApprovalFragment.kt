@@ -10,14 +10,18 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.mynikatech.apnafund.databinding.FragmentPendingApprovalBinding
+import com.mynikatech.apnafund.net.dto.PendingApprovalDto
+import com.mynikatech.apnafund.session.SessionManager
+import com.mynikatech.apnafund.ui.viewmodel.ApprovalViewModel
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
-import com.mynikatech.apnafund.util.EmailUtils
 import kotlinx.coroutines.launch
 
 class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClickListener {
 
     private lateinit var binding: FragmentPendingApprovalBinding
     private val viewModel: UserViewModel by viewModels()
+    private val approvalViewModel: ApprovalViewModel by viewModels()
+
     private lateinit var adapter: PendingApprovalAdapter
 
     override fun onCreateView(
@@ -41,35 +45,43 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
 
     private fun observePendingRequests() {
         lifecycleScope.launch {
-            val requests = viewModel.getPendingModeratorRequests()
+            val requests = approvalViewModel.getPendingApprovals(SessionManager.userId)
             adapter.updateList(requests)
-            //binding..visibility = if (requests.isEmpty()) View.VISIBLE else View.GONE
-
         }
     }
 
-    override fun onApproveClicked(userId: Int, roleId: Int, groupId: Int) {
+    override fun onApproveClicked(item: PendingApprovalDto) {
+
         lifecycleScope.launch {
-            viewModel.approveModeratorAndGroup(userId, roleId, groupId)
-            Toast.makeText(requireContext(), "Moderator Approved", Toast.LENGTH_SHORT).show()
+
+            when(item.entityType) {
+
+                "GROUP" ->
+                    approvalViewModel.approveGroup(item.approvalId, SessionManager.userId)
+
+                "LOAN" ->
+                    approvalViewModel.approveLoan(item.approvalId, SessionManager.userId)
+            }
+
+            Toast.makeText(requireContext(),"Approved",Toast.LENGTH_SHORT).show()
             observePendingRequests()
         }
     }
 
-    override fun onRejectClicked(userId: Int, roleId: Int, groupId: Int) {
+    override fun onRejectClicked(item: PendingApprovalDto) {
+
         lifecycleScope.launch {
-            //to do send email to the user of rejection and to connect with Support for more details
-            val user = viewModel.fetchUser(userId)
-            val emailId = user?.emailId
-            if (null != emailId)
-                EmailUtils.sendEmail(
-                    emailId,
-                    "Apna Fund: Moderator Request Rejected",
-                    "The request was not approved, please connect with App Support",
-                    requireContext()
-                )
-            viewModel.rejectModeratorAndGroup(userId, roleId, groupId)
-            Toast.makeText(requireContext(), "Moderator Rejected", Toast.LENGTH_SHORT).show()
+
+            when(item.entityType) {
+
+                "GROUP" ->
+                    approvalViewModel.rejectGroup(item.approvalId, SessionManager.userId)
+
+                "LOAN" ->
+                    approvalViewModel.rejectLoan(item.approvalId, SessionManager.userId)
+            }
+
+            Toast.makeText(requireContext(),"Rejected",Toast.LENGTH_SHORT).show()
             observePendingRequests()
         }
     }

@@ -112,4 +112,38 @@ interface LoansSql {
 
     @SqlQuery("""SELECT * FROM get_loan_details_with_names_for_fund_user(:fundId,:userId)""")
     fun getLoanDetailsWithNamesForFundUser(@Bind("fundId") fundId: Int, @Bind("userId") userId: Int): List<LoanDetailsWithMemberNamesDto>
+
+    // ---------------- APPROVE LOAN ----------------
+    @SqlQuery("""
+        SELECT approve_loan_request(
+            :approvalId,
+            :approvedBy
+        )
+    """)
+    fun approveLoanRequest(
+        @Bind("approvalId") approvalId: Int,
+        @Bind("approvedBy") approvedBy: Int
+    ): Boolean
+
+
+    // ---------------- REJECT LOAN ----------------
+    @SqlQuery("""
+        SELECT reject_loan_request(
+            :approvalId,
+            :rejectedBy,
+            :reason
+        )
+    """)
+    fun rejectLoanRequest(
+        @Bind("approvalId") approvalId: Int,
+        @Bind("rejectedBy") rejectedBy: Int,
+        @Bind("reason") reason: String
+    ): Boolean
+
+    @SqlQuery("""
+    SELECT * FROM get_loan_by_id(:loanId)
+    """)
+    fun getLoanById(
+        @Bind("loanId") loanId: Int
+    ): LoansDto?
 }

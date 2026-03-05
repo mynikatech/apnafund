@@ -1,0 +1,42 @@
+[Unit]
+Description=ApnaFund Ktor Server
+After=network.target
+
+[Service]
+# The Linux user running the service
+# You may switch this to 'apnafund' if you prefer a dedicated user.
+User=apnafund
+Group=apnafund
+Type=simple
+
+WorkingDirectory=/opt/apnafund/app
+
+# Environment configuration
+EnvironmentFile=/opt/apnafund/config/env-dev.properties
+
+# Java application start command
+ExecStart=/usr/bin/java -jar /opt/apnafund/app/apnafund-server.jar
+
+# Graceful shutdown
+ExecStop=/bin/kill -TERM $MAINPID
+
+# Restart behaviour
+Restart=always
+RestartSec=10
+
+# JVM exits with 143 on SIGTERM — treat as success
+SuccessExitStatus=143
+
+# Allow graceful shutdown time
+TimeoutStopSec=30
+
+# Log redirection
+StandardOutput=append:/opt/apnafund/logs/app.log
+StandardError=append:/opt/apnafund/logs/app-error.log
+
+# Hardening (safe defaults)
+KillMode=process
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

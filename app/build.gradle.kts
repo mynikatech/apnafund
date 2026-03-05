@@ -34,7 +34,8 @@ android {
         debug {
             // Emulator → host
             //buildConfigField("String", "SERVER_BASE_URL", "\"http://10.0.2.2:8080\"")
-            buildConfigField("String", "SERVER_BASE_URL", "\"https://10.0.2.2:8443\"")
+            //buildConfigField("String", "SERVER_BASE_URL", "\"https://10.0.2.2:8443\"")
+            buildConfigField("String", "SERVER_BASE_URL", "\"https://api-dev.apnafund.mynikatech.in\"")
         }
         release {
             isMinifyEnabled = false
@@ -43,7 +44,8 @@ android {
                 "proguard-rules.pro"
             )
             //buildConfigField("String", "SERVER_BASE_URL", "\"http://10.0.2.2:8080\"")
-            buildConfigField("String", "SERVER_BASE_URL", "\"https://10.0.2.2:8443\"")
+            //buildConfigField("String", "SERVER_BASE_URL", "\"https://10.0.2.2:8443\"")
+            buildConfigField("String", "SERVER_BASE_URL", "\"https://api-dev.apnafund.mynikatech.in\"")
         }
     }
     compileOptions {
@@ -73,6 +75,11 @@ dependencies {
     implementation(libs.androidx.cardview)
     implementation(libs.places)
     implementation(libs.firebase.storage)
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation(libs.firebase.auth)
 
     // If this project uses any Kotlin source, use Kotlin Symbol Processing (KSP)
     // See Add the KSP plugin to your project

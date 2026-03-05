@@ -19,7 +19,7 @@ interface GroupMembersDao {
     suspend fun getAllMembersofGroup( groupId: Int): List<GroupMembers>
 
     @Query("""SELECT gm.groupMemberId, gm.userId, gm.groupId, gm.joiningDate,
-            u.firstName, u.lastName
+            u.firstName, u.lastName, u.emailId
             from group_members gm
             INNER JOIN users as u on gm.userId = u.userId
             WHERE groupId = :groupId """)
@@ -33,7 +33,7 @@ interface GroupMembersDao {
 
     @Query("""
     SELECT gm.groupMemberId, gm.userId, gm.groupId, gm.joiningDate,
-           u.firstName, u.lastName
+           u.firstName, u.lastName, u.emailId
     FROM group_members AS gm
     INNER JOIN funds AS f ON gm.groupId = f.groupId
     INNER JOIN users AS u ON gm.userId = u.userId

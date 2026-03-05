@@ -10,13 +10,13 @@ import java.util.Date
 object Converters {
 
     @TypeConverter
-    fun fromTimestamp(value: Long?): Date? {
-        return value?.let { Date(it) }
+    fun fromDate(date: Date?): Long? {
+        return date?.time
     }
 
     @TypeConverter
-    fun dateToTimestamp(date: Date?): Long? {
-        return date?.time?.toLong()
+    fun toDate(timestamp: Long?): Date? {
+        return timestamp?.let { Date(it) }
     }
 
     fun formatCurrency(value: Double): String {

@@ -30,7 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_uph_changedat ON user_password_history("changedAt
 CREATE INDEX IF NOT EXISTS idx_upn_user      ON user_pin_history("userId");
 CREATE INDEX IF NOT EXISTS idx_upn_changedat ON user_pin_history("changedAt");
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_uq_deposits_fund_user_month_year on deposits(fundId, depositorId, depositMonth, depositYear)
-CREATE UNIQUE INDEX IF NOT EXISTS idx_uq_loan_emis_loan_month_year on loan_emi(loanId, emiMonth, emiYear)
-CREATE UNIQUE INDEX IF NOT EXISTS idx_uq_users_emailid_key on users(emailId)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_uq_deposits_fund_user_month_year on deposits("fundId", "depositorId", "depositMonth", "depositYear");
+CREATE UNIQUE INDEX IF NOT EXISTS idx_uq_loan_emis_loan_month_year on loan_emi("loanId", "emiMonth", "emiYear");
+CREATE UNIQUE INDEX IF NOT EXISTS idx_uq_users_emailid_key on users("emailId");
 

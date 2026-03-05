@@ -52,4 +52,12 @@ class UserSummaryRepository(
     suspend fun getUserFundDetails(userId: Int, fundId: Int): UserFundDetails? {
         return usersApi.getUserFundDetails(userId, fundId)?.toEntity()
     }
+
+    suspend fun getUnreadNotificationCount(userId: Int): Int {
+        return usersApi.getUnreadNotificationCount(userId)
+    }
+
+    suspend fun markNotificationRead(notificationId: Int): Boolean {
+        return usersApi.markNotificationRead(notificationId)
+    }
 }

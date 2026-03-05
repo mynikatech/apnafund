@@ -13,5 +13,6 @@ data class LoansDto(
     val loanAmount: Double,
     val maturityDate: String,
     val rateOfInterest: Double,
-    val status: String
+    val status: String,
+    val workflowStatus: String
 )

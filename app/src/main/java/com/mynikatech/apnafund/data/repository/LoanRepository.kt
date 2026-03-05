@@ -13,6 +13,7 @@ import com.mynikatech.apnafund.data.model.LoanEmis
 import com.mynikatech.apnafund.data.model.Loans
 import com.mynikatech.apnafund.data.model.UserLoanDetails
 import com.mynikatech.apnafund.net.LoansApi
+import com.mynikatech.apnafund.net.dto.LoanDetailsWithMemberNamesDto
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -21,8 +22,8 @@ class LoanRepository(
     private val loansApi: LoansApi
 ) {
 
-    suspend fun saveLoanAndDetails(loan: Loans, loanDetails: LoanDetails) {
-        loansApi.insertLoanWithDetails(loan, loanDetails)
+    suspend fun saveLoanAndDetails(loan: Loans, loanDetails: LoanDetails, requestorId: Int) {
+        loansApi.insertLoanWithDetails(loan, loanDetails, requestorId)
     }
 
     suspend fun updateLoanAndDetails(loan: Loans, loanDetails: LoanDetails) {
@@ -96,6 +97,13 @@ class LoanRepository(
 
     suspend fun getUserLoanDetails(userId: Int, fundId: Int): UserLoanDetails {
         return loansApi.getUserLoanDetails(userId, fundId).toEntity()
+    }
+
+    suspend fun getLoanDetailsWithNamesForFund(
+        fundId: Int
+    ): List<LoanDetailsWithMemberNamesDto> {
+
+        return loansApi.listByFund(fundId)
     }
 
 }

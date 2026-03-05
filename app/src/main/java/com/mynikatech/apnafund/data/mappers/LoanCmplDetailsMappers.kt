@@ -20,7 +20,8 @@ fun LoanCmplDetailsDto.toProjection(): LoanCmplDetails = LoanCmplDetails(
     currPrincipal   = currPrincipal,
     origPrincipal   = origPrincipal,
     totalInterest   = totalInterest,
-    currTotalIntPaid= currTotalIntPaid
+    currTotalIntPaid= currTotalIntPaid,
+    workflowStatus = workflowStatus
 )
 
 fun LoanCmplDetails.toDto(): LoanCmplDetailsDto = LoanCmplDetailsDto(
@@ -40,5 +41,6 @@ fun LoanCmplDetails.toDto(): LoanCmplDetailsDto = LoanCmplDetailsDto(
     currPrincipal   = currPrincipal,
     origPrincipal   = origPrincipal,
     totalInterest   = totalInterest,
-    currTotalIntPaid= currTotalIntPaid
+    currTotalIntPaid= currTotalIntPaid,
+    workflowStatus = workflowStatus
 )

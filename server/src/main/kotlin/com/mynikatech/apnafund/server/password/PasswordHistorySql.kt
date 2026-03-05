@@ -15,6 +15,6 @@ interface PasswordHistorySql {
     fun getLast3PasswordHashes(@Bind("userId") userId: Int): List<String>
 
     // READ last change timestamp (epoch millis)
-    @SqlQuery("""SELECT get_last_password_change_ms(:userId)""")
+    @SqlQuery("""SELECT * from get_last_password_change_ms(:userId)""")
     fun getLastPasswordChangeMs(@Bind("userId") userId: Int): Long?
 }

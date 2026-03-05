@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 019-user_notifications_update2.sql
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/019-user_notifications_update2.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

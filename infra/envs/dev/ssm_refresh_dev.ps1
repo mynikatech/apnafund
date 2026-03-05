@@ -1,129 +1,167 @@
 param(
-  [ValidateSet("dev","test","prod")]
-  [string]$Env = "dev",
+    [ValidateSet("dev","test","prod")]
+    [string]$Env = "dev",
 
-  [string]$Region  = "ap-south-1",
-  [string]$Profile = "ApnaFundAdmin",
+    [string]$Region  = "ap-south-1",
 
-# Optional: override the instance-id if you want to target a specific EC2
-  [string]$InstanceId = ""
+# Optional — override instance-id
+    [string]$InstanceId = "",
+
+# NEW — allow passing profile
+    [string]$Profile = "default"
 )
-# ---- ensure UTF-8 console so unicode from AWS CLI doesn't crash ----
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$OutputEncoding = New-Object System.Text.UTF8Encoding($false)
-$env:PYTHONIOENCODING = 'utf-8'
-chcp 65001 > $null
 
+# -------------------------
+# Updated credential loader
+# -------------------------
+Write-Host "[INFO] Loading AWS credentials using profile: $Profile"
+
+$accessKey = aws configure get aws_access_key_id --profile $Profile
+$secretKey = aws configure get aws_secret_access_key --profile $Profile
+$sessionToken = aws configure get aws_session_token --profile $Profile
+
+if (-not $accessKey -or -not $secretKey) {
+    Write-Error "[FATAL] No AWS credentials found for profile '$Profile'!"
+    exit 1
+}
+
+$env:AWS_ACCESS_KEY_ID = $accessKey
+$env:AWS_SECRET_ACCESS_KEY = $secretKey
+if ($sessionToken) { $env:AWS_SESSION_TOKEN = $sessionToken }
+
+Write-Host "[INFO] Credentials loaded successfully."
+Write-Host "AWS_ACCESS_KEY_ID: $env:AWS_ACCESS_KEY_ID"
+
+# -------------------------
+# 1) Get InstanceId
+# -------------------------
 function Get-InstanceId {
-  param($Env, $Region, $Profile, $InstanceId)
+    param($Env, $Region, $InstanceId)
 
-  if ($InstanceId) { return $InstanceId }
+    if ($InstanceId) { return $InstanceId }
 
-  # 1) Try terraform output first (recommended)
-  try {
-    $root   = Split-Path -Parent (Split-Path -Parent $PSScriptRoot) # .../infra
-    $envDir = Join-Path $root "envs\$Env"
-    Push-Location $envDir
-    $tfJson = terraform output -json 2>$null
-    Pop-Location
+    try {
+        $root   = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+        $envDir = Join-Path $root "envs\$Env"
 
-    if ($LASTEXITCODE -eq 0 -and $tfJson) {
-      $obj = $tfJson | ConvertFrom-Json
-      if ($obj.dev_instance_id.value) {
-        return $obj.dev_instance_id.value
-      }
+        Push-Location $envDir
+        $tfJson = terraform output -json 2>$null
+        Pop-Location
+
+        if ($LASTEXITCODE -eq 0 -and $tfJson) {
+            $obj = $tfJson | ConvertFrom-Json
+            if ($obj.dev_instance_id.value) {
+                Write-Host "[INFO] Terraform InstanceId: $($obj.dev_instance_id.value)"
+                return $obj.dev_instance_id.value
+            }
+        }
     }
-  } catch { }
+    catch {}
 
-  # 2) Fallback: look up by tag Name = "ApnaFund Dev Server"
-  $name = if ($Env -eq "dev") { "ApnaFund Dev Server" } elseif ($Env -eq "test") { "ApnaFund Test Server" } else { "ApnaFund Prod Server" }
-  $ec2 = aws ec2 describe-instances `
-        --region $Region --profile $Profile `
-        --filters "Name=tag:Name,Values=$name" "Name=instance-state-name,Values=running,stopped,stopping,pending" |
-          ConvertFrom-Json
-
-  $ids = @()
-  foreach ($r in $ec2.Reservations) {
-    foreach ($i in $r.Instances) { $ids += $i.InstanceId }
-  }
-  if (-not $ids -or $ids.Count -eq 0) {
-    throw "No EC2 instance found with tag Name='$name'."
-  }
-  # Prefer running if multiple
-  $running = @()
-  foreach ($r in $ec2.Reservations) {
-    foreach ($i in $r.Instances) {
-      if ($i.State.Name -eq "running") { $running += $i.InstanceId }
-    }
-  }
-  if ($running.Count -gt 0) { return $running[0] }
-  return $ids[0]
+    throw "[ERROR] No instance-id available!"
 }
 
+# -------------------------
+# Resolve the instanceId
+# -------------------------
 try {
-  $iid = Get-InstanceId -Env $Env -Region $Region -Profile $Profile -InstanceId $InstanceId
-  Write-Host "Target EC2 InstanceId: $iid" -ForegroundColor Cyan
-} catch {
-  Write-Error $_.Exception.Message
-  exit 1
+    $iid = Get-InstanceId -Env $Env -Region $Region -InstanceId $InstanceId
+    Write-Host "Target EC2 InstanceId: $iid" -ForegroundColor Cyan
+}
+catch {
+    Write-Error $_.Exception.Message
+    exit 1
 }
 
-# Ensure instance is in a valid state (start it if needed)
-$state = (aws ec2 describe-instances --instance-ids $iid --region $Region --profile $Profile | ConvertFrom-Json).Reservations[0].Instances[0].State.Name
+# -------------------------
+# Check EC2 state
+# -------------------------
+Write-Host "[INFO] Checking EC2 state..."
+$stateJson = aws ec2 describe-instances `
+    --instance-ids $iid --region $Region |
+        ConvertFrom-Json
+
+if (-not $stateJson) {
+    Write-Error "[ERROR] aws describe-instances returned no data."
+    exit 1
+}
+
+$state = $stateJson.Reservations[0].Instances[0].State.Name
+Write-Host "[INFO] State: $state"
+
 if ($state -eq "stopped" -or $state -eq "stopping") {
-  Write-Host "Instance is $state. Starting it..." -ForegroundColor Yellow
-  aws ec2 start-instances --instance-ids $iid --region $Region --profile $Profile | Out-Null
-  Write-Host "Waiting for 'running'..." -ForegroundColor Yellow
-  aws ec2 wait instance-running --instance-ids $iid --region $Region --profile $Profile
+    Write-Host "Instance is $state. Starting..."
+    aws ec2 start-instances --instance-ids $iid --region $Region | Out-Null
+    aws ec2 wait instance-running --instance-ids $iid --region $Region
 }
 
-# Send a combined command:
-#  1) disk setup (idempotent): formats /dev/nvme1n1 if needed and mounts it at /opt/apnafund/postgres
-#  2) update_startup_from_s3.sh: pulls latest startup.sh & restarts apnafund-startup.service
-$cmd = @"
-sudo /opt/apnafund/bin/update_startup_from_s3.sh && sudo /usr/local/bin/apnafund-disk-setup.sh
-"@.Trim()
+# -------------------------
+# SSM Commands
+# -------------------------
+$commands = @(
+    "set -ex",
 
-Write-Host "Sending SSM command (disk-setup + startup refresh)..." -ForegroundColor Green
+    # Always download the latest sync-scripts-from-s3.sh
+    "aws s3 cp s3://apnafund-config-861082243595-ap-south-1/apnafund/$Env/sync-scripts-from-s3.sh /opt/apnafund/bin/sync-scripts-from-s3.sh",
+    "sudo chmod +x /opt/apnafund/bin/sync-scripts-from-s3.sh",
+
+    # Run it so it pulls all other scripts
+    "sudo bash /opt/apnafund/bin/sync-scripts-from-s3.sh",
+
+    # Now run the refresh master orchestrator
+    "sudo bash /opt/apnafund/bin/ssm-refresh.sh"
+)
+$cmdJson = ($commands | ConvertTo-Json -Compress)
+
+Write-Host "DEBUG: commands array content:"
+$commands
+Write-Host "DEBUG: commands Json to be send:"
+$cmdJson
+
 $send = aws ssm send-command `
-  --document-name "AWS-RunShellScript" `
-  --targets Key=instanceids,Values=$iid `
-  --parameters commands="$cmd" `
-  --region $Region --profile $Profile `
-  --comment "ApnaFund: disk setup + startup refresh" |
+    --document-name "AWS-RunShellScript" `
+    --targets Key=instanceids,Values=$iid `
+    --parameters commands="$cmdJson" `
+    --region $Region `
+    --comment "ApnaFund: Full refresh" |
         ConvertFrom-Json
 
 $commandId = $send.Command.CommandId
-Write-Host "CommandId: $commandId" -ForegroundColor Cyan
+if (-not $commandId) {
+    Write-Error "[ERROR] SSM did not return a commandId."
+    exit 1
+}
 
-# Wait for completion and print output
-aws ssm wait command-executed --command-id $commandId --instance-id $iid --region $Region --profile $Profile
+Write-Host "CommandId: $commandId"
 
-# ----- Fetch outputs (capture raw) -----
-Write-Host "`n==== Fetching SSM outputs (saved to files) ====" -ForegroundColor DarkCyan
+# -------------------------
+# Wait for command completion
+# -------------------------
+aws ssm wait command-executed `
+    --command-id $commandId `
+    --instance-id $iid `
+    --region $Region
 
-$stdout = aws ssm get-command-invocation `
-  --command-id $commandId `
-  --instance-id $iid `
-  --region $Region --profile $Profile `
-  --query StandardOutputContent --output text 2>$null
-
-$stderr = aws ssm get-command-invocation `
-  --command-id $commandId `
-  --instance-id $iid `
-  --region $Region --profile $Profile `
-  --query StandardErrorContent --output text 2>$null
-
-# ----- Persist to UTF-8 files -----
-$ts = (Get-Date).ToString('yyyyMMdd_HHmmss')
+# -------------------------
+# Fetch Output
+# -------------------------
+$ts = (Get-Date).ToString("yyyyMMdd_HHmmss")
 $stdoutFile = ".\ssm_stdout_${iid}_${ts}.txt"
 $stderrFile = ".\ssm_stderr_${iid}_${ts}.txt"
 
-# Use Out-File -Encoding utf8 to guarantee UTF-8 files
-$stdout | Out-File -FilePath $stdoutFile -Encoding utf8
-$stderr | Out-File -FilePath $stderrFile -Encoding utf8
+aws ssm get-command-invocation `
+    --command-id $commandId `
+    --instance-id $iid `
+    --region $Region `
+    --query StandardOutputContent `
+    --output text | Out-File $stdoutFile -Encoding utf8
 
-Write-Host "Saved StandardOutputContent -> $stdoutFile" -ForegroundColor DarkCyan
-Write-Host "Saved StandardErrorContent  -> $stderrFile" -ForegroundColor DarkRed
+aws ssm get-command-invocation `
+    --command-id $commandId `
+    --instance-id $iid `
+    --region $Region `
+    --query StandardErrorContent `
+    --output text | Out-File $stderrFile -Encoding utf8
 
-
+Write-Host "Saved stdout -> $stdoutFile"
+Write-Host "Saved stderr -> $stderrFile"

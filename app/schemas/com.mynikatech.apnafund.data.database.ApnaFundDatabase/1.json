@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "37e1ac99739f6aa1f2b6a29749b6ed82",
+    "identityHash": "5401abdddee54de535782d9aff1c5cb1",
     "entities": [
       {
         "tableName": "users",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `firstName` TEXT NOT NULL, `lastName` TEXT, `emailId` TEXT, `phoneNumber` TEXT, `status` TEXT NOT NULL, `passwordHash` TEXT, `createdDate` TEXT NOT NULL, `isPinSet` INTEGER NOT NULL, `hashPIN` TEXT, `firebaseUserId` TEXT, `userCode` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `firstName` TEXT NOT NULL, `lastName` TEXT, `emailId` TEXT, `phoneNumber` TEXT, `status` TEXT NOT NULL, `passwordHash` TEXT, `createdDate` TEXT NOT NULL, `isPinSet` INTEGER NOT NULL, `hashPIN` TEXT, `firebaseUserId` TEXT, `emailVerified` INTEGER NOT NULL, `emailVerifiedAt` TEXT, `userCode` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "userId",
@@ -66,6 +66,17 @@
           {
             "fieldPath": "firebaseUserId",
             "columnName": "firebaseUserId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "emailVerified",
+            "columnName": "emailVerified",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "emailVerifiedAt",
+            "columnName": "emailVerifiedAt",
             "affinity": "TEXT"
           },
           {
@@ -485,7 +496,7 @@
       },
       {
         "tableName": "loans",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`loanId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `loanNumber` TEXT NOT NULL, `borrowerId` INTEGER NOT NULL, `issuedDate` TEXT NOT NULL, `period` REAL NOT NULL, `loanAmount` REAL NOT NULL, `maturityDate` TEXT NOT NULL, `rateOfInterest` REAL NOT NULL, `status` TEXT NOT NULL, `fundId` INTEGER NOT NULL, FOREIGN KEY(`fundId`) REFERENCES `funds`(`fundId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`loanId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `loanNumber` TEXT NOT NULL, `borrowerId` INTEGER NOT NULL, `issuedDate` TEXT NOT NULL, `period` REAL NOT NULL, `loanAmount` REAL NOT NULL, `maturityDate` TEXT NOT NULL, `rateOfInterest` REAL NOT NULL, `status` TEXT NOT NULL, `fundId` INTEGER NOT NULL, `workflowStatus` TEXT NOT NULL, FOREIGN KEY(`fundId`) REFERENCES `funds`(`fundId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "loanId",
@@ -545,6 +556,12 @@
             "fieldPath": "fundId",
             "columnName": "fundId",
             "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "workflowStatus",
+            "columnName": "workflowStatus",
+            "affinity": "TEXT",
             "notNull": true
           }
         ],
@@ -931,7 +948,7 @@
       },
       {
         "tableName": "user_notifications",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userNotificationId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `notificationType` TEXT NOT NULL, `userId` INTEGER NOT NULL, `message` TEXT, `isExpiredFlag` INTEGER NOT NULL, `publishedFlag` INTEGER NOT NULL, `readFlag` INTEGER NOT NULL, `status` TEXT NOT NULL, FOREIGN KEY(`userId`) REFERENCES `users`(`userId`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`notificationType`) REFERENCES `type`(`typeCode`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userNotificationId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `notificationType` TEXT NOT NULL, `userId` INTEGER NOT NULL, `message` TEXT, `isExpiredFlag` INTEGER NOT NULL, `publishedFlag` INTEGER NOT NULL, `readFlag` INTEGER NOT NULL, `status` TEXT NOT NULL, `createdAt` TEXT, `readAt` TEXT, `expiredAt` TEXT, FOREIGN KEY(`userId`) REFERENCES `users`(`userId`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`notificationType`) REFERENCES `type`(`typeCode`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "userNotificationId",
@@ -979,6 +996,21 @@
             "columnName": "status",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "readAt",
+            "columnName": "readAt",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "expiredAt",
+            "columnName": "expiredAt",
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -1209,7 +1241,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '37e1ac99739f6aa1f2b6a29749b6ed82')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5401abdddee54de535782d9aff1c5cb1')"
     ]
   }
 }

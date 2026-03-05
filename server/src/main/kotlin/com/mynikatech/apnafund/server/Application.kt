@@ -1,27 +1,39 @@
 package com.mynikatech.apnafund.server
 
-import UsersSql
+import com.mynikatech.apnafund.net.api.ValidationException
 import com.mynikatech.apnafund.server.admin.AdminSql
 import com.mynikatech.apnafund.server.api.respondError
+import com.mynikatech.apnafund.server.approval.ApprovalService
+import com.mynikatech.apnafund.server.approval.ApprovalSql
+import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
+import com.mynikatech.apnafund.server.common.messaging.publishers.SupportMessagingPublisher
+import com.mynikatech.apnafund.server.common.messaging.publishers.UserMessagingPublisher
+import com.mynikatech.apnafund.server.common.ratelimit.RateLimitConfig
+import com.mynikatech.apnafund.server.common.ratelimit.RateLimiter
+import com.mynikatech.apnafund.server.config.FirebaseAdminProvider
 import com.mynikatech.apnafund.server.db.Db
 import com.mynikatech.apnafund.server.deposits.DepositsSql
 import com.mynikatech.apnafund.server.feedback.FeedbackSql
 import com.mynikatech.apnafund.server.funds.FundsSql
 import com.mynikatech.apnafund.server.groups.GroupsSql
 import com.mynikatech.apnafund.server.loans.LoansSql
+import com.mynikatech.apnafund.server.notifications.NotificationService
 import com.mynikatech.apnafund.server.notifications.NotificationsSql
 import com.mynikatech.apnafund.server.roles.RolesSql
 import com.mynikatech.apnafund.server.security.PasswordHistorySql
 import com.mynikatech.apnafund.server.security.PinHistorySql
 import com.mynikatech.apnafund.server.types.TypesSql
 import com.mynikatech.apnafund.server.userroles.UserRolesSql
+import com.mynikatech.apnafund.server.users.EmailVerificationService
+import com.mynikatech.apnafund.server.users.ModeratorRegistrationService
+import com.mynikatech.apnafund.server.users.UserManagementService
+import com.mynikatech.apnafund.server.users.UsersSql
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.application.install
-import io.ktor.server.application.log
 import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.sslConnector
@@ -51,16 +63,20 @@ fun main() {
 
     val httpsPort = System.getenv("HTTPS_PORT")?.toIntOrNull() ?: 8443
     val keyStorePathEnv = System.getenv("KEYSTORE_PATH")
-    val keyStoreType = System.getenv("KEYSTORE_TYPE") ?: "JKS" // or PKCS12
+    val keyStoreType = System.getenv("KEYSTORE_TYPE") ?: "JKS"
     val keyAlias = System.getenv("KEY_ALIAS") ?: "selfsigned"
     val keyStorePassword = (System.getenv("KEYSTORE_PASSWORD") ?: "changeit").toCharArray()
     val privateKeyPassword =
         (System.getenv("PRIVATE_KEY_PASSWORD") ?: String(keyStorePassword)).toCharArray()
+    // 🔴 MUST be first — before Firebase Admin / Firestore
+    System.setProperty(
+        "io.grpc.internal.DnsNameResolverProvider.enable_unix_domain_socket",
+        "false"
+    )
 
     embeddedServer(
         Netty,
         configure = {
-            // HTTP connector (optional)
             if (httpPort > 0) {
                 connector {
                     this.host = host
@@ -68,7 +84,6 @@ fun main() {
                 }
             }
 
-            // HTTPS connector (conditional)
             if (useHttps && !keyStorePathEnv.isNullOrBlank()) {
                 val ksPath = Paths.get(keyStorePathEnv)
                 require(Files.exists(ksPath)) { "Keystore not found at $ksPath" }
@@ -92,13 +107,12 @@ fun main() {
     ).start(wait = true)
 }
 
-/** Minimal HTTPS redirect plugin for Ktor 3 (replaces the removed HttpsRedirect plugin). */
+/** HTTPS redirect plugin */
 private val HttpsEnforcer = createApplicationPlugin("HttpsEnforcer") {
     val sslPort = System.getenv("HTTPS_PORT")?.toIntOrNull() ?: 8443
     val permanent = true
 
     onCall { call ->
-        // Prefer proxy headers if present; fall back to local scheme.
         val proto = call.request.headers["X-Forwarded-Proto"]
             ?: call.request.headers["X-Forwarded-Protocol"]
             ?: call.request.local.scheme
@@ -110,30 +124,35 @@ private val HttpsEnforcer = createApplicationPlugin("HttpsEnforcer") {
             val hostHasPort = ':' in host
             val portSuffix = if (sslPort == 443 || hostHasPort) "" else ":$sslPort"
 
-            val target = "https://$host$portSuffix$uri"
-            call.respondRedirect(target, permanent)
-            return@onCall
+            call.respondRedirect("https://$host$portSuffix$uri", permanent)
         }
     }
 }
 
+private fun isEmailVerificationEnabled(): Boolean {
+    return when (System.getenv("EMAIL_VERIFICATION_ENABLED")) {
+        "0" -> false   // 0 = enabled
+        "1" -> true  // 1 = disabled
+        null -> true  // safe default → ENABLED
+        else -> true
+    }
+}
+
 fun Application.module() {
+
+    println(">>> MODULE STARTED <<<")
     install(CallId) {
         header(HttpHeaders.XRequestId)
         generate { UUID.randomUUID().toString().replace("-", "") }
         verify { it.isNotBlank() }
         replyToHeader(HttpHeaders.XRequestId)
     }
-
+    FirebaseAdminProvider.init()
     install(ContentNegotiation) { json() }
     install(CallLogging) { level = Level.INFO }
 
-    // Force HTTPS
-    val useHttps = System.getenv("USE_HTTPS") == "1"
-    if (useHttps) {
+    if (System.getenv("USE_HTTPS") == "1") {
         install(HttpsEnforcer)
-
-        // Strict-Transport-Security (Ktor 3 uses seconds)
         install(HSTS) {
             maxAgeInSeconds = 365.days.inWholeSeconds
             includeSubDomains = true
@@ -141,7 +160,22 @@ fun Application.module() {
         }
     }
 
-    // Initialize DAOs
+    val registerLimiter = RateLimiter(
+        maxRequests = RateLimitConfig.REGISTER_PER_HOUR,
+        windowMillis = RateLimitConfig.ONE_HOUR_MS
+    )
+
+    val resendOtpLimiter = RateLimiter(
+        maxRequests = RateLimitConfig.RESEND_PER_15_MIN,
+        windowMillis = RateLimitConfig.FIFTEEN_MIN_MS
+    )
+
+    val loginLimiter = RateLimiter(
+        maxRequests = 10,
+        windowMillis = RateLimitConfig.ONE_HOUR_MS
+    )
+
+    // ------------------ DAOs ------------------
     val jdbi = Db.jdbi
     val usersDao = jdbi.onDemand(UsersSql::class.java)
     val deposistsDao = jdbi.onDemand(DepositsSql::class.java)
@@ -156,7 +190,59 @@ fun Application.module() {
     val adminDao = jdbi.onDemand(AdminSql::class.java)
     val passwordHistoryDao = jdbi.onDemand(PasswordHistorySql::class.java)
     val pinHistoryDao = jdbi.onDemand(PinHistorySql::class.java)
+    val approvalDao = jdbi.onDemand(ApprovalSql::class.java)
 
+    // ------------------ Messaging ------------------
+    val userEventsArn = System.getenv("USER_EVENTS_TOPIC_ARN")
+        ?: error("USER_EVENTS_TOPIC_ARN env var not set")
+
+    val supportEventsArn = System.getenv("SUPPORT_EVENTS_TOPIC_ARN")
+        ?: error("SUPPORT_EVENTS_TOPIC_ARN env var not set")
+
+    val eventDispatchService = EventDispatchService(
+        UserMessagingPublisher(userEventsArn),
+        SupportMessagingPublisher(supportEventsArn)
+    )
+    val emailVerificationEnabled: Boolean = isEmailVerificationEnabled()
+    val emailOtpExpiryMinutes =
+        System.getenv("EMAIL_OTP_EXPIRY_MINUTES")?.toLongOrNull() ?: 60
+    val emailVerificationService =
+        EmailVerificationService(usersDao, eventDispatchService, emailOtpExpiryMinutes)
+    val moderatorRegistrationService = ModeratorRegistrationService(
+        usersDao,
+        userRolesDao,
+        roleDao,
+        groupsDao,
+        emailVerificationService,
+        eventDispatchService,
+        emailVerificationEnabled,
+        passwordHistoryDao
+    )
+    val userManagemnentService = UserManagementService(
+        usersDao,
+        userRolesDao,
+        roleDao,
+        groupsDao,
+        eventDispatchService,
+        emailVerificationService,
+        emailVerificationEnabled,
+        passwordHistoryDao
+    )
+
+
+    val notificationService =
+        NotificationService(notificationsDao, groupsDao, fundDao, usersDao,loansDao, eventDispatchService)
+
+    val approvalService = ApprovalService(
+        approvalDao,
+        loansDao,
+        groupsDao,
+        fundDao,
+        usersDao,
+        notificationService,
+        eventDispatchService
+    )
+    // ------------------ Error Handling ------------------
     install(StatusPages) {
         status(HttpStatusCode.NotFound) { call, _ ->
             call.respondError(HttpStatusCode.NotFound, "not_found", "Resource not found")
@@ -168,34 +254,47 @@ fun Application.module() {
                 "Method not allowed"
             )
         }
-        // Parse/validation
+        exception<ValidationException> { call, ex ->
+            call.respondError(
+                HttpStatusCode.BadRequest,
+                ex.errorCode,
+                ex.message ?: "Validation failed"
+            )
+        }
         exception<io.ktor.server.plugins.BadRequestException> { call, cause ->
             call.respondError(HttpStatusCode.BadRequest, "validation", "Bad request", cause.message)
         }
-        // JDBI / SQL
         exception<org.jdbi.v3.core.statement.UnableToExecuteStatementException> { call, cause ->
             call.respondError(
-                HttpStatusCode.Conflict, "db_conflict", "Database conflict",
+                HttpStatusCode.Conflict,
+                "db_conflict",
+                "Database conflict",
                 cause.cause?.message?.take(200)
             )
         }
         exception<java.sql.SQLException> { call, cause ->
             call.respondError(
-                HttpStatusCode.InternalServerError, "db_error", "Database error",
+                HttpStatusCode.InternalServerError,
+                "db_error",
+                "Database error",
                 cause.message?.take(200)
             )
         }
-        // Last resort
+
+
         exception<Throwable> { call, cause ->
-            call.application.log.error("Unhandled", cause)
             call.respondError(
-                HttpStatusCode.InternalServerError, "internal", "Something went wrong"
+                HttpStatusCode.InternalServerError,
+                "internal",
+                "Something went wrong"
             )
         }
     }
 
+    // ------------------ Routes ------------------
     routing {
         get("/health") { call.respondText("OK") }
+
         registerRoutes(
             usersDao,
             deposistsDao,
@@ -209,7 +308,15 @@ fun Application.module() {
             notificationsDao,
             adminDao,
             pinHistoryDao,
-            passwordHistoryDao
+            passwordHistoryDao,
+            eventDispatchService,
+            moderatorRegistrationService,
+            userManagemnentService,
+            emailVerificationService,
+            notificationService,
+            approvalDao,
+            approvalService
         )
     }
+    println(">>> MODULE COMPLETED <<<")
 }

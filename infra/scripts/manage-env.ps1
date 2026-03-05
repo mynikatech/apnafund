@@ -8,11 +8,14 @@
   One of: bootstrap, dev, test, prod
 .PARAMETER Action
   One of: deploy, destroy, plan, validate
+. PARAMETER AWSProfile
+    default - ApnaFundAdmin
 #>
 
 param(
     [Parameter(Mandatory)][ValidateSet("bootstrap", "dev", "test", "prod")] [string]$Env,
-    [Parameter(Mandatory)][ValidateSet("deploy", "destroy", "plan", "validate")] [string]$Action
+    [Parameter(Mandatory)][ValidateSet("deploy", "destroy", "plan", "validate")] [string]$Action,
+    [Parameter(Mandatory=$false)] [string]$AwsProfile = ""
 )
 
 # --- Setup -------------------------------------------------------------
@@ -21,6 +24,14 @@ $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $logDir = Join-Path $root "logs"
 if (!(Test-Path $logDir)) { New-Item -ItemType Directory -Force -Path $logDir | Out-Null }
 $logFile = Join-Path $logDir "$Env-$Action-$timestamp.log"
+
+if ($AwsProfile -ne "") {
+    Write-Host "[INFO] Using AWS profile: $AwsProfile"
+    $env:AWS_PROFILE = $AwsProfile
+}
+else {
+    Write-Host "[INFO] Using existing AWS profile: $env:AWS_PROFILE"
+}
 
 # Determine working directory
 if ($Env -eq "bootstrap") {

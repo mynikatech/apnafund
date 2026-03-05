@@ -1,6 +1,5 @@
 package com.mynikatech.apnafund.server.users
 
-import UsersSql
 import com.mynikatech.apnafund.net.dto.FundsDto
 import com.mynikatech.apnafund.net.dto.GroupsDto
 import com.mynikatech.apnafund.net.dto.UserDetailsDto

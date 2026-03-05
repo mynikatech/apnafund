@@ -14,17 +14,17 @@ class AdminApiKtor(
 
     private val client get() = clientProvider()
 
-    override suspend fun approveModeratorAndGroup(userId: Int, roleId: Int, groupId: Int) {
+    override suspend fun approveModeratorAndGroup(userId: Int, roleId: Int, groupId: Int, moderatorName: String,moderatorEmail: String, groupName: String) {
         client.post("/admin/approve/moderator-and-group") {
             contentType(ContentType.Application.Json)
-            setBody(ApproveRejectReq(userId = userId, roleId = roleId, groupId = groupId))
+            setBody(ApproveRejectReq(userId = userId, roleId = roleId, groupId = groupId, userEmail = moderatorEmail, userName = moderatorName, groupName = groupName  ))
         }.body<Unit>()
     }
 
-    override suspend fun rejectModeratorAndGroup(userId: Int, roleId: Int, groupId: Int) {
+    override suspend fun rejectModeratorAndGroup(userId: Int, roleId: Int, groupId: Int, moderatorName: String,moderatorEmail: String, groupName: String) {
         client.post("/admin/reject/moderator-and-group") {
             contentType(ContentType.Application.Json)
-            setBody(ApproveRejectReq(userId = userId, roleId = roleId, groupId = groupId))
+            setBody(ApproveRejectReq(userId = userId, roleId = roleId, groupId = groupId, userEmail = moderatorEmail, userName = moderatorName, groupName = groupName))
         }.body<Unit>()
     }
 

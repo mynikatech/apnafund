@@ -44,7 +44,7 @@ if (-not $DefaultsFile) {
         $legacyDefaults = Join-Path $defaultsDir "liquibase.$Env.properties"
 
         if ($Labels -and $Labels -match 'baselineSchema' -and (Test-Path $adminDefaults)) { $DefaultsFile = $adminDefaults }
-        elseif ($Labels -and $Labels -match 'baselineObject' -and (Test-Path $deployDefaults)) { $DefaultsFile = $deployDefaults }
+        elseif ($Labels -and $Labels -match 'baselineObjects' -and (Test-Path $deployDefaults)) { $DefaultsFile = $deployDefaults }
         else {
             foreach ($p in @($genericDefaults, $deployDefaults, $adminDefaults, $legacyDefaults)) { if (Test-Path $p) { $DefaultsFile = $p; break } }
         }
@@ -119,7 +119,7 @@ try {
     [System.IO.File]::WriteAllText($tempDefaultsFile, $content, $utf8NoBom)
 
     # best-effort tighten ACLs
-    try { icacls $tempDefaultsFile /inheritance:r /grant:r "$($env:USERNAME):(R,W)" | Out-Null } catch {}
+    #try { icacls $tempDefaultsFile /inheritance:r /grant:r "$($env:USERNAME):(R,W)" | Out-Null } catch {}
 
     "Temp defaults file: $tempDefaultsFile" | Out-File -FilePath $LogFile -Append
     Get-Content -Path $tempDefaultsFile -ErrorAction Stop | Select-Object -First 40 | ForEach-Object { $_ | Out-File -FilePath $LogFile -Append }
@@ -137,6 +137,8 @@ if ($Command) { $args += $Command }
 # add connection creds for liquibase
 $args += "--username=$chosenUser"
 $args += "--password=$chosenPass"
+
+$env:PATH = "C:\Program Files\liquibase-pro;$env:PATH"
 
 # masked log
 $masked = '*' * ($chosenPass.Length)

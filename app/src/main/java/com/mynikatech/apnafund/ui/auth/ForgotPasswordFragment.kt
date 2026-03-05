@@ -6,17 +6,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.mynikatech.apnafund.data.mappers.toEntity
 import com.mynikatech.apnafund.databinding.FragmentForgotPasswordBinding
+import com.mynikatech.apnafund.net.ApiException
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
-import com.mynikatech.apnafund.util.assessPasswordStrength
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class ForgotPasswordFragment : Fragment() {
 
@@ -38,12 +36,8 @@ class ForgotPasswordFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.editTextEmail.setText(userEmail)
 
-        binding.editTextNewPassword.addTextChangedListener { validatePasswordInputs() }
-        binding.editTextConfirmPassword.addTextChangedListener { validatePasswordInputs() }
-
-        binding.buttonResetPassword.setOnClickListener {
+        binding.buttonSendResetCode.setOnClickListener {
             val email = binding.editTextEmail.text.toString().trim()
-            val newPassword = binding.editTextNewPassword.text.toString()
 
             if (email.isEmpty()) {
                 Toast.makeText(requireContext(), "Please enter email Id", Toast.LENGTH_SHORT).show()
@@ -54,10 +48,10 @@ class ForgotPasswordFragment : Fragment() {
                     .show()
                 return@setOnClickListener
             }
-
             lifecycleScope.launch {
-                val user = userViewModel.getUserByEmail(email)
-                if (user == null) {
+                val loginResponse = userViewModel.getUserByEmail(email)
+
+                if (loginResponse == null) {
                     Toast.makeText(
                         requireContext(),
                         "No user found with this email",
@@ -65,61 +59,42 @@ class ForgotPasswordFragment : Fragment() {
                     ).show()
                     return@launch
                 }
-                if (!validatePasswordInputs()) return@launch
-                val isReused = userViewModel.isPasswordReused(user.userId, newPassword)
-                if (isReused) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Cannot reuse last 3 passwords",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                val user = loginResponse.user.toEntity()
+                val resp = try {
+                    userViewModel.resendEmailVerification(
+                        userId = user.userId,
+                        email = email,
+                        userName = "${user.firstName} ${user.lastName}",
+                        purpose = "RESET_PASSWORD"
+                    )
+                } catch (e: ApiException) {
+                    showToast(e.message ?: "Server error. Please try again.")
                     return@launch
                 }
-                userViewModel.changeUserPassword(user.userId, newPassword)
-                Toast.makeText(
-                    requireContext(),
-                    "Password updated. Please login again.",
-                    Toast.LENGTH_LONG
-                ).show()
-                findNavController().navigateUp()
+                findNavController().navigate(
+                    ForgotPasswordFragmentDirections
+                        .actionForgotPasswordFragmentToVerifyEmailFragment(
+                            userId = user.userId,
+                            email = email,
+                            userName = "${user.firstName} ${user.lastName}",
+                            emailOtpExpiresAtMillis = resp.emailOtpExpiresAtMillis,
+                            purpose = "RESET_PASSWORD"
+                        )
+                )
             }
         }
-        binding.buttonCancel.setOnClickListener {
+        binding.authToolbar.setNavigationOnClickListener {
             findNavController().navigateUp()
+        }
+
+        binding.buttonCancel.setOnClickListener {
+            findNavController().navigate(
+                ForgotPasswordFragmentDirections.actionForgotPasswordFragmentToLoginFragment()
+            )
         }
     }
 
-    private fun validatePasswordInputs(): Boolean {
-        val password = binding.editTextNewPassword.text.toString()
-        val confirmPassword = binding.editTextConfirmPassword.text.toString()
-        if (password.isEmpty()) {
-            binding.editTextNewPassword.error = null
-        }
-        if (confirmPassword.isEmpty()) {
-            binding.editTextConfirmPassword.error = null
-        }
-        // Basic length check
-        if (password.isNotEmpty() && password.length < 8) {
-            binding.editTextNewPassword.error = "Password must be at least 8 characters"
-            return false
-        }
-        // Password strength
-        val strength = assessPasswordStrength(password)
-        if (password.isNotEmpty() && strength.name == "WEAK") {
-            binding.editTextNewPassword.error =
-                "Password is too weak. Use letters, numbers, and special characters"
-            return false
-        }
-        // Confirm password match
-        if (password.isNotEmpty() && confirmPassword.isNotEmpty() && password != confirmPassword) {
-            binding.editTextConfirmPassword.error = "Passwords do not match"
-            return false
-        }
-        // Clear errors if valid
-        binding.editTextNewPassword.error = null
-        binding.editTextConfirmPassword.error = null
-        return true
+    private fun showToast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 }

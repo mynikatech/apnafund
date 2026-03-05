@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 011-verify-token-update
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/012-verify-token-update.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

@@ -3,8 +3,6 @@ variable "role_name" {
   description = "Name of the IAM role to create"
 }
 
-variable "attach_admin" {
-  type        = bool
-  default     = true
-  description = "Attach the AdministratorAccess policy to this role"
+variable "inline_policy" {
+  type = string
 }

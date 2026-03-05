@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.mynikatech.apnafund.databinding.FragmentSetPasswordBinding
+import com.mynikatech.apnafund.net.ApiException
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
 import com.mynikatech.apnafund.util.assessPasswordStrength
 import kotlinx.coroutines.launch
@@ -67,21 +68,42 @@ class SetPasswordFragment : Fragment() {
                 return@setOnClickListener
             }
             lifecycleScope.launch {
-                // Update the existing user with Firebase UID
-                val user = userViewModel.fetchUser(userId)
-                if (user != null) {
+                try {
                     userViewModel.changeUserPassword(userId, password)
                     Toast.makeText(
                         requireContext(),
-                        "Password set successfully. Relogin",
+                        "Password set successfully. Please login",
                         Toast.LENGTH_SHORT
                     ).show()
 
                     findNavController().navigate(
-                        SetPasswordFragmentDirections.actionSetPasswordFragmentToLoginFragment()
+                        SetPasswordFragmentDirections
+                            .actionSetPasswordFragmentToLoginFragment()
                     )
-                } else {
-                    // some exception todo
+                } catch (e: ApiException) {
+
+                    // 🎯 Handle known server-side validation errors
+                    val message = when (e.type) {
+                        "PASSWORD_REUSED" ->
+                            "You cannot reuse your last 3 passwords"
+
+                        "NETWORK_ERROR" ->
+                            "Please check your internet connection"
+
+                        "SERVER_ERROR" ->
+                            "Server error. Please try again later"
+
+                        else ->
+                            e.message ?: "Password update failed"
+                    }
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+
+                } catch (e: Exception) {
+                    Toast.makeText(
+                        requireContext(),
+                        e.message ?: "Password set failed",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
             /*
@@ -117,6 +139,12 @@ class SetPasswordFragment : Fragment() {
                         ).show()
                     }
                 } */
+        }
+
+        binding.authToolbar.setNavigationOnClickListener {
+            findNavController().navigate(
+                SetPasswordFragmentDirections.actionSetPasswordFragmentToLoginFragment()
+            )
         }
 
         binding.buttonCancel.setOnClickListener {

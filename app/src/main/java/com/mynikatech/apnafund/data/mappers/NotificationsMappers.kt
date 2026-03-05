@@ -12,7 +12,10 @@ fun UserNotifications.toDto(): UserNotificationsDto = UserNotificationsDto(
     isExpiredFlag = isExpiredFlag,
     publishedFlag = publishedFlag,
     readFlag = readFlag,
-    status = status
+    status = status,
+    createdAt = createdAt,
+    readAt = readAt,
+    expiredAt = expiredAt
 
 )
 
@@ -26,7 +29,10 @@ fun UserNotificationsDto.toEntity(): UserNotifications = UserNotifications(
     isExpiredFlag = isExpiredFlag,
     publishedFlag = publishedFlag,
     readFlag = readFlag,
-    status = status
+    status = status,
+    createdAt = createdAt,
+    readAt = readAt,
+    expiredAt = expiredAt
 )
 
 @JvmName("toUserNotificationsEntity")
@@ -40,7 +46,10 @@ fun List<UserNotificationsDto>.toEntity(): List<UserNotifications> =
             isExpiredFlag = d.isExpiredFlag,
             publishedFlag = d.publishedFlag,
             readFlag = d.readFlag,
-            status = d.status
+            status = d.status,
+            createdAt = d.createdAt,
+            readAt = d.readAt,
+            expiredAt = d.expiredAt
         )
     }
 
@@ -53,6 +62,9 @@ fun List<UserNotifications>.toDto(): List<UserNotificationsDto> = map { d ->
         isExpiredFlag = d.isExpiredFlag,
         publishedFlag = d.publishedFlag,
         readFlag = d.readFlag,
-        status = d.status
+        status = d.status,
+        createdAt = d.createdAt,
+        readAt = d.readAt,
+        expiredAt = d.expiredAt
     )
 }

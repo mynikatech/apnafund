@@ -2,6 +2,7 @@ package com.mynikatech.apnafund.data.mappers
 
 import com.mynikatech.apnafund.data.model.FundMemberWithName
 import com.mynikatech.apnafund.net.dto.FundMemberWithNameDto
+import kotlin.String
 
 fun FundMemberWithNameDto.toEntity(): FundMemberWithName = FundMemberWithName(
     fundMemberId = fundMemberId,
@@ -10,6 +11,8 @@ fun FundMemberWithNameDto.toEntity(): FundMemberWithName = FundMemberWithName(
     joiningDate = joiningDate,
     firstName = firstName,
     lastName = lastName,
+    emailId = emailId
+
 )
 
 fun FundMemberWithName.toDto(): FundMemberWithNameDto = FundMemberWithNameDto(
@@ -19,6 +22,8 @@ fun FundMemberWithName.toDto(): FundMemberWithNameDto = FundMemberWithNameDto(
     joiningDate = joiningDate,
     firstName = firstName,
     lastName = lastName,
+    emailId = emailId
+
 )
 
 fun List<FundMemberWithNameDto>.toEntity(): List<FundMemberWithName> = map { it.toEntity() }

@@ -1,5 +1,6 @@
 package com.mynikatech.apnafund.net
 
+import com.mynikatech.apnafund.net.dto.CloseFundRequest
 import com.mynikatech.apnafund.net.dto.FundDetailsDto
 import com.mynikatech.apnafund.net.dto.FundMemberWithNameDto
 import com.mynikatech.apnafund.net.dto.FundsDto
@@ -40,4 +41,5 @@ interface FundsApi {
     suspend fun getAvailableFundAmount(fundId: Int): Double?
     suspend fun getAvailableFundMembers(groupId: Int, fundId: Int): List<UsersDto>
     suspend fun updateFundWithDetails(fund: FundsDto,fundDetails: FundDetailsDto)
+    suspend fun closeFund(fundId: Int, request: CloseFundRequest ): Boolean
 }

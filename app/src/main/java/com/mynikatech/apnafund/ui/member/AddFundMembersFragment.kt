@@ -72,14 +72,28 @@ class AddFundMembersFragment : Fragment() {
             }
 
             binding.buttonSaveFundMember.setOnClickListener {
+                binding.buttonSaveFundMember.isEnabled = true
+                binding.buttonSaveFundMember.text = "Saving..."
                 lifecycleScope.launch {
-                    if(selectedUserIds.toList().isEmpty()){
-                        Toast.makeText(context, "No Members to add", Toast.LENGTH_SHORT).show()
-                        return@launch
+                    try {
+                        if (selectedUserIds.toList().isEmpty()) {
+                            Toast.makeText(context, "No Members to add", Toast.LENGTH_SHORT).show()
+                            return@launch
+                        }
+                        fundViewModel.addFundMembers(fundId, selectedUserIds.toList())
+                        Toast.makeText(context, "Members added", Toast.LENGTH_SHORT).show()
+                        findNavController().navigateUp()
+                    } catch (e: Exception) {
+
+                        binding.buttonSaveFundMember.isEnabled = true
+                        binding.buttonSaveFundMember.text = getString(R.string.text_save_button)
+
+                        Toast.makeText(
+                            requireContext(),
+                            "Something went wrong. Please try again.",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
-                    fundViewModel.addFundMembers(fundId, selectedUserIds.toList())
-                    Toast.makeText(context, "Members added", Toast.LENGTH_SHORT).show()
-                    findNavController().navigateUp()
                 }
             }
             binding.buttonCancelFundMember.setOnClickListener {

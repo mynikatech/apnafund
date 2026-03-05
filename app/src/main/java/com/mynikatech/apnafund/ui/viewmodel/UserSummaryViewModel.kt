@@ -4,6 +4,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mynikatech.apnafund.ApnaFundApplication
+import com.mynikatech.apnafund.Exception.InvalidSessionException
 import com.mynikatech.apnafund.data.model.FundWithDetails
 import com.mynikatech.apnafund.data.model.Funds
 import com.mynikatech.apnafund.data.model.LoanDetails
@@ -14,6 +15,9 @@ import com.mynikatech.apnafund.data.model.UserFundDetails
 import com.mynikatech.apnafund.data.model.UserLoanDetails
 import com.mynikatech.apnafund.data.model.UserNotifications
 import com.mynikatech.apnafund.data.model.UserProfile
+import com.mynikatech.apnafund.session.SessionManager
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 class UserSummaryViewModel : ViewModel() {
@@ -24,6 +28,11 @@ class UserSummaryViewModel : ViewModel() {
     private val fundRepository = ApnaFundApplication.fundRepository
 
     private val loanRepository = ApnaFundApplication.loanRepository
+
+    private val groupsRepository = ApnaFundApplication.groupRepository
+
+    private val _sessionInvalid = MutableSharedFlow<Unit>()
+    val sessionInvalid = _sessionInvalid.asSharedFlow()
 
     val userName = MutableLiveData<String>()
     private val userRoles = MutableLiveData<List<String>>()
@@ -94,9 +103,15 @@ class UserSummaryViewModel : ViewModel() {
         issueDate: String,
         period: Double,
         rateOfInt: Double,
-        maturityDate: String
+        maturityDate: String,
+        autoapprove: Boolean,
+        requestorId: Int
     ) {
         viewModelScope.launch {
+            val workflowStatus =
+                if (autoapprove) "APPROVED"
+                else "PENDING_APPROVAL"
+
             val loan = Loans(
                 borrowerId = userId,
                 issuedDate = issueDate,
@@ -105,6 +120,7 @@ class UserSummaryViewModel : ViewModel() {
                 maturityDate = maturityDate,
                 rateOfInterest = rateOfInt,
                 status = "ACTIVE",// to implement approval workflow
+                workflowStatus = workflowStatus,
                 fundId = fundId,
                 loanNumber = "LN$userId$issueDate$fundId"
             )
@@ -124,7 +140,7 @@ class UserSummaryViewModel : ViewModel() {
                 currPrincipal = loanAmount,
                 currTotalIntPaid = 0.0
             )
-            loanRepository.saveLoanAndDetails(loan, loanDetails)
+            loanRepository.saveLoanAndDetails(loan, loanDetails, requestorId)
             loadFundDetails(userId, fundId) // refresh loan info
         }
     }
@@ -159,11 +175,37 @@ class UserSummaryViewModel : ViewModel() {
     }
 
     suspend fun getUserProfile(userId: Int): List<UserProfile> {
-        return userRoleRepository.getUserProfile(userId)
+        return try {
+            userRoleRepository.getUserProfile(userId)
+        } catch (e: InvalidSessionException) {
+            _sessionInvalid.emit(Unit)
+            throw e
+        }
     }
 
     suspend fun getUserLoanDetails(userId: Int, fundId: Int): UserLoanDetails {
         return loanRepository.getUserLoanDetails(userId, fundId)
+    }
+
+    fun syncFirebaseUidIfNeeded() {
+        if (SessionManager.isFirebaseSynced ||
+            SessionManager.groupId == null ||
+            SessionManager.firebaseUid.isBlank()
+        ) return
+
+        viewModelScope.launch {
+            try {
+                groupsRepository.syncFirebaseUid(
+                    userId = SessionManager.userId,
+                    groupId = SessionManager.groupId!!,
+                    firebaseUid = SessionManager.firebaseUid
+                )
+                SessionManager.isFirebaseSynced = true
+            } catch (e: Exception) {
+                // Log only — do not break user flow
+                e.printStackTrace()
+            }
+        }
     }
 
 

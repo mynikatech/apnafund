@@ -21,5 +21,6 @@ data class LoanDetailsWithMemberNamesDto(
     val userId: Int,
     val loanDetailsId: Int? = null,
     val currTotalIntPaid: Double,
-    val totalInterest: Double
+    val totalInterest: Double,
+    val workflowStatus: String
 )

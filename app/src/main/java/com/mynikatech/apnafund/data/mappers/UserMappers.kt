@@ -32,6 +32,8 @@ fun Users.toDto(): UsersDto = UsersDto(
     firebaseUserId = firebaseUserId,
     createdDate = createdDate,
     passwordHash = passwordHash,
+    emailVerified = emailVerified,
+    emailVerifiedAt = emailVerifiedAt,
     hashPIN = hashPIN
 
 )
@@ -49,6 +51,8 @@ fun UsersDto.toEntity(): Users = Users(
     isPinSet = isPinSet ?: false,
     hashPIN = hashPIN,
     firebaseUserId = firebaseUserId,
+    emailVerified = emailVerified,
+    emailVerifiedAt = emailVerifiedAt,
     userCode = userCode
 )
 

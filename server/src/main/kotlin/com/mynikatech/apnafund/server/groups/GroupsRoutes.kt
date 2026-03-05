@@ -3,9 +3,13 @@ package com.mynikatech.apnafund.server.groups
 import com.mynikatech.apnafund.net.dto.AddMemberRequest
 import com.mynikatech.apnafund.net.dto.GroupMembersDto
 import com.mynikatech.apnafund.net.dto.GroupsDto
+import com.mynikatech.apnafund.net.dto.SyncFirebaseUidRequest
 import com.mynikatech.apnafund.server.api.respondError
 import com.mynikatech.apnafund.server.api.respondOk
+import com.mynikatech.apnafund.server.auth.FirebaseGroupService
+import com.mynikatech.apnafund.server.chat.FirebaseChatService
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.log
 import io.ktor.server.request.receive
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
@@ -40,15 +44,40 @@ fun Route.groupsRoutes(groups: GroupsSql) = route("/groups") {
     // 3) POST /groups/add
     post("add") {
         val dto = call.receive<GroupsDto>()
-        // Minimal validation; extend as needed
+
         if (dto.groupName.isNullOrBlank()) {
             call.respondError(
                 HttpStatusCode.BadRequest,
                 "validation",
                 "groupName required"
-            ); return@post
+            )
+            return@post
         }
+
         val id = groups.addGroup(dto)
+
+        call.application.log.info("Creating Firebase group for groupId=$id")
+
+        try {
+            FirebaseGroupService.createGroup(
+                groupId = id,
+                groupName = dto.groupName
+            )
+        } catch (e: Exception) {
+            call.application.log.error(
+                "🔥 Firebase group creation failed for groupId=$id",
+                e
+            )
+
+            // IMPORTANT: decide your consistency strategy (see below)
+            call.respondError(
+                HttpStatusCode.InternalServerError,
+                "firebase_error",
+                "Failed to create group in Firebase"
+            )
+            return@post
+        }
+
         call.respondOk(id, HttpStatusCode.Created)
     }
 
@@ -130,6 +159,10 @@ fun Route.groupsRoutes(groups: GroupsSql) = route("/groups") {
         }
         val body = call.receive<AddMemberRequest>()
         val newId = groups.addGroupMember(body.userId, groupId, body.joiningDate)
+        FirebaseGroupService.addMemberToGroup(
+            groupId = groupId,
+            userId = body.userId
+        )
         call.respondOk(newId)
     }
 
@@ -150,6 +183,7 @@ fun Route.groupsRoutes(groups: GroupsSql) = route("/groups") {
     delete("delete/member") {
         val gm = call.receive<GroupMembersDto>()
         val ok = groups.deleteGroupMember(gm)
+        FirebaseGroupService.removeMemberFromGroup(gm.groupId, gm.userId)
         call.respondOk(ok)
     }
 
@@ -225,4 +259,34 @@ fun Route.groupsRoutes(groups: GroupsSql) = route("/groups") {
         }
         call.respondOk(groups.getTotMemberNumbersForFund(groupId))
     }
+
+    // 17) POST /groups/sync/firebase-uid
+    post("sync/firebase-uid") {
+
+        val req = call.receive<SyncFirebaseUidRequest>()
+
+        // 1️⃣ Validate membership in YOUR DB
+        val isMember = groups.checkIfGroupMemberAlreadyAdded(
+            userId = req.userId,
+            groupId = req.groupId
+        )
+
+        if (!isMember) {
+            call.respondError(
+                HttpStatusCode.Forbidden,
+                "forbidden",
+                "User is not a member of this group"
+            )
+            return@post
+        }
+
+        // 2️⃣ Update Firestore
+        FirebaseChatService.addMemberToGroup(
+            groupId = req.groupId,
+            firebaseUid = req.firebaseUid
+        )
+
+        call.respondOk(Unit)
+    }
+
 }

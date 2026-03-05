@@ -80,8 +80,14 @@ fun Route.userRolesRoutes(sql: UserRolesSql) = route("/user-roles") {
 
     post("add/batch") {
         val items = call.receive<List<UserRolesDto>>()           // flat list
-        val json = Json { explicitNulls = false }
-        val itemsJson = Json { explicitNulls = false }
+        val json = Json {
+            explicitNulls = false
+            encodeDefaults = true
+        }
+        val itemsJson = Json {
+            explicitNulls = false
+            encodeDefaults = true
+        }
             .encodeToString(ListSerializer(UserRolesDto.serializer()), items)             // -> JSON array
         val count = sql.addUserRoles(itemsJson)
         call.respondOk(count, HttpStatusCode.Created)            // { "data": <count>, ... }

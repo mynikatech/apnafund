@@ -4,5 +4,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class InsertWithLoanDetailsRequest(
     val loan: LoansDto,
-    val details: LoanDetailsDto
+    val details: LoanDetailsDto,
+    val requestorId: Int
 )

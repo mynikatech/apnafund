@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 026-get-approval-request-byId
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/026-get-approval-request-byId.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

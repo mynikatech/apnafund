@@ -24,6 +24,8 @@ interface GroupsApi {
     suspend fun getGroupMembersForFund(fundId: Int): List<GroupMembersDto>
     suspend fun checkIfGroupMemberAlreadyAdded(userId: Int, groupId: Int): Boolean
     suspend fun getTotMemberNumbersForFund(groupId: Int): Int
+
+    suspend fun syncFirebaseUid(userId: Int, groupId: Int, firebaseUid: String)
 }
 
 

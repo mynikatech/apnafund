@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 010-one-time-seq-grants-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/011-one-time-sequence-grants-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

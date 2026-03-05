@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 027-loan-updates
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/027-loan-updates.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-user-query-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/009-user-get-query-update.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

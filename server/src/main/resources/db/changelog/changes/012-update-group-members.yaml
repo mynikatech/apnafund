@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 013-Update-group-members-fetch
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/013-Update-group-members-fetch.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

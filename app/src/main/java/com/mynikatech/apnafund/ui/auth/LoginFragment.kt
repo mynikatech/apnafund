@@ -3,6 +3,7 @@ package com.mynikatech.apnafund.ui.auth
 
 import android.os.Bundle
 import android.text.InputFilter
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,7 +19,9 @@ import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.mynikatech.apnafund.R
+import com.mynikatech.apnafund.data.mappers.toEntity
 import com.mynikatech.apnafund.databinding.FragmentLoginBinding
+import com.mynikatech.apnafund.net.ApiException
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
 import com.mynikatech.apnafund.util.Converters
 import kotlinx.coroutines.launch
@@ -69,18 +72,35 @@ class LoginFragment : Fragment() {
                         .show()
                     return@setOnClickListener
                 }
+
                 lifecycleScope.launch {
-                    val localUser = userViewModel.getUserByPhone(phone)
+                    val localUser = try {
+                        userViewModel.getUserByPhone(phone)
+                    } catch (e: ApiException) {
+                        when (e.code) {
+                            404 -> showToast("User not found. Please register first")
+                            400 -> showToast(e.message ?: "Invalid request")
+                            else -> showToast("Server error. Please try again.")
+                        }
+                        return@launch
+                    }
+
                     if (localUser == null) {
                         Toast.makeText(
                             requireContext(),
                             "User not found. Please register first",
                             Toast.LENGTH_SHORT
                         ).show()
+                        binding.otpLayout.visibility = View.GONE
+                        binding.verifyOtpButton.visibility = View.GONE
                         return@launch
                     }
+                    binding.otpLayout.visibility = View.VISIBLE
+                    binding.verifyOtpButton.visibility = View.VISIBLE
+                    binding.cancelOtpButton.visibility = View.VISIBLE
+                    sendOtp(phone)
                 }
-                sendOtp(phone)
+
             } else {
                 val email = binding.emailEditText.text.toString()
                 val password = binding.passwordEditText.text.toString()
@@ -102,8 +122,31 @@ class LoginFragment : Fragment() {
             val phone = binding.phoneEditText.text.toString()
             if (otp.isNotEmpty() && storedVerificationId != null) {
                 val credential = PhoneAuthProvider.getCredential(storedVerificationId!!, otp)
+                binding.otpLayout.visibility = View.GONE
+                binding.verifyOtpButton.visibility = View.GONE
                 signInWithPhoneAuthCredential(credential, phone)
             }
+        }
+
+        binding.cancelOtpButton.setOnClickListener {
+
+            // 🔄 Reset phone-login state
+            isPhoneLogin = false
+
+            // 🧹 Clear fields
+            binding.phoneEditText.text?.clear()
+            binding.otpEditText.text?.clear()
+
+            // 🔒 Hide OTP UI
+            binding.otpLayout.visibility = View.GONE
+            binding.verifyOtpButton.visibility = View.GONE
+            binding.cancelOtpButton.visibility = View.GONE
+
+            // 🔓 Re-enable login button (in case it was disabled)
+            binding.loginButton.isEnabled = true
+
+            // 🔄 Switch back to email login UI
+            updateLoginMode()
         }
 
         binding.registerRedirectText.setOnClickListener {
@@ -147,22 +190,41 @@ class LoginFragment : Fragment() {
         binding.emailLayout.visibility = if (isPhoneLogin) View.GONE else View.VISIBLE
         binding.passwordLayout.visibility = if (isPhoneLogin) View.GONE else View.VISIBLE
         binding.phoneLayout.visibility = if (isPhoneLogin) View.VISIBLE else View.GONE
-        binding.otpLayout.visibility = if (isPhoneLogin) View.VISIBLE else View.GONE
-        binding.verifyOtpButton.visibility = if (isPhoneLogin) View.VISIBLE else View.GONE
+        // ✅ OTP MUST ALWAYS START HIDDEN
+        binding.otpLayout.visibility = View.GONE
+        binding.verifyOtpButton.visibility = View.GONE
+        binding.cancelOtpButton.visibility = if (isPhoneLogin) View.VISIBLE else View.GONE
         binding.toggleLoginMode.text = if (isPhoneLogin) "Use Email/Password" else "Use Phone OTP"
     }
 
     private fun loginWithEmail(email: String, password: String) {
         lifecycleScope.launch {
-            val localUser = userViewModel.getUserByEmail(email)
-            if (localUser == null) {
-                Toast.makeText(
-                    requireContext(),
-                    "User not found. Please register first",
-                    Toast.LENGTH_SHORT
-                ).show()
+            val loginResponse = try {
+                userViewModel.getUserByEmail(email)
+            } catch (e: ApiException) {
+                when (e.code) {
+                    404 -> showToast("User not found. Please register first")
+                    400 -> showToast(e.message ?: "Invalid request")
+                    else -> showToast("Server error. Please try again.")
+                }
                 return@launch
             }
+            if (null == loginResponse)
+                return@launch
+
+            val localUser = loginResponse.user.toEntity()
+            val firebaseToken = loginResponse.firebaseToken
+                ?: run {
+                    showToast("Login failed. Please try again.")
+                    return@launch
+                }
+
+
+            if (localUser == null) {
+                showToast("User not found. Please register as moderator first or request moderator to invite")
+                return@launch
+            }
+
             val userPassword = localUser.passwordHash
             if (userPassword.isNullOrEmpty()) {
                 Toast.makeText(
@@ -181,6 +243,60 @@ class LoginFragment : Fragment() {
                 Toast.makeText(requireContext(), "Incorrect Password", Toast.LENGTH_SHORT).show()
                 return@launch
             }
+            FirebaseAuthHelper.ensureFirebaseSignedIn(
+                firebaseToken = firebaseToken,
+                onSuccess = {
+                    lifecycleScope.launch {
+                        val isDue = userViewModel.isPasswordRotationDue(localUser.userId)
+                        if (isDue) {
+                            findNavController().navigate(
+                                LoginFragmentDirections
+                                    .actionLoginFragmentToChangePasswordFragment(localUser.userId)
+                            )
+                        } else {
+                            val isVerified = userViewModel.isEmailVerified(localUser.userId)
+
+                            if (!isVerified) {
+                                val resp = try {
+                                    userViewModel.resendEmailVerification(
+                                        userId = localUser.userId,
+                                        email = email,
+                                        userName = "${localUser.firstName} ${localUser.lastName}",
+                                        purpose = "EMAIL_VERIFY"
+                                    )
+                                } catch (e: ApiException) {
+                                    showToast(e.message ?: "Server error. Please try again.")
+                                    return@launch
+                                }
+                                findNavController().navigate(
+                                    LoginFragmentDirections
+                                        .actionLoginFragmentToVerifyEmailFragment(
+                                            userId = localUser.userId,
+                                            email = email,
+                                            userName = "${localUser.firstName} ${localUser.lastName}",
+                                            emailOtpExpiresAtMillis = resp.emailOtpExpiresAtMillis,
+                                            purpose = "EMAIL_VERIFY"
+                                        )
+                                )
+                            } else {
+                                FirebaseAuth.getInstance().currentUser
+                                    ?.getIdToken(true)
+                                    ?.addOnSuccessListener {
+                                        Log.d("FirebaseAuth", "Token claims = ${it.claims}")
+                                    }
+                                findNavController().navigate(
+                                    LoginFragmentDirections
+                                        .actionLoginFragmentToUserSummaryFragment(localUser.userId)
+                                )
+                            }
+
+                        }
+                    }
+                },
+                onFailure = {
+                    showToast("Authentication failed. Please try again.")
+                }
+            )
             /*if (localUser.firebaseUserId.isNullOrBlank()) {
                 // Firebase UID is not yet set — allow user to setup password
                 val action = LoginFragmentDirections
@@ -189,18 +305,7 @@ class LoginFragment : Fragment() {
                 return@launch
             }*/
             // Proceed with Firebase sign-in only if password is not empty
-            lifecycleScope.launch {
-                val isDue = userViewModel.isPasswordRotationDue(localUser.userId)
-                if (isDue) {
-                    val action = LoginFragmentDirections
-                        .actionLoginFragmentToChangePasswordFragment(localUser.userId)
-                    findNavController().navigate(action)
-                } else {
-                    val action = LoginFragmentDirections
-                        .actionLoginFragmentToUserSummaryFragment(localUser.userId)
-                    findNavController().navigate(action)
-                }
-            }
+
             /*
             auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
                if (task.isSuccessful) {
@@ -264,10 +369,12 @@ class LoginFragment : Fragment() {
             .setActivity(requireActivity())
             .setCallbacks(object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
                 override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+                    Log.d("OTP_DEBUG", "onVerificationCompleted (auto-verification)")
                     signInWithPhoneAuthCredential(credential, phone)
                 }
 
                 override fun onVerificationFailed(e: FirebaseException) {
+                    Log.e("OTP_DEBUG", "FAILED before verification (Firebase rejected app)", e)
                     Toast.makeText(
                         requireContext(),
                         "Verification failed: ${e.message}",
@@ -279,8 +386,16 @@ class LoginFragment : Fragment() {
                     verificationId: String,
                     token: PhoneAuthProvider.ForceResendingToken
                 ) {
+                    Log.d("OTP_DEBUG", "OTP SENT, verificationId=$verificationId")
                     storedVerificationId = verificationId
+                    binding.loginButton.isEnabled = false
+                    binding.loginButton.postDelayed({
+                        if (isAdded) { // fragment safety
+                            binding.loginButton.isEnabled = true
+                        }
+                    }, 60_000)
                     Toast.makeText(requireContext(), "OTP sent", Toast.LENGTH_SHORT).show()
+                    Log.d("OTP_DEBUG", "currentUser=${FirebaseAuth.getInstance().currentUser}")
                 }
             }).build()
 
@@ -290,12 +405,49 @@ class LoginFragment : Fragment() {
     private fun signInWithPhoneAuthCredential(credential: PhoneAuthCredential, phone: String) {
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
+                if (!task.isSuccessful) {
+                    Log.e("AUTH", "Firebase OTP failed", task.exception)
+                    showToast("OTP verification failed")
+                    return@addOnCompleteListener
+                }
+
+                val firebaseUser = FirebaseAuth.getInstance().currentUser
+                if (firebaseUser == null) {
+                    showToast("Authentication error. Please retry.")
+                    return@addOnCompleteListener
+                }
+
+                val isPhoneUser = firebaseUser.providerData
+                    .any { it.providerId == PhoneAuthProvider.PROVIDER_ID }
+
+                if (!isPhoneUser) {
+                    Log.e("OTP_DEBUG", "User is not authenticated via PHONE")
+                    FirebaseAuth.getInstance().signOut()
+                    showToast("Phone verification failed. Please retry.")
+                    return@addOnCompleteListener
+                }
+
+                val firebaseUid = firebaseUser.uid
+                Log.d("OTP_DEBUG", "OTP VERIFIED, uid=$firebaseUid")
+
                     lifecycleScope.launch {
                         val localUser = userViewModel.getUserByPhone(phone)
                         if (localUser == null) {
                             Toast.makeText(requireContext(), "User not found", Toast.LENGTH_SHORT)
                                 .show()
+                            FirebaseAuth.getInstance().signOut()
+                            return@launch
+                        }
+
+                        // MUST succeed or STOP
+                        val updated = userViewModel.updateFirebaseUserIdSafely(
+                            userId = localUser.userId,
+                            firebaseUid = firebaseUid
+                        )
+
+                        if (!updated) {
+                            showToast("Login failed. Please contact support.")
+                            FirebaseAuth.getInstance().signOut()
                             return@launch
                         }
                         val isDue = userViewModel.isPasswordRotationDue(localUser.userId)
@@ -312,13 +464,6 @@ class LoginFragment : Fragment() {
                             findNavController().navigate(action)
                         }
                     }
-                } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "Login failed: ${task.exception?.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
 
             }
     }
@@ -326,5 +471,31 @@ class LoginFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun ensureFirebaseAuth(onDone: () -> Unit) {
+        val auth = FirebaseAuth.getInstance()
+
+        if (auth.currentUser != null) {
+            onDone()
+            return
+        }
+
+        auth.signInAnonymously()
+            .addOnSuccessListener {
+                Log.d("FirebaseAuth", "Anonymous UID = ${it.user?.uid}")
+                onDone()
+            }
+            .addOnFailureListener {
+                Toast.makeText(
+                    requireContext(),
+                    "Firebase authentication failed",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 }

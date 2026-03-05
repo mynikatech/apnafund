@@ -8,7 +8,8 @@ fun PendingModeratorRequestDto.toEntity(): PendingModeratorRequest = PendingMode
     userId = userId,
     moderatorName = moderatorName,
     groupName = groupName,
-    groupDescription      = groupDescription
+    emailId = emailId,
+    groupDescription     = groupDescription
 
 )
 
@@ -17,7 +18,8 @@ fun PendingModeratorRequest.toDto(): PendingModeratorRequestDto = PendingModerat
     userId = userId,
     moderatorName = moderatorName,
     groupName = groupName,
-    groupDescription      = groupDescription
+    emailId = emailId,
+    groupDescription  = groupDescription
 )
 fun List<PendingModeratorRequestDto>.toEntity(): List<PendingModeratorRequest> = map { it.toEntity() }
 fun List<PendingModeratorRequest>.toDto(): List<PendingModeratorRequestDto> = map { it.toDto() }

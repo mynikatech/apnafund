@@ -19,7 +19,7 @@ data class Groups(
 
     @PrimaryKey(autoGenerate = true) val groupId: Int = 0,
     val groupName: String,
-    val moderator: Int?,
+    val moderator: Int? = null,
     val createdDate: String,
     val description: String?,
     val groupCode: String,

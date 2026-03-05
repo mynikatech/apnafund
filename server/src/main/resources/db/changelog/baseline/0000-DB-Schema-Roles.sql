@@ -197,6 +197,42 @@ ALTER DEFAULT PRIVILEGES FOR ROLE apnafund_app_test IN SCHEMA "ApnaFundTest"
 
  ALTER SCHEMA "ApnaFundTest" OWNER TO apnafund_test_user;
 
+ ALTER DEFAULT PRIVILEGES
+ FOR ROLE apnafund_dev_deploy
+ IN SCHEMA "apnafunddev"
+ GRANT SELECT, INSERT, UPDATE, DELETE
+ ON TABLES TO apnafund_app_dev, apnafund_dev_user;
+
+ ALTER DEFAULT PRIVILEGES
+ FOR ROLE apnafund_dev_deploy
+ IN SCHEMA "apnafunddev"
+ GRANT USAGE, SELECT, UPDATE
+ ON SEQUENCES TO apnafund_app_dev, apnafund_dev_user;
+
+ ALTER DEFAULT PRIVILEGES
+ FOR ROLE apnafund_prod_deploy
+ IN SCHEMA "ApnaFund"
+ GRANT SELECT, INSERT, UPDATE, DELETE
+ ON TABLES TO apnafund_app_prod, apnafund_prod_user;
+
+ ALTER DEFAULT PRIVILEGES
+ FOR ROLE apnafund_prod_deploy
+ IN SCHEMA "ApnaFund"
+ GRANT USAGE, SELECT, UPDATE
+ ON SEQUENCES TO apnafund_app_prod, apnafund_prod_user;
+
+ ALTER DEFAULT PRIVILEGES
+ FOR ROLE apnafund_test_deploy
+ IN SCHEMA "ApnaFundTest"
+ GRANT SELECT, INSERT, UPDATE, DELETE
+ ON TABLES TO apnafund_app_test, apnafund_test_user;
+
+ ALTER DEFAULT PRIVILEGES
+ FOR ROLE apnafund_test_deploy
+ IN SCHEMA "ApnaFundTest"
+ GRANT USAGE, SELECT, UPDATE
+ ON SEQUENCES TO apnafund_app_test, apnafund_test_user;
+
 
 -- ============================
 -- OPTIONAL: If you already created objects under a wrong owner,

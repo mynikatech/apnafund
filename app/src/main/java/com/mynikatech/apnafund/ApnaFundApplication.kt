@@ -1,7 +1,11 @@
 package com.mynikatech.apnafund
 
 import android.app.Application
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.firebase.firestore.MemoryCacheSettings
 import com.mynikatech.apnafund.data.database.ApnaFundDatabase
+import com.mynikatech.apnafund.data.repository.ApprovalRepository
 import com.mynikatech.apnafund.data.repository.DepositRepository
 import com.mynikatech.apnafund.data.repository.FeedbackRepository
 import com.mynikatech.apnafund.data.repository.FundRepository
@@ -12,6 +16,7 @@ import com.mynikatech.apnafund.data.repository.UserRoleRepository
 import com.mynikatech.apnafund.data.repository.UserSummaryRepository
 import com.mynikatech.apnafund.di.AppLocator
 import com.mynikatech.apnafund.net.AdminApiKtor
+import com.mynikatech.apnafund.net.ApprovalApiKtor
 import com.mynikatech.apnafund.net.DepositsApiKtor
 import com.mynikatech.apnafund.net.FeedbackApiKtor
 import com.mynikatech.apnafund.net.FundsApiKtor
@@ -63,7 +68,17 @@ class ApnaFundApplication : Application() {
         val pinHistoryApi = PinHistoryApiKtor()
         val passwordHistoryApi = PasswordHistoryApiKtor()
         val notificationsApi = NotificationsApiKtor()
+        val approvalApi = ApprovalApiKtor()
         val context = applicationContext
+        val firestore = FirebaseFirestore.getInstance()
+
+        val settings = FirebaseFirestoreSettings.Builder()
+            .setLocalCacheSettings(
+                MemoryCacheSettings.newBuilder().build()
+            )
+            .build()
+
+        firestore.firestoreSettings = settings
         AppLocator.init(applicationContext)
 
         userRolesRepository = UserRoleRepository(
@@ -81,6 +96,7 @@ class ApnaFundApplication : Application() {
         typeRepository = TypeRepository(typeDao, typeApi)
         loanRepository = LoanRepository(loansDao, loanEmisDao, loansApi)
         feedbackRepository = FeedbackRepository(feedbackDao, feedbackApi)
+        approvalRepository = ApprovalRepository(approvalApi)
         userSummaryRepository = UserSummaryRepository(
             userApi,
             loansApi,
@@ -94,6 +110,7 @@ class ApnaFundApplication : Application() {
             rolesMap = userRolesRepository.getRoleCodesByRoleId()
             typeMap = typeRepository.getAllTypes()
         }
+
     }
 
     companion object {
@@ -109,6 +126,7 @@ class ApnaFundApplication : Application() {
         lateinit var typeRepository: TypeRepository
         lateinit var typeMap: Map<String, String>
         lateinit var rolesMap: Map<String, Int>
+        lateinit var approvalRepository: ApprovalRepository
 
     }
 }

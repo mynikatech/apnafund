@@ -1,0 +1,23 @@
+[Unit]
+Description=ApnaFund Application Startup Orchestrator
+After=network-online.target docker.service
+Wants=network-online.target docker.service
+
+[Service]
+Type=oneshot
+
+# Optional but useful: load environment variables if present
+EnvironmentFile=-/opt/apnafund/.env
+
+# Run your startup script (Postgres container, prepare app directories, etc.)
+ExecStart=/bin/bash -lc '/opt/apnafund/bin/startup.sh'
+
+# Keep service marked as active after ExecStart completes
+RemainAfterExit=yes
+
+# Log all output to ApnaFund log folder
+StandardOutput=append:/var/log/apnafund/startup.log
+StandardError=append:/var/log/apnafund/startup.log
+
+[Install]
+WantedBy=multi-user.target

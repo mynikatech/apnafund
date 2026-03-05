@@ -18,18 +18,20 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
-import com.mynikatech.apnafund.ApnaFundApplication
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
+import com.mynikatech.apnafund.data.mappers.toDto
 import com.mynikatech.apnafund.data.model.Groups
-import com.mynikatech.apnafund.data.model.UserRoles
 import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.databinding.FragmentRegisterBinding
+import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
+import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
+import com.mynikatech.apnafund.net.dto.SaveOrUpdateUserResponse
+import com.mynikatech.apnafund.net.dto.UserSaveSource
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
 import com.mynikatech.apnafund.util.ApnaBankDate
 import com.mynikatech.apnafund.util.Converters
 import com.mynikatech.apnafund.util.Converters.toTitleCase
-import com.mynikatech.apnafund.util.EmailUtils
 import com.mynikatech.apnafund.util.GroupInputValidator
 import com.mynikatech.apnafund.util.UserInputValidator
 import com.mynikatech.apnafund.util.assessPasswordStrength
@@ -114,46 +116,86 @@ class RegisterFragment : Fragment() {
                 }
             }
             if (!validatePasswordInputs()) return@setOnClickListener
-            //auth.createUserWithEmailAndPassword(email, password)
-            //    .addOnSuccessListener {
-            //       val firebaseUserId = it.user?.uid ?: return@addOnSuccessListener
             viewLifecycleOwner.lifecycleScope.launch {
                 val userId: Int
                 if (isModerator) {
-                    userId = saveModeratorUser(
+                    saveModeratorUser(
                         "1", firstName, lastName,
                         email, phone, groupName, groupDesc, password
-                    )
-                    showToast("Submitted for approval. You will receive an email once approved")
-                    if (binding.setPinFlag.isChecked) {
-                        val action = RegisterFragmentDirections
-                            .actionRegisterFragmentToSetPinFragment(userId)
-                        findNavController().navigate(action)
+                    ).onSuccess { resp ->
+                        showToast("Submitted for approval. You will receive an email once approved")
+                        if (!resp.emailVerified) {
 
-                    } else {
-                        findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
-                    }
-                } else {
-                    if (checkPreAddedMember(email, phone)) {
-                        userId = saveRegularUser("1", firstName, lastName, email, phone)
-                        if (binding.setPinFlag.isChecked) {
-                            val action = RegisterFragmentDirections
-                                .actionRegisterFragmentToSetPinFragment(userId)
+                            val action =
+                                RegisterFragmentDirections
+                                    .actionRegisterFragmentToVerifyEmailFragment(
+                                        userId = resp.userId,
+                                        email = email,
+                                        userName = "$firstName $lastName",
+                                        shouldSetPin = binding.setPinFlag.isChecked,
+                                        emailOtpExpiresAtMillis = resp.emailOtpExpiresAtMillis ?: 0,
+                                        purpose = "EMAIL_VERIFY"
+                                    )
                             findNavController().navigate(action)
                         } else {
-                            findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
+                            // DEV fallback only (email verification disabled)
+
+                            if (binding.setPinFlag.isChecked) {
+                                val action =
+                                    RegisterFragmentDirections
+                                        .actionRegisterFragmentToSetPinFragment(resp.userId)
+                                findNavController().navigate(action)
+                            } else {
+                                findNavController()
+                                    .navigate(R.id.action_registerFragment_to_loginFragment)
+                            }
                         }
+                    }
+                        .onFailure {
+                            showToast(
+                                "Some issues with server. Please raise a support ticket or contact admin."
+                            )
+                        }
+                } else {
+                    if (checkPreAddedMember(email, phone)) {
+                        val shouldSetPin = binding.setPinFlag.isChecked
+                        saveRegularUser("1", firstName, lastName, email, phone, password)
+                            .onSuccess { resp ->
+                                if (!resp.emailVerified) {
+                                    val action = RegisterFragmentDirections
+                                        .actionRegisterFragmentToVerifyEmailFragment(
+                                            userId = resp.userId,
+                                            email = email,
+                                            userName = "$firstName $lastName",
+                                            shouldSetPin = shouldSetPin,
+                                            emailOtpExpiresAtMillis = resp.emailOtpExpiresAtMillis
+                                                ?: 0,
+                                            purpose = "EMAIL_VERIFY"
+                                        )
+                                    findNavController().navigate(action)
+                                } else {
+                                    if (shouldSetPin) {
+                                        val action =
+                                            RegisterFragmentDirections
+                                                .actionRegisterFragmentToSetPinFragment(resp.userId)
+                                        findNavController().navigate(action)
+                                    } else {
+                                        findNavController()
+                                            .navigate(R.id.action_registerFragment_to_loginFragment)
+                                    }
+                                }
+                            }
+                            .onFailure {
+                                showToast(
+                                    "Some issues with server. Please raise a support ticket or contact admin."
+                                )
+                            }
                     } else {
                         showToast("Please contact moderator to add you before registering")
                     }
                 }
             }
         }
-        // .addOnFailureListener {
-        //     showToast("Registration failed: ${it.message}")
-        // }
-        //}
-
         binding.buttonCancel.setOnClickListener {
             findNavController().navigateUp()
         }
@@ -167,14 +209,18 @@ class RegisterFragment : Fragment() {
         return userViewModel.isDuplicate(email, phone)
     }
 
-    suspend private fun saveRegularUser(
+    private suspend fun saveRegularUser(
         uid: String,
         firstName: String,
         lastName: String,
         email: String,
-        phone: String
-    ): Int {
-        val userId: Int
+        phone: String,
+        password: String
+    ): Result<SaveOrUpdateUserResponse> {
+
+        val passwordHash = Converters.hashPassword(password)
+        val userCode = Converters.generateUserCode(firstName, lastName)
+
         val user = Users(
             userId = 0,
             firstName = firstName,
@@ -182,11 +228,14 @@ class RegisterFragment : Fragment() {
             emailId = email,
             phoneNumber = phone,
             firebaseUserId = uid,
-            userCode = Converters.generateUserCode(firstName, lastName)
+            userCode = userCode,
+            passwordHash = passwordHash
         )
-        userId = userViewModel.saveOrUpdateUser(user)
-        return userId
 
+        return userViewModel.saveOrUpdateUser(
+            user = user,
+            userSaveSource = UserSaveSource.SELF_REGISTER
+        )
     }
 
     private suspend fun saveModeratorUser(
@@ -198,7 +247,11 @@ class RegisterFragment : Fragment() {
         groupName: String,
         desc: String,
         password: String
-    ): Int {
+    ): Result<ModeratorRegistrationResponse> {
+
+        val passwordHash = Converters.hashPassword(password)
+        val userCode = Converters.generateUserCode(firstName, lastName)
+
         val user = Users(
             userId = 0,
             firstName = firstName,
@@ -206,50 +259,23 @@ class RegisterFragment : Fragment() {
             emailId = email,
             phoneNumber = phone,
             firebaseUserId = uid,
-            passwordHash = Converters.hashPassword(password),
-            userCode = Converters.generateUserCode(firstName, lastName)
+            passwordHash = passwordHash,
+            userCode = userCode
         )
-        val createdUserId = userViewModel.createUserAndReturnId(user)
-
-        // Assign role with PENDING status
-        val moderatorRoleId = ApnaFundApplication.rolesMap[ApnaBankConstants.ROLE_MODERATOR]
-        val memberRoleId = ApnaFundApplication.rolesMap[ApnaBankConstants.ROLE_MEMBER]
-        val userRole = UserRoles(
-            userId = createdUserId,
-            roleId = moderatorRoleId!!,
-            status = ApnaBankConstants.STATUS_PENDING
-
-        )
-        val memberRole = UserRoles(
-            userId = createdUserId,
-            roleId = memberRoleId!!,
-            status = ApnaBankConstants.STATUS_ACTIVE
-
-        )
-        val userRoles = mutableListOf<UserRoles>()
-        userRoles.add(userRole)
-        userRoles.add(memberRole)
-        userViewModel.addUserRoles(userRoles)
-        // Create group with PENDING_APPROVAL
         val group = Groups(
             groupName = groupName,
-            moderator = createdUserId,
             status = ApnaBankConstants.STATUS_PENDING,
             createdDate = ApnaBankDate.getCurrentDate(),
             description = desc,
             groupCode = Converters.generateGroupCode(groupName)
         )
-        ApnaFundApplication.groupRepository.createGroup(group)
-        // Send email to admin
-        val adminEmail = ApnaBankConstants.ADMIN_EMAIL
-        EmailUtils.sendEmail(
-            to = adminEmail,
-            subject = "Moderator Approval Request",
-            message = "A new moderator request from $firstName $lastName for group '$groupName' is pending approval.",
-            requireContext()
+        val regModReq = RegisterModeratorRequest(
+            user = user.toDto(),
+            group = group.toDto()
         )
-        return createdUserId
+        return userViewModel.registerModeratorAndGroup(regModReq)
     }
+
 
     // Local function to validate inputs
     private fun validateUserInput() {

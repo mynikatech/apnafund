@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,19 +17,23 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.model.Users
+import com.mynikatech.apnafund.net.dto.UserSaveSource
 import com.mynikatech.apnafund.session.PreferencesHelper
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.SplashActivity
+import com.mynikatech.apnafund.ui.auth.FirebaseAuthHelper
 import com.mynikatech.apnafund.ui.viewmodel.AdminViewModel
 import com.mynikatech.apnafund.ui.viewmodel.ProfileSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.UserSummaryViewModel
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
+import com.mynikatech.apnafund.util.Converters
 import com.mynikatech.apnafund.util.ThemeManager
 import com.mynikatech.apnafund.util.UserInputValidator
-import com.mynikatech.apnafund.util.Converters
 import kotlinx.coroutines.launch
 
 class SideMenuDialogFragment : DialogFragment() {
@@ -79,10 +84,11 @@ class SideMenuDialogFragment : DialogFragment() {
                         // Load the latest user (local cache). If you also want remote, call refresh first.
                         val user = userViewModel.fetchUser(SessionManager.userId)
 
-                        val firstNameEdit = dialogView.findViewById<EditText>(R.id.editTextFirstName)
-                        val lastNameEdit  = dialogView.findViewById<EditText>(R.id.editTextLastName)
-                        val emailEdit     = dialogView.findViewById<EditText>(R.id.editTextEmail)
-                        val phoneEdit     = dialogView.findViewById<EditText>(R.id.editTextPhone)
+                        val firstNameEdit =
+                            dialogView.findViewById<EditText>(R.id.editTextFirstName)
+                        val lastNameEdit = dialogView.findViewById<EditText>(R.id.editTextLastName)
+                        val emailEdit = dialogView.findViewById<EditText>(R.id.editTextEmail)
+                        val phoneEdit = dialogView.findViewById<EditText>(R.id.editTextPhone)
 
                         // Pre-fill from fetched user when available, else SessionManager
                         firstNameEdit.setText(user?.firstName ?: SessionManager.firstName)
@@ -104,30 +110,41 @@ class SideMenuDialogFragment : DialogFragment() {
                                 // Run suspending work in a coroutine tied to the Fragment lifecycle
                                 lifecycleScope.launch {
                                     val firstName = firstNameEdit.text.toString().trim()
-                                    val lastName  = lastNameEdit.text.toString().trim()
-                                    val email     = emailEdit.text.toString().trim().lowercase()
-                                    val phone     = phoneEdit.text.toString().trim()
+                                    val lastName = lastNameEdit.text.toString().trim()
+                                    val email = emailEdit.text.toString().trim().lowercase()
+                                    val phone = phoneEdit.text.toString().trim()
 
                                     // 1) Basic validation
                                     var isValid = true
                                     if (!UserInputValidator.isFirstNameValid(firstName)) {
-                                        firstNameEdit.error = ApnaBankConstants.FIRST_NAME_ERROR_MESSAGE
+                                        firstNameEdit.error =
+                                            ApnaBankConstants.FIRST_NAME_ERROR_MESSAGE
                                         isValid = false
                                     }
                                     if (!UserInputValidator.isEmailValid(email)) {
-                                        emailEdit.error = ApnaBankConstants.INVALID_EMAIL_ERROR_MESSAGE
+                                        emailEdit.error =
+                                            ApnaBankConstants.INVALID_EMAIL_ERROR_MESSAGE
                                         isValid = false
                                     }
                                     if (!UserInputValidator.isPhoneValid(phone)) {
-                                        phoneEdit.error = ApnaBankConstants.INVALID_PHONE_ERROR_MESSAGE
+                                        phoneEdit.error =
+                                            ApnaBankConstants.INVALID_PHONE_ERROR_MESSAGE
                                         isValid = false
                                     }
                                     if (!isValid) return@launch
 
                                     // 2) Optional: uniqueness check (exclude current userId)
-                                    val duplicate = userViewModel.isDuplicate(email, phone, SessionManager.userId)
+                                    val duplicate = userViewModel.isDuplicate(
+                                        email,
+                                        phone,
+                                        SessionManager.userId
+                                    )
                                     if (duplicate) {
-                                        Toast.makeText(requireContext(), "Email or phone already in use.", Toast.LENGTH_LONG).show()
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Email or phone already in use.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
                                         return@launch
                                     }
 
@@ -144,8 +161,8 @@ class SideMenuDialogFragment : DialogFragment() {
                                     )
                                     val updatedUser = base.copy(
                                         firstName = firstName,
-                                        lastName  = lastName,
-                                        emailId   = email,
+                                        lastName = lastName,
+                                        emailId = email,
                                         phoneNumber = phone
                                     )
 
@@ -153,29 +170,69 @@ class SideMenuDialogFragment : DialogFragment() {
                                     saveBtn.isEnabled = false
 
                                     try {
-                                        // Remote-first save (suspend). Your saveOrUpdateUser is suspend now.
-                                        val updatedId = userViewModel.saveOrUpdateUser(updatedUser)
+                                        saveBtn.isEnabled = false
 
-                                        // 5) Update SessionManager after success
-                                        SessionManager.userId = updatedId
-                                        SessionManager.firstName = firstName
-                                        SessionManager.lastName = lastName
-                                        SessionManager.emailId = email
-                                        SessionManager.phoneNumber = phone
-                                        SessionManager.userName = "${SessionManager.firstName} ${SessionManager.lastName}".trim()
+                                        val result = userViewModel.saveOrUpdateUser(
+                                            updatedUser,
+                                            userSaveSource = UserSaveSource.SELF_UPDATE
+                                        )
 
-                                        profileSharedViewModel.publishDisplayName(SessionManager.userName)
-                                        userSummaryViewModel.userName.postValue(SessionManager.userName)
-                                        //userViewModel.refreshUser(SessionManager.userId)
-                                        findNavController().previousBackStackEntry
-                                            ?.savedStateHandle
-                                            ?.set("profile_updated", true)
+                                        result
+                                            .onSuccess { resp ->
+                                                // ✅ Safe access
+                                                SessionManager.userId = resp.userId
+                                                SessionManager.firstName = firstName
+                                                SessionManager.lastName = lastName
+                                                SessionManager.emailId = email
+                                                SessionManager.phoneNumber = phone
+                                                SessionManager.userName =
+                                                    "${SessionManager.firstName} ${SessionManager.lastName}".trim()
 
-                                        Toast.makeText(requireContext(), "Profile updated", Toast.LENGTH_SHORT).show()
-                                        dialog.dismiss()
+                                                profileSharedViewModel.publishDisplayName(
+                                                    SessionManager.userName
+                                                )
+                                                userSummaryViewModel.userName.postValue(
+                                                    SessionManager.userName
+                                                )
+
+                                                findNavController().previousBackStackEntry
+                                                    ?.savedStateHandle
+                                                    ?.set("profile_updated", true)
+
+                                                Toast.makeText(
+                                                    requireContext(),
+                                                    "Profile updated successfully",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+
+                                                dialog.dismiss()
+                                            }
+                                            .onFailure { e ->
+                                                Log.e(
+                                                    "ProfileUpdate",
+                                                    "Failed to update profile",
+                                                    e
+                                                )
+
+                                                Toast.makeText(
+                                                    requireContext(),
+                                                    "Some issues with server. Please raise a support ticket or contact admin.",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            }
+
+                                        saveBtn.isEnabled = true
                                     } catch (t: Throwable) {
-                                        // surface the error
-                                        Toast.makeText(requireContext(), "Failed to update: ${t.message}", Toast.LENGTH_LONG).show()
+                                        // ONLY for unexpected crashes (not API errors)
+                                        Log.e("ProfileUpdate", "Unexpected error", t)
+
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Something went wrong. Please try again.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+
+                                    } finally {
                                         saveBtn.isEnabled = true
                                     }
                                 }
@@ -199,15 +256,25 @@ class SideMenuDialogFragment : DialogFragment() {
                         .setTitle("Confirm Logout")
                         .setMessage("Are you sure you want to logout?")
                         .setPositiveButton("Yes") { _, _ ->
+                            try {
+                                FirebaseFirestore.getInstance().terminate()
+                            } catch (e: Exception) {
+                                Log.w("LOGOUT", "Firestore terminate failed", e)
+                            }
+
+                            FirebaseAuthHelper.signOut()
                             val prefsHelper = PreferencesHelper(requireContext())
                             prefsHelper.clearSession()
+                            SessionManager.clearSession()
+                            FirebaseFirestore.getInstance().clearPersistence()
                             Toast.makeText(
                                 requireContext(),
                                 "Successfully Logged Out",
                                 Toast.LENGTH_SHORT
                             ).show()
                             val intent = Intent(requireContext(), SplashActivity::class.java)
-                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            intent.flags =
+                                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                             startActivity(intent)
                             val action = SideMenuDialogFragmentDirections
                                 .actionSideMenuDialogFragmentToLogInFragment()

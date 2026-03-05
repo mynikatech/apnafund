@@ -149,10 +149,10 @@ class LoansApiKtor(
             parameter("userId", userId); parameter("fundId", fundId)
         }.unwrap<Boolean>()
 
-    override suspend fun insertLoanWithDetails(loan: Loans, laonDetails: LoanDetails) {
+    override suspend fun insertLoanWithDetails(loan: Loans, laonDetails: LoanDetails, requestorId: Int) {
         client.post("/loans/insert/with-details") {
             contentType(ContentType.Application.Json)
-            val payload = InsertWithLoanDetailsRequest(loan = loan.toDto(), details = laonDetails.toDto())
+            val payload = InsertWithLoanDetailsRequest(loan = loan.toDto(), details = laonDetails.toDto(), requestorId)
             setBody(payload)
         }.unwrap<Int>()
     }

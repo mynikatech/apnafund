@@ -29,5 +29,8 @@ data class UserNotifications(
     val isExpiredFlag: Boolean = false,
     val publishedFlag: Boolean = false,
     val readFlag: Boolean = false,
-    val status: String = "ACTIVE"
+    val status: String = "ACTIVE",
+    val createdAt: String?,   // ISO string from DB
+    val readAt: String?,
+    val expiredAt: String?
 )

@@ -1,0 +1,11 @@
+{
+  "eventType": "USER_REGISTERED",
+  "userId": "Sunil",
+  "channel": "EMAIL",
+  "payload": {
+    "email": "sunilagl@gmail.com",
+    "userName": "Sunil Agarwal",
+    "subject": "ApnaFund Test Email",
+    "body": "Lambda + SQS + SES integration is working successfully!"
+  }
+}

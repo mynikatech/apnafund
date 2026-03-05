@@ -63,9 +63,9 @@ class UserSummaryViewModelTest {
 
         val result = viewModel.getFund(1)
 
-        Assert.assertEquals("Monthly Savings", result.fundName)
-        Assert.assertEquals("2024-01-01", result.fundStartDate)
-        Assert.assertEquals(10.5, result.loanInterestRate, 0.0)
+        Assert.assertEquals("Monthly Savings", result?.fundName)
+        Assert.assertEquals("2024-01-01", result?.fundStartDate)
+        Assert.assertEquals(10.5, result?.loanInterestRate!!, 0.0)
     }
 
     @Test

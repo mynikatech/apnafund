@@ -5,5 +5,6 @@ data class PendingModeratorRequest(
     val groupId: Int,
     val moderatorName: String,
     val groupName: String,
+    val emailId: String,
     val groupDescription: String?
 )

@@ -57,10 +57,12 @@ interface LoansApi {
 
     suspend fun getLoanDetailsforLoan(loanId: Int): LoanCmplDetailsDto
     suspend fun isLoanforUserforFund(userId: Int, fundId: Int): Boolean
-    suspend fun insertLoanWithDetails(loan: Loans, laonDetails: LoanDetails)
+    suspend fun insertLoanWithDetails(loan: Loans, laonDetails: LoanDetails, requestorId: Int)
     suspend fun updateLoanWithDetails(loan: Loans, loanDetails: LoanDetails)
     suspend fun getTotalLoanAmount(userId: Int, fundId: Int): Double
     suspend fun getTotalPendingAmount(userId: Int, fundId: Int): Double
     suspend fun getTotalCurrIntPaid(userId: Int, fundId: Int): Double
     suspend fun getUserLoanDetails(userId: Int, fundId: Int): UserLoanDetailsDto
+
+
 }

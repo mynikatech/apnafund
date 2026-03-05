@@ -56,6 +56,7 @@ class AdminFragment : Fragment() {
         val moderatorTabs = listOf(
             "Users" to UserFragment(),
             "Groups" to GroupFragment(),
+            "Approvals" to PendingApprovalFragment(),
             "Deposits" to DepositEntryFragment(),
             "Loans EMI" to LoanEmiEntryFragment()
         )

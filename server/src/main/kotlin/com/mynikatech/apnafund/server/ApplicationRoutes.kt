@@ -1,8 +1,10 @@
 package com.mynikatech.apnafund.server
 
-import UsersSql
 import com.mynikatech.apnafund.server.admin.AdminSql
 import com.mynikatech.apnafund.server.admin.adminRoutes
+import com.mynikatech.apnafund.server.approval.ApprovalService
+import com.mynikatech.apnafund.server.approval.ApprovalSql
+import com.mynikatech.apnafund.server.approval.approvalRoutes
 import com.mynikatech.apnafund.server.deposits.DepositsSql
 import com.mynikatech.apnafund.server.deposits.depositsRoutes
 import com.mynikatech.apnafund.server.feedback.FeedbackSql
@@ -31,6 +33,12 @@ import com.mynikatech.apnafund.server.users.userDetailsRoute
 import com.mynikatech.apnafund.server.users.usersRoutes
 import io.ktor.server.application.Application
 import io.ktor.server.routing.routing
+import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
+import com.mynikatech.apnafund.server.notifications.NotificationService
+import com.mynikatech.apnafund.server.users.EmailVerificationService
+import com.mynikatech.apnafund.server.users.ModeratorRegistrationService
+import com.mynikatech.apnafund.server.users.UserManagementService
+import com.mynikatech.apnafund.server.users.UsersSql
 
 fun Application.registerRoutes(
     usersDao: UsersSql, deposistsDao: DepositsSql,
@@ -39,24 +47,31 @@ fun Application.registerRoutes(
     fundDao: FundsSql, loansDao: LoansSql,
     typeDao: TypesSql, notificationsDao: NotificationsSql,
     adminDao: AdminSql, pinHistoryDao: PinHistorySql,
-    passwordHistoryDao: PasswordHistorySql
+    passwordHistoryDao: PasswordHistorySql,
+    eventDispatchService: EventDispatchService,
+    moderatorRegistrationService: ModeratorRegistrationService,
+    userManagementService: UserManagementService,
+    emailVerificationService: EmailVerificationService,
+    notificationService: NotificationService,
+    approvalDao: ApprovalSql, approvalService: ApprovalService
 ) {
     routing {
-        usersRoutes(usersDao)
+        usersRoutes(usersDao,eventDispatchService, moderatorRegistrationService,userManagementService,emailVerificationService)
         groupsRoutes(groupsDao)
         rolesRoutes(roleDao)
         userRolesRoutes(userRolesDao)
-        fundsRoutes(fundDao)
+        fundsRoutes(fundDao,notificationService,usersDao )
         depositsRoutes(deposistsDao)
-        loansRoutes(loansDao)
+        loansRoutes(loansDao,eventDispatchService,usersDao, fundDao, notificationService,approvalDao)
         typesRoutes(typeDao)
         notificationsRoutes(notificationsDao)
         feedbackRoutes(feedbackDao)
-        adminRoutes(adminDao)
+        adminRoutes(adminDao,eventDispatchService)
         pinHistoryRoutes(pinHistoryDao)
         passwordHistoryRoutes(passwordHistoryDao)
         rolePrivilegeRoutes(roleDao)
         privilegesRoutes(roleDao)
         userDetailsRoute(usersDao,userRolesDao,notificationsDao)
+        approvalRoutes(approvalDao, approvalService)
     }
 }

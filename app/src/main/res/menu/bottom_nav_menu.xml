@@ -6,6 +6,10 @@
     <item android:id="@+id/fundFragment"
         android:icon="@drawable/ic_fund_filled"
         android:title="Funds"/>
+    <item
+        android:id="@+id/groupChatFragment"
+        android:icon="@drawable/ic_chat"
+        android:title="Chat"/>
     <item android:id="@+id/adminFragment"
         android:icon="@drawable/ic_admin"
         android:title="Admin"/>

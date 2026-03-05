@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 024-type-notification-update
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/024-type-notification-update.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

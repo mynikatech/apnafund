@@ -5,6 +5,7 @@ import org.jdbi.v3.sqlobject.customizer.Bind
 import org.jdbi.v3.sqlobject.kotlin.BindKotlin
 import org.jdbi.v3.sqlobject.kotlin.RegisterKotlinMapper
 import org.jdbi.v3.sqlobject.statement.SqlQuery
+import org.jdbi.v3.sqlobject.statement.SqlUpdate
 
 @RegisterKotlinMapper(UserNotificationsDto::class)
 interface NotificationsSql {
@@ -34,4 +35,10 @@ interface NotificationsSql {
     // DELETE -> returns boolean
     @SqlQuery("""SELECT delete_user_notification(:id)""")
     fun deleteUserNotification(@Bind("id") userNotificationId: Int): Boolean
+
+    @SqlQuery("SELECT get_unread_notification_count(:userId)")
+    fun getUnreadNotificationCount(@Bind("userId") userId: Int): Int
+
+    @SqlQuery("SELECT mark_notification_read(:notificationId)")
+    fun markNotificationRead(@Bind("notificationId") notificationId: Int): Boolean
 }

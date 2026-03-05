@@ -13,6 +13,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.mynikatech.apnafund.databinding.FragmentLoginPinBinding
+import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 
@@ -58,9 +59,33 @@ class LoginPinFragment : Fragment() {
                             .actionLoginPinFragmentToSetPinFragment(userId)
                         findNavController().navigate(action)
                     } else {
-                        val action = LoginPinFragmentDirections
-                            .actionLoginPinFragmentToUserSummaryFragment(userId)
-                        findNavController().navigate(action)
+                        // 🔐 STEP 1: Get Firebase token from backend
+                        val firebaseRespToken = try {
+                            userViewModel.getFirebaseTokenForUser(userId)
+                        } catch (e: Exception) {
+                            showToast("Authentication failed. Please login again.")
+                            findNavController().navigate(
+                                LoginPinFragmentDirections.actionLoginPinFragmentToLoginFragment()
+                            )
+                            return@launch
+                        }
+
+                        // STEP 2: Ensure Firebase is signed in
+                        FirebaseAuthHelper.ensureFirebaseSignedIn(
+                            firebaseToken = firebaseRespToken.firebaseToken,
+                            onSuccess = {
+                                SessionManager.isFirebaseSynced = true
+
+                                // STEP 3: Navigate only AFTER Firebase is ready
+                                findNavController().navigate(
+                                    LoginPinFragmentDirections
+                                        .actionLoginPinFragmentToUserSummaryFragment(userId)
+                                )
+                            },
+                            onFailure = {
+                                showToast("Chat connection failed. Please retry.")
+                            }
+                        )
                     }
                 } else {
                     showToast("Incorrect PIN entered")

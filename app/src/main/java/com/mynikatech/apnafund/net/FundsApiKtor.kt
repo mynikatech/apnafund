@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund.net
 
 import com.mynikatech.apnafund.net.dto.AddFundWithDetailsRequest
+import com.mynikatech.apnafund.net.dto.CloseFundRequest
 import com.mynikatech.apnafund.net.dto.FundDetailsDto
 import com.mynikatech.apnafund.net.dto.FundMemberWithNameDto
 import com.mynikatech.apnafund.net.dto.FundsDto
@@ -153,6 +154,17 @@ class FundsApiKtor(
             setBody(AddFundWithDetailsRequest(fund = fund, details = details))
         }.unwrap<Int>()
 
+    override suspend fun closeFund(
+        fundId: Int,
+        request: CloseFundRequest
+    ): Boolean {
 
+        return client.post(
+            "funds/$fundId/close"
+        ) {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+    }
 
 }

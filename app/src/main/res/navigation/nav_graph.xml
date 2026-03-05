@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/loginFragment">
 
@@ -23,6 +24,9 @@
         <action
             android:id="@+id/actionLoginFragmentToForgotPasswordFragment"
             app:destination="@id/resetPasswordFragment" />
+        <action
+            android:id="@+id/actionLoginFragment_to_verifyEmailFragment"
+            app:destination="@id/verifyEmailFragment" />
     </fragment>
 
     <fragment
@@ -31,7 +35,10 @@
         android:label="Change Password">
         <action
             android:id="@+id/actionSetPasswordFragmentToLoginFragment"
-            app:destination="@id/loginFragment" />
+            app:destination="@id/loginFragment"/>
+        <action
+            android:id="@+id/actionSetPasswordFragmentToVerifyEmailFragment"
+            app:destination="@id/verifyEmailFragment" />
         <argument
             android:name="userId"
             android:defaultValue="0"
@@ -63,6 +70,9 @@
         <action
             android:id="@+id/actionForgotPasswordFragmentToLoginFragment"
             app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/actionForgotPasswordFragmentToVerifyEmailFragment"
+            app:destination="@id/verifyEmailFragment" />
         <argument
             android:name="userEmail"
             android:defaultValue=""
@@ -79,6 +89,9 @@
         <action
             android:id="@+id/action_registerFragment_to_setPinFragment"
             app:destination="@id/setPinFragment" />
+        <action
+            android:id="@+id/action_registerFragment_to_verifyEmailFragment"
+            app:destination="@id/verifyEmailFragment" />
     </fragment>
     <fragment
         android:id="@+id/setPinFragment"
@@ -160,6 +173,9 @@
         <action
             android:id="@+id/action_fundFragment_to_fundMemberDetailsFragment"
             app:destination="@id/fundMemberDetailsFragment" />
+        <action
+            android:id="@+id/action_fundFragment_to_fundLoanSummaryFragment"
+            app:destination="@id/fundLoanSummaryFragment" />
     </fragment>
     <fragment
         android:id="@+id/adminFragment"
@@ -204,7 +220,7 @@
 
         <action
             android:id="@+id/action_fundMembersFragment_to_addFundMembersFragment"
-            app:destination="@id/fundAddMembersFragment"/>
+            app:destination="@id/fundAddMembersFragment" />
 
         <argument
             android:name="fundId"
@@ -276,4 +292,74 @@
         android:id="@+id/notificationFragment"
         android:name="com.mynikatech.apnafund.ui.user.notification.NotificationFragment"
         android:label="Notifications"></fragment>
+
+    <fragment
+        android:id="@+id/groupChatFragment"
+        android:name="com.mynikatech.apnafund.ui.chat.GroupChatFragment"
+        android:label="Chat">
+        <argument
+            android:name="groupId"
+            app:argType="integer" />
+        <argument
+            android:name="groupName"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/verifyEmailFragment"
+        android:name="com.mynikatech.apnafund.ui.auth.VerifyEmailFragment"
+        android:label="Verify Email">
+
+        <argument
+            android:name="userId"
+            app:argType="integer" />
+
+        <argument
+            android:name="email"
+            app:argType="string" />
+
+        <argument
+            android:name="userName"
+            app:argType="string" />
+        <argument
+            android:name="shouldSetPin"
+            app:argType="boolean"
+            android:defaultValue="false" />
+        <argument
+            android:name="emailOtpExpiresAtMillis"
+            app:argType="long"/>
+        <argument
+            android:name="purpose"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_verifyEmailFragment_to_setPinFragment"
+            app:destination="@id/setPinFragment" />
+        <action
+            android:id="@+id/action_verifyEmailFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+
+        <action
+            android:id="@+id/actionVerifyEmailFragmentToChangePasswordFragment"
+            app:destination="@id/changePasswordFragment"
+            app:popUpTo="@id/verifyEmailFragment"
+            app:popUpToInclusive="true"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/fundLoanSummaryFragment"
+        android:name="com.mynikatech.apnafund.ui.loan.FundLoanSummaryFragment"
+        android:label="Fund Loans Summary">
+
+        <argument
+            android:name="fundId"
+            android:defaultValue="0"
+            app:argType="integer" />
+        <argument
+            android:name="fundName"
+            app:argType="string" />
+
+        <action
+            android:id="@+id/action_FundLoanSummaryFragment_to_loanEmiFragment"
+            app:destination="@id/loanEmiFragment" />
+
+    </fragment>
 </navigation>

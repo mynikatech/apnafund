@@ -28,7 +28,7 @@ interface FundMembersDao {
     @Query(
         """
     SELECT fm.fundMemberId, fm.userId, fm.fundId, fm.joiningDate,
-           u.firstName, u.lastName
+           u.firstName, u.lastName, u.emailId
     FROM fund_members AS fm
     INNER JOIN funds AS f ON fm.fundId = f.fundId
     INNER JOIN users AS u ON fm.userId = u.userId

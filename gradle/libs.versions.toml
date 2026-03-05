@@ -37,7 +37,8 @@ jdbiVer= "3.49.5"
 ktorHttps = "3.3.0"
 liquibaseVer = "4.29.2"
 liquibaseGradVer = "2.2.0"
-
+aws-sdk = "2.25.47"
+firebase-admin="9.2.0"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-fragment-ktx-v187 = { module = "androidx.fragment:fragment-ktx", version.ref = "fragmentKtxVersion" }
@@ -63,6 +64,7 @@ arch-core-testing = { module = "androidx.arch.core:core-testing", version.ref = 
 firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx", version.ref = "firebase-auth" }
 google-play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "google-auth" }
 firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebase-auth" }
+firebase-admin = { module = "com.google.firebase:firebase-admin", version.ref = "firebase-admin"}
 amplify = { module = "com.amplifyframework:core", version.ref = "amplify" }
 firebase-storage = { group = "com.google.firebase", name = "firebase-storage", version.ref = "firebaseStorage" }
 ktor-server-netty               = { module = "io.ktor:ktor-server-netty",                 version.ref = "ktorVer" }
@@ -95,6 +97,11 @@ ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", versio
 
 exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
 exposed-java-time = { module = "org.jetbrains.exposed:exposed-java-time", version.ref = "exposed" }
+aws-sns = { module = "software.amazon.awssdk:sns", version.ref = "aws-sdk" }
+aws-sqs = { module = "software.amazon.awssdk:sqs", version.ref = "aws-sdk" }
+aws-ses = { module = "software.amazon.awssdk:ses", version.ref = "aws-sdk" }
+
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

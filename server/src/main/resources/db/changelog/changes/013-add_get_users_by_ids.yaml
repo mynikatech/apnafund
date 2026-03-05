@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 014-add-func-get-users-by-ids
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/014-add-func-get-users-by-ids.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 020-user-notifcation-mark-read
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/020-user-notifcation-mark-read.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

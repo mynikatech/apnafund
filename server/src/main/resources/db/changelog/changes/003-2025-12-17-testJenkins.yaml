@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2025-11-01-add-new-procedure
+      author: sunil
+      changes:
+        - sql:
+            sql: |
+              CREATE OR REPLACE FUNCTION test_new_proc()
+              RETURNS void LANGUAGE plpgsql AS $$
+              BEGIN
+                RAISE NOTICE 'Test new procedure ran!';
+              END $$;
+      rollback:
+        - sql:
+            sql: |
+              DROP FUNCTION IF EXISTS test_new_proc();

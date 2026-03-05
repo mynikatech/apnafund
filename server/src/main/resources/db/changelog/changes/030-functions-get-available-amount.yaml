@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 030-get-available-amount
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/030-get-available-amount.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

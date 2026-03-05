@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 028-pending-approval
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/028-pending-approval.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

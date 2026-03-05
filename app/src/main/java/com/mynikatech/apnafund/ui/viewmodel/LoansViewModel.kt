@@ -2,6 +2,8 @@ package com.mynikatech.apnafund.ui.viewmodel
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mynikatech.apnafund.ApnaFundApplication
@@ -10,11 +12,16 @@ import com.mynikatech.apnafund.data.model.LoanDetailsWithMemberNames
 import com.mynikatech.apnafund.data.model.LoanEmiWithMemberNames
 import com.mynikatech.apnafund.data.model.LoanEmis
 import com.mynikatech.apnafund.data.model.Loans
+import com.mynikatech.apnafund.net.dto.LoanDetailsWithMemberNamesDto
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class LoansViewModel: ViewModel() {
 
     private val loanRepository = ApnaFundApplication.loanRepository
+
+    private val _fundLoans = MutableLiveData<List<LoanDetailsWithMemberNamesDto>>()
+    val fundLoans: LiveData<List<LoanDetailsWithMemberNamesDto>> = _fundLoans
 
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun getAllLoanEmisForFundForMonthYear(
@@ -61,7 +68,8 @@ class LoansViewModel: ViewModel() {
                 rateOfInterest = existingloan.rateOfInterest,
                 status = existingloan.status,
                 fundId = existingloan.fundId,
-                loanNumber = existingloan.loanNumber
+                loanNumber = existingloan.loanNumber,
+                workflowStatus = existingloan.workflowStatus
             )
             val monthlyInt = (loanAmount * existingloan.rateOfInterest * 1/12)/100
             val totalInt =  monthlyInt * period
@@ -86,4 +94,25 @@ class LoansViewModel: ViewModel() {
             }
         }
     }
+
+    fun loadLoansForFund(fundId: Int) {
+
+        viewModelScope.launch {
+
+            try {
+
+                val loans =
+                    loanRepository.getLoanDetailsWithNamesForFund(fundId)
+
+                _fundLoans.postValue(loans)
+
+            } catch (e: Exception) {
+
+                Log.e("LoansViewModel", "Error loading fund loans", e)
+
+                _fundLoans.postValue(emptyList())
+            }
+        }
+    }
+
 }

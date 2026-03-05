@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 031-loans-complete-return
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/031-loans-complete-return.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

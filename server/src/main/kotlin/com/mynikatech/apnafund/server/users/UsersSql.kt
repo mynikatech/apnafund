@@ -1,8 +1,11 @@
+package com.mynikatech.apnafund.server.users
+
 import com.mynikatech.apnafund.net.dto.FeedbackDto
 import com.mynikatech.apnafund.net.dto.FeedbackWithUserGroupDto
 import com.mynikatech.apnafund.net.dto.FundsDto
 import com.mynikatech.apnafund.net.dto.GroupMembersDto
 import com.mynikatech.apnafund.net.dto.GroupsDto
+import com.mynikatech.apnafund.net.dto.UserBasicDto
 import com.mynikatech.apnafund.net.dto.UserDetailsDto
 import com.mynikatech.apnafund.net.dto.UserFundDetailsDto
 import com.mynikatech.apnafund.net.dto.UserProfileDto
@@ -31,6 +34,9 @@ interface UsersSql {
 
     @SqlQuery("""SELECT * FROM get_user(:id)""")
     fun getUser(@Bind("id") id: Int): List<UsersDto>
+
+    @SqlQuery("""SELECT * FROM get_user(:id)""")
+    fun getUserById(@Bind("id") id: Int): UsersDto
 
     @SqlQuery(
         """
@@ -144,6 +150,64 @@ interface UsersSql {
     @SqlQuery("""SELECT * FROM validate_user(:email, :pwd)""")
     fun validateUser(
         @Bind("email") email: String,
-        @Bind("pwd")   passwordHash: String
+        @Bind("pwd") passwordHash: String
     ): UsersDto?
+    /* -------------------------------------------------
+    * EMAIL / VERIFICATION
+    * ------------------------------------------------- */
+
+    @SqlUpdate(
+        """
+    SELECT create_verification_token(
+        :userId,
+        :channel,
+        :purpose,
+        :token,
+        to_timestamp(:expiresAtMillis / 1000)::timestamp
+    )
+    """
+    )
+    fun createVerificationToken(
+        @Bind("userId") userId: Int,
+        @Bind("channel") channel: String,
+        @Bind("purpose") purpose: String,
+        @Bind("token") tokenHash: String,
+        @Bind("expiresAtMillis") expiresAtMillis: Long
+    )
+
+    @SqlQuery(
+        """
+    SELECT * from verify_verification_token(
+        :token,
+        :channel,
+        :purpose,
+        :userId
+    )
+    """
+    )
+    fun verifyVerificationToken(
+        @Bind("token") tokenHash: String,
+        @Bind("channel") channel: String,
+        @Bind("purpose") purpose: String,
+        @Bind("userId") userId: Int
+    ): Int?
+
+    @SqlUpdate(
+        """
+    SELECT * from mark_user_email_verified(:userId)
+    """
+    )
+    fun markUserEmailVerified(
+        @Bind("userId") userId: Int
+    )
+
+    @SqlQuery("""SELECT is_email_verified(:userId)""")
+    fun isEmailVerified(@Bind("userId") userId: Int): Boolean
+
+    @SqlQuery("""
+    SELECT * FROM get_users_basic_by_ids(:userIds)
+    """)
+    fun getUsersBasicByIds(
+        @Bind("userIds") userIds: IntArray
+    ): List<UserBasicDto>
 }

@@ -1,15 +1,32 @@
 package com.mynikatech.apnafund.server.users
 
-import UsersSql
+import com.mynikatech.apnafund.net.dto.ChangePasswordRequest
+import com.mynikatech.apnafund.net.dto.Channel
+import com.mynikatech.apnafund.net.dto.EmailPayload
 import com.mynikatech.apnafund.net.dto.FeedbackDto
+import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
+import com.mynikatech.apnafund.net.dto.LoginUserResponse
+import com.mynikatech.apnafund.net.dto.NotificationEvent
+import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
+import com.mynikatech.apnafund.net.dto.RegisterOrUpdateUserRequest
+import com.mynikatech.apnafund.net.dto.SendEmailVerificationReq
+import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
 import com.mynikatech.apnafund.net.dto.UserFundDetailsDto
-import com.mynikatech.apnafund.net.dto.UserPasswordHistoryDto
 import com.mynikatech.apnafund.net.dto.UserPinHistoryDto
 import com.mynikatech.apnafund.net.dto.UsersDto
 import com.mynikatech.apnafund.net.dto.ValidateUserRequest
+import com.mynikatech.apnafund.net.dto.VerifyEmailReq
 import com.mynikatech.apnafund.server.api.respondError
 import com.mynikatech.apnafund.server.api.respondOk
+import com.mynikatech.apnafund.server.auth.FirebaseTokenService
+import com.mynikatech.apnafund.server.common.http.clientIp
+import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
+import com.mynikatech.apnafund.server.common.messaging.factories.UserNotificationFactory
+import com.mynikatech.apnafund.server.common.ratelimit.RateLimiters
+import com.mynikatech.apnafund.server.common.ratelimit.RateLimiters.loginLimiter
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.log
+import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -20,7 +37,12 @@ import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import kotlinx.serialization.json.Json
 
-fun Route.usersRoutes(users: UsersSql) = route("/users") {
+fun Route.usersRoutes(
+    users: UsersSql, eventDispatchService: EventDispatchService,
+    moderatorRegistrationService: ModeratorRegistrationService,
+    userManagementService: UserManagementService,
+    emailVerificationService: EmailVerificationService,
+) = route("/users") {
 
     // ---- GETs ----
     get("get/all") { call.respondOk(users.getUsers()) }
@@ -36,24 +58,106 @@ fun Route.usersRoutes(users: UsersSql) = route("/users") {
     }
 
     get("get/by-email") {
+        val ip = call.clientIp()
+
+        if (!loginLimiter.allow("LOGIN_IP:$ip")) {
+            return@get call.respondError(
+                HttpStatusCode.TooManyRequests,
+                "rate_limit",
+                "Too many attempts. Please try later."
+            )
+        }
+
         val email = call.request.queryParameters["email"]
-            ?: return@get call.respondError(HttpStatusCode.BadRequest, "validation", "email required")
-        val u = users.getUserByEmail(email).firstOrNull()
-        if (u != null) call.respondOk(u)
-        else call.respondError(HttpStatusCode.NotFound, "not_found", "User not found")
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "email required"
+            )
+
+        try {
+            val user = users.getUserByEmail(email).firstOrNull()
+                ?: return@get call.respondError(
+                    HttpStatusCode.NotFound,
+                    "not_found",
+                    "User not found"
+                )
+
+            val userId = user.userId
+                ?: return@get call.respondError(
+                    HttpStatusCode.InternalServerError,
+                    "internal",
+                    "Invalid userId"
+                )
+
+            val userProf = users.getUserProfile(userId).firstOrNull()
+                ?: return@get call.respondError(
+                    HttpStatusCode.InternalServerError,
+                    "internal",
+                    "User profile not found"
+                )
+
+            val groupId = userProf.groupId
+
+            val firebaseToken = FirebaseTokenService.generateFirebaseCustomToken(
+                userId = userId,
+                email = user.emailId,
+                groupId = groupId
+            )
+
+            call.respondOk(
+                LoginUserResponse(
+                    user = user,
+                    firebaseToken = firebaseToken
+                )
+            )
+
+        } catch (e: Exception) {
+            call.application.log.error(
+                "GET /users/get/by-email failed for email=$email",
+                e
+            )
+            call.respondError(
+                HttpStatusCode.InternalServerError,
+                "internal",
+                "Failed to fetch user"
+            )
+        }
     }
 
     get("get/by-phone") {
         val phone = call.request.queryParameters["phone"]
-            ?: return@get call.respondError(HttpStatusCode.BadRequest, "validation", "phone required")
-        val u = users.getUserByPhone(phone).firstOrNull()
-        if (u != null) call.respondOk(u)
-        else call.respondError(HttpStatusCode.NotFound, "not_found", "User not found")
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "phone required"
+            )
+        try {
+            val u = users.getUserByPhone(phone).firstOrNull()
+
+            if (u != null) call.respondOk(u)
+            else call.respondError(HttpStatusCode.NotFound, "not_found", "User not found")
+        } catch (e: Exception) {
+            // THIS is what was missing
+            call.application.log.error(
+                "GET /users/get/by-phone failed for phone=$phone",
+                e
+            )
+            call.respondError(
+                HttpStatusCode.InternalServerError,
+                "internal",
+                e.message ?: "Failed to fetch user"
+            )
+        }
     }
 
     get("get/with-group") {
         val gid = call.request.queryParameters["groupId"]?.toIntOrNull()
-            ?: return@get call.respondError(HttpStatusCode.BadRequest, "validation", "groupId required")
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "groupId required"
+            )
         call.respondOk(users.getUserWithGroup(gid))
     }
 
@@ -77,7 +181,11 @@ fun Route.usersRoutes(users: UsersSql) = route("/users") {
         val userId = call.request.queryParameters["userId"]?.toIntOrNull()
         val groupId = call.request.queryParameters["groupId"]?.toIntOrNull()
         if (userId == null || groupId == null)
-            return@get call.respondError(HttpStatusCode.BadRequest, "validation", "userId and groupId required")
+            return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "userId and groupId required"
+            )
         val gm = users.getGroupMember(userId, groupId).firstOrNull()
         if (gm != null) call.respondOk(gm)
         else call.respondError(HttpStatusCode.NotFound, "not_found", "Group member not found")
@@ -85,7 +193,11 @@ fun Route.usersRoutes(users: UsersSql) = route("/users") {
 
     get("get/exists/by-email") {
         val email = call.request.queryParameters["email"]
-            ?: return@get call.respondError(HttpStatusCode.BadRequest, "validation", "email required")
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "email required"
+            )
         call.respondOk(users.doesUserExists(email))
     }
 
@@ -93,7 +205,11 @@ fun Route.usersRoutes(users: UsersSql) = route("/users") {
         val userId = call.request.queryParameters["userId"]?.toIntOrNull()
         val pin = call.request.queryParameters["pin"]
         if (userId == null || pin.isNullOrBlank())
-            return@get call.respondError(HttpStatusCode.BadRequest, "validation", "userId & pin required")
+            return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "userId & pin required"
+            )
         call.respondOk(users.checkUserPIN(userId, pin))
     }
 
@@ -145,7 +261,7 @@ fun Route.usersRoutes(users: UsersSql) = route("/users") {
                 "validation",
                 "userId & fundId required"
             )
-        call.respondOk(users.getTotalDeposit(uid, fid)?: 0.0)
+        call.respondOk(users.getTotalDeposit(uid, fid) ?: 0.0)
     }
 
     get("get/per-member-expected-maturity-amount/{fundId}") {
@@ -194,6 +310,18 @@ fun Route.usersRoutes(users: UsersSql) = route("/users") {
             call.respond(HttpStatusCode.BadRequest, "emailId required"); return@post
         }
         val id = users.upsertUserByEmail(dto)
+        try {
+            val event = UserNotificationFactory.userRegistered(
+                userId = id.toString(),
+                email = dto.emailId,
+                phone = "91${dto.phoneNumber}", // temp India logic
+                userName = dto.fullName ?: "User"
+            )
+            call.application.log.info("sending email to :", dto.emailId)
+            eventDispatchService.dispatchUser(event)
+        } catch (ex: Exception) {
+            call.application.log.error("Failed to publish USER_REGISTERED notification", ex)
+        }
         call.respondOk(id, HttpStatusCode.Created)
     }
 
@@ -210,6 +338,18 @@ fun Route.usersRoutes(users: UsersSql) = route("/users") {
             call.respond(HttpStatusCode.BadRequest, "emailId required"); return@put
         }
         users.upsertUserByEmail(dto)
+
+        try {
+            val event = UserNotificationFactory.userUpdated(
+                userId = dto.userId!!.toString(),
+                email = dto.emailId,
+                phone = "91${dto.phoneNumber}", // temp India logic
+                userName = dto.fullName ?: "User"
+            )
+            eventDispatchService.dispatchUser(event)
+        } catch (ex: Exception) {
+            call.application.log.error("Failed to publish USER_UPDATED notification", ex)
+        }
         call.respond(HttpStatusCode.NoContent)
     }
 
@@ -227,17 +367,44 @@ fun Route.usersRoutes(users: UsersSql) = route("/users") {
         call.respondOk(true)
     }
 
-    put("update/{id}/password") {
+    post("update/{id}/password") {
         val id = call.parameters["id"]?.toIntOrNull()
-        if (id == null) {
-            call.respondError(HttpStatusCode.BadRequest, "validation", "id required"); return@put
+            ?: return@post call.respondError(
+                HttpStatusCode.BadRequest, "validation", "id required"
+            )
+
+        val user = users.getUserById(id)
+            ?: return@post call.respondError(
+                HttpStatusCode.NotFound, "not_found", "User not found"
+            )
+
+        val req = call.receive<ChangePasswordRequest>()
+
+        userManagementService.changePassword(
+            userId = id,
+            rawPassword = req.newPassword
+        )
+
+        try {
+            eventDispatchService.dispatchUser(
+                NotificationEvent(
+                    eventType = "PASSWORD_UPDATED",
+                    userId = user.userId.toString(),
+                    channels = setOf(Channel.EMAIL),
+                    email = EmailPayload(
+                        to = user.emailId,
+                        userName = user.fullName ?: "User"
+                    )
+                )
+            )
+        } catch (ex: Exception) {
+            call.application.log.error(
+                "Failed to publish PASSWORD_UPDATED notification for userId=$id",
+                ex
+            )
         }
-        if (users.getUser(id).isEmpty()) {
-            call.respondError(HttpStatusCode.NotFound, "not_found", "User not found"); return@put
-        }
-        val req = call.receive<UserPasswordHistoryDto>()
-        users.updatePassword(id, req.passwordHash)
-        call.respondOk(Unit, HttpStatusCode.NoContent)
+
+        call.respond(HttpStatusCode.NoContent)
     }
 
     put("update/{id}/pin") {
@@ -280,7 +447,215 @@ fun Route.usersRoutes(users: UsersSql) = route("/users") {
     post("validate") {
         val req = call.receive<ValidateUserRequest>()
         val user = users.validateUser(req.emailId, req.passwordHash)
-        if (user == null) call.respondError(HttpStatusCode.Unauthorized, "auth", "Invalid credentials")
+        if (user == null) call.respondError(
+            HttpStatusCode.Unauthorized,
+            "auth",
+            "Invalid credentials"
+        )
         else call.respondOk(user)
     }
+
+    post("/groups/register-moderator") {
+        try {
+            val req = call.receive<RegisterModeratorRequest>()
+            val resp = moderatorRegistrationService.registerModeratorAndGroup(req)
+            call.respondOk(resp)
+        } catch (e: Exception) {
+            call.application.log.error("register-moderator failed", e)
+            call.respondError(
+                HttpStatusCode.InternalServerError,
+                "internal",
+                "Failed to register moderator"
+            )
+        }
+    }
+
+    post("/register-update") {
+        try {
+            val ip = call.clientIp()
+
+            if (!RateLimiters.registerLimiter.allow("REGISTER_IP:$ip")) {
+                return@post call.respondError(
+                    HttpStatusCode.TooManyRequests,
+                    "rate_limit",
+                    "Too many registration attempts. Please try later."
+                )
+            }
+            val req = call.receive<RegisterOrUpdateUserRequest>()
+            val resp = userManagementService.saveOrUpdateUser(req)
+            call.respondOk(resp)
+        } catch (e: Exception) {
+            call.application.log.error("register-update failed", e)
+            call.respondError(
+                HttpStatusCode.InternalServerError,
+                "internal",
+                "Failed to register or update user"
+            )
+        }
+
+    }
+
+    post("/email/verify/send") {
+        var req: SendEmailVerificationReq? = null
+        val ip = call.clientIp()
+        try {
+            req = call.receive<SendEmailVerificationReq>()
+            if (
+                !RateLimiters.resendOtpLimiter.allow("RESEND_IP:$ip") ||
+                !RateLimiters.resendOtpLimiter.allow("RESEND_USER:${req.userId}")
+            ) {
+                return@post call.respondError(
+                    HttpStatusCode.TooManyRequests,
+                    "rate_limit",
+                    "Please wait before requesting another code."
+                )
+            }
+            val expiresAtMillis =
+                emailVerificationService.sendVerificationEmail(
+                    userId = req.userId,
+                    email = req.emailId,
+                    userName = req.userName,
+                    purpose = req.purpose
+                )
+
+            call.respondOk(
+                SendEmailVerificationResp(
+                    emailOtpExpiresAtMillis = expiresAtMillis
+                )
+            )
+        } catch (e: Exception) {
+            call.application.log.error(
+                "email verify send failed for userId=${req?.userId ?: "unknown"}",
+                e
+            )
+            call.respondError(
+                HttpStatusCode.InternalServerError,
+                "internal",
+                "Failed to send verification email"
+            )
+        }
+    }
+
+    get("/is-email-verified/{userId}") {
+        val userId = call.parameters["userId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "userId required"
+            )
+
+        try {
+            val verified = emailVerificationService.isEmailVerified(userId)
+            call.respondOk(verified)
+        } catch (e: Exception) {
+            call.application.log.error(
+                "is-email-verified failed for userId=$userId",
+                e
+            )
+            call.respondError(
+                HttpStatusCode.InternalServerError,
+                "internal",
+                "Failed to check email verification status"
+            )
+        }
+    }
+
+    post("/email/verify/confirm") {
+        try {
+            val req = call.receive<VerifyEmailReq>()
+
+            emailVerificationService.verifyEmail(
+                otp = req.token,
+                userId = req.userId,
+                purpose = req.purpose
+            )
+
+            call.respondOk(true)
+
+        } catch (e: BadRequestException) {
+            call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                e.message ?: "Invalid or expired token"
+            )
+
+        } catch (e: Exception) {
+            call.application.log.error("email verify confirm failed", e)
+            call.respondError(
+                HttpStatusCode.InternalServerError,
+                "internal",
+                "Email verification failed"
+            )
+        }
+    }
+    post("/firebase-uid/{id}") {
+        val id = call.parameters["id"]?.toIntOrNull()
+        if (id == null) {
+            call.respond(HttpStatusCode.BadRequest, "id required")
+            return@post
+        }
+
+        val existing = users.getUser(id)
+        if (existing.isEmpty()) {
+            call.respond(HttpStatusCode.NotFound)
+            return@post
+        }
+
+        val req = call.receive<UsersDto>()
+
+        if (req.firebaseUserId.isNullOrBlank()) {
+            call.respond(HttpStatusCode.BadRequest, "firebaseUserId required")
+            return@post
+        }
+
+        // ✅ Force correct identity
+        val user = existing.first()
+
+        val updatedDto = user.copy(
+            firebaseUserId = req.firebaseUserId
+        )
+
+        // ✅ Reuse existing UPSERT
+        users.upsertUserByEmail(updatedDto)
+
+        call.respond(HttpStatusCode.NoContent)
+    }
+
+    post("/firebase-token/{userId}") {
+        val userId = call.parameters["userId"]!!.toInt()
+
+        try {
+            val user = users.getUserById(userId)
+                ?: return@post call.respond(HttpStatusCode.NotFound)
+
+            val userProf = users.getUserProfile(userId).firstOrNull()
+                ?: return@post call.respondError(
+                    HttpStatusCode.InternalServerError,
+                    "internal",
+                    "User profile not found"
+                )
+
+            val firebaseToken = FirebaseTokenService.generateFirebaseCustomToken(
+                userId = userId,
+                email = user.emailId,
+                groupId = userProf.groupId
+            )
+
+            call.respondOk(
+                FirebaseTokenResp(firebaseToken = firebaseToken)
+            )
+
+        } catch (e: Exception) {
+            call.application.log.error(
+                "POST /users/firebase-token/$userId",
+                e
+            )
+            call.respondError(
+                HttpStatusCode.InternalServerError,
+                "internal",
+                "Failed to generate Firebase token"
+            )
+        }
+    }
 }
+

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 021-mark-notification
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/021-mark-notification.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

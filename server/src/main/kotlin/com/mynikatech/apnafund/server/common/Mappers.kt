@@ -90,7 +90,8 @@ val GroupMemberWithNameRowMapper = RowMapper<GroupMemberWithNameDto> { rs, _ ->
         groupId = rs.getInt("groupId"),
         joiningDate = rs.getDate("joiningDate").toString(),
         firstName = rs.getString("firstName"),
-        lastName = rs.getString("lastName") ?: ""
+        lastName = rs.getString("lastName") ?: "",
+        emailId = rs.getString("emailId")
     )
 }
 
@@ -207,7 +208,8 @@ val LoansRowMapper = RowMapper<LoansDto> { rs, _ ->
         loanAmount = rs.getDouble("loanAmount"),
         maturityDate = rs.getString("maturityDate"),
         rateOfInterest = rs.getDouble("rateOfInterest"),
-        status = rs.getString("status")
+        status = rs.getString("status"),
+        workflowStatus = rs.getString("workflowStatus")
     )
 }
 
@@ -258,7 +260,11 @@ val UserNotificationsRowMapper = RowMapper<UserNotificationsDto> { rs, _ ->
         isExpiredFlag = rs.getBoolean("isExpiredFlag"),
         publishedFlag = rs.getBoolean("publishedFlag"),
         readFlag = rs.getBoolean("readFlag"),
-        status = rs.getString("status")
+        status = rs.getString("status"),
+        createdAt = rs.getString("createdAt"),
+        readAt = rs.getString("readAt"),
+        expiredAt = rs.getString("expiredAt")
+
     )
 }
 

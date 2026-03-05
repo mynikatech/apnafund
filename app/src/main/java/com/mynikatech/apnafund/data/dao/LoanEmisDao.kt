@@ -200,7 +200,8 @@ interface LoanEmisDao {
                     maturityDate = loanDetls.maturityDate,
                     rateOfInterest = loanDetls.rateOfInterest,
                     status = "Closed",
-                    fundId = loanDetls.fundId
+                    fundId = loanDetls.fundId,
+                    workflowStatus = loanDetls.workflowStatus
                 )
                 updateLoan(updatedLoan)
             }

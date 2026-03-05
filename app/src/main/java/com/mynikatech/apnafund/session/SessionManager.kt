@@ -14,9 +14,16 @@ object SessionManager {
     var roleNames: List<String> = emptyList()
     var groupId: Int? = null
     var token: String? = null
+    var groupName: String? = null
     var isLoggedIn: Boolean = false
     var isPinSet: Boolean = false
+    var firebaseUid: String = ""
+    var firebaseToken: String? = null
     private lateinit var prefs: SharedPreferences
+    var isFirebaseSynced: Boolean = false
+
+    val hasValidSession: Boolean
+        get() = userId > 0
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
@@ -32,9 +39,12 @@ object SessionManager {
         roleIds = emptyList()
         roleNames = emptyList()
         groupId = null
+        groupName = null
         token = null
         isLoggedIn = false
         isPinSet = false
+        firebaseUid = ""
+        firebaseToken = ""
     }
 
     private fun hasRole(role: String): Boolean {
@@ -47,4 +57,6 @@ object SessionManager {
     fun getFormattedUserName(): String {
         return "${firstName} ${lastName}"
     }
+
+
 }

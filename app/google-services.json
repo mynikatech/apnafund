@@ -23,44 +23,6 @@
           "other_platform_oauth_client": []
         }
       }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:771994098603:android:8ed4136195d7cba2dbd0ee",
-        "android_client_info": {
-          "package_name": "com.sunil.apnabank"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAzQpysrHfCEnZP5_HDE8TQGXr_3ROdwAw"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:771994098603:android:5edb96dce4c6c861dbd0ee",
-        "android_client_info": {
-          "package_name": "com.sunil.apnafund"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAzQpysrHfCEnZP5_HDE8TQGXr_3ROdwAw"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
     }
   ],
   "configuration_version": "1"

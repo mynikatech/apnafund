@@ -2,6 +2,7 @@ package com.mynikatech.apnafund.ui
 
 import android.os.Bundle
 import android.os.StrictMode
+import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -11,14 +12,14 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.core.view.MenuProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.android.volley.BuildConfig
+import com.google.firebase.auth.FirebaseAuth
+import com.mynikatech.apnafund.BuildConfig
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.databinding.ActivityMainBinding
+import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.NotificationSharedViewModel
-import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 
 class MainActivity : AppCompatActivity() {
@@ -61,12 +62,14 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
         setupToolbarMenu(navController)
+        //ensureFirebaseSignedIn()
         val toolbarRef = WeakReference(binding.toolbar)
         val hideToolbarFor = setOf(
             R.id.loginFragment, R.id.registerFragment,
             R.id.changePasswordFragment, R.id.setPasswordFragment,
-            R.id.loginPinFragment,R.id.fundMemberDetailsFragment,
-            R.id.fundAddMembersFragment,
+            R.id.loginPinFragment, R.id.fundMemberDetailsFragment,
+            R.id.fundAddMembersFragment, R.id.verifyEmailFragment,
+            R.id.resetPasswordFragment, R.id.fundLoanSummaryFragment
         )
         navController.addOnDestinationChangedListener { _, destination, _ ->
             toolbarRef.get()?.visibility = when (destination.id) {
@@ -76,7 +79,8 @@ class MainActivity : AppCompatActivity() {
                 R.id.loginFragment, R.id.registerFragment,
                 R.id.changePasswordFragment, R.id.setPasswordFragment,
                 R.id.fundMemberDetailsFragment, R.id.fundAddMembersFragment,
-                R.id.loginPinFragment-> View.GONE
+                R.id.verifyEmailFragment, R.id.resetPasswordFragment,
+                R.id.loginPinFragment, R.id.fundLoanSummaryFragment-> View.GONE
 
                 else -> View.VISIBLE
             }
@@ -114,37 +118,41 @@ class MainActivity : AppCompatActivity() {
                     .build()
             )
         }
+        binding.bottomNavigationView.setOnItemReselectedListener { item ->
+            if (item.itemId == R.id.userSummaryFragment) {
+                navController.popBackStack(
+                    R.id.userSummaryFragment,
+                    inclusive = false
+                )
+            }
+        }
+
+        notificationViewModel.unreadCount.observe(this) { count ->
+            updateNotificationBadge(count)
+        }
     }
+
     private fun setupToolbarMenu(navController: androidx.navigation.NavController) {
         addMenuProvider(object : MenuProvider {
+
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.toolbar_menu, menu)
+                /* ---------------- NOTIFICATIONS ---------------- */
+                val notifItem = menu.findItem(R.id.action_notifications)
 
-                val menuItem = menu.findItem(R.id.action_notifications)
-                val badgeTextView = menuItem?.actionView
-                    ?.findViewById<TextView>(R.id.notification_badge)
-
-                // Avoid capturing badgeTextView in observer
-                currentBadgeView = WeakReference(badgeTextView)
-
-                menuItem?.actionView?.setOnClickListener {
+                notifItem?.actionView?.setOnClickListener {
                     navController.navigate(R.id.notificationFragment)
                 }
-                // Load once
-                lifecycleScope.launch {
-                    val userId = 1
-                    notificationViewModel.loadNotifications(userId)
+                // Apply latest count immediately if already loaded
+                notificationViewModel.unreadCount.value?.let {
+                    updateNotificationBadge(it)
                 }
 
-                // Observe safely without view capture
-                notificationViewModel.notifications.observe(this@MainActivity) { list ->
-                    val unreadCount = list?.count { !it.readFlag } ?: 0
-                    updateNotificationBadge(unreadCount)
-                }
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 return when (menuItem.itemId) {
+
                     R.id.action_notifications -> {
                         navController.navigate(R.id.notificationFragment)
                         true
@@ -155,10 +163,44 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
+
     private fun updateNotificationBadge(count: Int) {
-        currentBadgeView?.get()?.apply {
+        val menu = binding.toolbar.menu
+        val notifItem = menu.findItem(R.id.action_notifications)
+        val badgeTextView =
+            notifItem?.actionView?.findViewById<TextView>(R.id.notification_badge)
+
+        badgeTextView?.apply {
             text = if (count > 99) "99+" else count.toString()
             visibility = if (count > 0) View.VISIBLE else View.GONE
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        if (!SessionManager.hasValidSession) {
+            // App session says user is logged out → ignore Firebase
+            FirebaseAuth.getInstance().signOut()
+            SessionManager.firebaseUid = ""
+            SessionManager.isFirebaseSynced = false
+            return
+        }
+
+        val firebaseUser = FirebaseAuth.getInstance().currentUser
+        if (firebaseUser != null) {
+            SessionManager.firebaseUid = firebaseUser.uid
+            SessionManager.isFirebaseSynced = true
+            Log.d("FirebaseAuth", "Restored firebaseUid=${firebaseUser.uid}")
+        }
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val userId = SessionManager.userId
+        if (userId > 0) {
+            notificationViewModel.loadUnreadCount(userId)
         }
     }
 }

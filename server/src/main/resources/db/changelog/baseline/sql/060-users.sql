@@ -362,8 +362,6 @@ RETURNS TABLE (
    ORDER BY r."roleId";
 $$;
 
-DROP FUNCTION get_user_roles_of_user(integer);
-
 -- 2) user_roles rows of a user
 CREATE OR REPLACE FUNCTION get_user_roles_of_user(p_user_id int)
 RETURNS TABLE (
@@ -508,3 +506,5 @@ RETURNS TABLE (
         AND ur."status" = 'PENDING'
         AND g."status" = 'PENDING';
 $$;
+
+

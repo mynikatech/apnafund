@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 018-type-update-checksum-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/018-type-update-checksum-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

@@ -6,6 +6,9 @@ import kotlinx.serialization.Serializable
 data class ApproveRejectReq (
     val userId: Int,
     val roleId: Int,
-    val groupId: Int
+    val groupId: Int,
+    val userEmail: String,
+    val userName: String,
+    val groupName: String
 
 )

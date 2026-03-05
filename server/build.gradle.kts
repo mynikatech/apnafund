@@ -14,6 +14,9 @@ dependencies {
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.forwarded.header)
+    implementation("io.getstream:stream-chat-java:1.37.0")
+// Firebase Admin
+    implementation("com.google.firebase:firebase-admin:9.2.0")
 
     // Logging
     implementation(libs.logback.classic)
@@ -33,6 +36,11 @@ dependencies {
     implementation(libs.ktor.server.status.pages)
     testImplementation(kotlin("test"))
     implementation(project(":api"))
+
+    implementation(libs.aws.sns)
+    implementation(libs.aws.sqs)
+    implementation(libs.aws.ses)
+
 }
 
 kotlin {
@@ -42,3 +50,8 @@ kotlin {
 }
 application { mainClass.set("com.mynikatech.apnafund.server.ApplicationKt")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=true")}
+
+tasks.shadowJar {
+    archiveFileName.set("apnafund-server.jar")
+    mergeServiceFiles() // 🔑 REQUIRED FOR gRPC
+}

@@ -72,3 +72,12 @@ variable "config_bucket" {
   description = "S3 bucket that stores env startup scripts (e.g., apnafund-config-<acct>-ap-south-1)"
   type        = string
 }
+
+variable "meta_wa_token" {
+  type      = string
+  sensitive = true
+}
+
+variable "meta_phone_number_id" {
+  type = string
+}

@@ -126,5 +126,17 @@ class GroupRepository(
         return api.getTotMemberNumbersForFund(groupId)
     }
 
+    suspend fun syncFirebaseUid(
+        userId: Int,
+        groupId: Int,
+        firebaseUid: String
+    ) {
+        api.syncFirebaseUid(
+            userId = userId,
+            groupId = groupId,
+            firebaseUid = firebaseUid
+        )
+    }
+
 
 }

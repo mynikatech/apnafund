@@ -15,5 +15,12 @@ data class UsersDto(
     val isPinSet: Boolean = false,
     val hashPIN: String? = null,
     val firebaseUserId: String? = null,
+    val emailVerified: Boolean = false,
+    val emailVerifiedAt: String? = null,
     val userCode: String
-)
+) {
+
+    val fullName: String
+        get() = listOfNotNull(lastName, firstName)
+            .joinToString(", ")
+}

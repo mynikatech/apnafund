@@ -13,8 +13,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.firebase.auth.FirebaseAuth
+import com.mynikatech.apnafund.Exception.InvalidSessionException
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.model.LoanDetailsWithMemberNames
@@ -26,6 +29,7 @@ import com.mynikatech.apnafund.ui.loan.AddLoanDialog
 import com.mynikatech.apnafund.ui.loan.LoanAdapter
 import com.mynikatech.apnafund.ui.viewmodel.FundSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.LoansViewModel
+import com.mynikatech.apnafund.ui.viewmodel.NotificationSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.ProfileSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.UserSummaryViewModel
 import com.mynikatech.apnafund.util.Converters
@@ -42,6 +46,8 @@ class UserSummaryFragment : Fragment() {
     private val fundSharedViewModel: FundSharedViewModel by activityViewModels()
 
     private val profileSharedViewModel: ProfileSharedViewModel by activityViewModels()
+
+    private val notificationViewModel: NotificationSharedViewModel by activityViewModels()
 
     private var adapter: LoanAdapter? = null
 
@@ -73,13 +79,36 @@ class UserSummaryFragment : Fragment() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        // Session invalidation observer
+        viewLifecycleOwner.lifecycleScope.launch {
+            userSummaryViewModel.sessionInvalid.collect {
+                forceLogout()
+            }
+        }
         arguments?.let {
             userId = it.getInt("userId")
         }
-        Log.d("Sunil", "UserFragment: The user Id is  $userId")
+        Log.d("ApnaFund", "UserFragment: The user Id is  $userId")
+        val firebaseUser = FirebaseAuth.getInstance().currentUser
+        if (firebaseUser == null) {
+            Log.w("UserSummary", "Firebase not ready yet")
+            // Do NOT crash
+            // Just disable Firebase-dependent features
+        } else {
+            SessionManager.firebaseUid = firebaseUser.uid
+            SessionManager.isFirebaseSynced = true
+        }
+
         lifecycleScope.launch {
-            val userProfile = userSummaryViewModel.getUserProfile(userId)
-            saveUserProfilesSession(userProfile)
+            try {
+                val userProfile = userSummaryViewModel.getUserProfile(userId)
+                saveUserProfilesSession(userProfile)
+                notificationViewModel.loadUnreadCount(SessionManager.userId)
+            } catch (_: InvalidSessionException) {
+                // already handled
+            }
+
+            userSummaryViewModel.syncFirebaseUidIfNeeded()
             val roleCodes = SessionManager.roleNames
             val bottomNav =
                 requireActivity().findViewById<BottomNavigationView>(R.id.bottom_navigation_view)
@@ -98,7 +127,10 @@ class UserSummaryFragment : Fragment() {
                 ?.observe(viewLifecycleOwner) {
                     if (it == true) {
                         binding.textViewWelcomeMessage.text =
-                            getString(R.string.text_welcome_message, SessionManager.getFormattedUserName())
+                            getString(
+                                R.string.text_welcome_message,
+                                SessionManager.getFormattedUserName()
+                            )
                     }
                 }
 
@@ -184,11 +216,11 @@ class UserSummaryFragment : Fragment() {
 
                         // Update status dot
                         val isInactive =
-                            selectedFund.fundStatus == ApnaBankConstants.INACTIVE_STATUS
+                            selectedFund.fundStatus == ApnaBankConstants.INACTIVE_STATUS || selectedFund.fundStatus == ApnaBankConstants.CLOSED_STATUS
                         binding.imageFundStatus.setImageResource(
                             if (isInactive) R.drawable.status_inactive_dot else R.drawable.status_active_dot
                         )
-
+                        updateLoanAddVisibility(selectedFund.fundStatus)
                         userSummaryViewModel.loadFundDetails(userId, selectedFund.fundId)
                     }
                     .show()
@@ -208,9 +240,10 @@ class UserSummaryFragment : Fragment() {
                     fundId = selectedFund.fundId
                     fundStatus = selectedFund.fundStatus
                     binding.textViewSelectedFund.text = selectedFund.fundName
+                    updateLoanAddVisibility(selectedFund.fundStatus)
                 }
                 userSummaryViewModel.loadFundDetails(userId, fundId)
-                val isInactive = fundStatus == ApnaBankConstants.INACTIVE_STATUS
+                val isInactive = fundStatus == ApnaBankConstants.INACTIVE_STATUS || fundStatus == ApnaBankConstants.CLOSED_STATUS
                 if (isInactive) {
                     binding.imageFundStatus.setBackgroundResource(R.drawable.status_inactive_dot)
                     binding.imageFundStatus.tooltipText = ApnaBankConstants.INACTIVE_STATUS
@@ -224,7 +257,8 @@ class UserSummaryFragment : Fragment() {
                     binding.fundDetailsSection.visibility =
                         if (isFundExpanded) View.VISIBLE else View.GONE
                     binding.imageFundExpandCollapse.setImageResource(
-                        if (isFundExpanded) R.drawable.ic_up_arrow else R.drawable.ic_down_arrow)
+                        if (isFundExpanded) R.drawable.ic_up_arrow else R.drawable.ic_down_arrow
+                    )
                 }
 
             } else {
@@ -282,9 +316,15 @@ class UserSummaryFragment : Fragment() {
                 }
                 userSummaryViewModel.userLoans.observe(viewLifecycleOwner) { loans ->
                     val hasLoans = !loans.isNullOrEmpty()
+                    val selectedFund = fundSharedViewModel.selectedFund.value
+                    val isClosedFund =
+                        selectedFund?.fundStatus == ApnaBankConstants.CLOSED_STATUS ||
+                                selectedFund?.fundStatus == ApnaBankConstants.INACTIVE_STATUS
+
                     binding.recyclerViewLoans.visibility = if (hasLoans) View.VISIBLE else View.GONE
-                    binding.textViewNoLoans.visibility   = if (hasLoans) View.GONE    else View.VISIBLE
-                    binding.textViewLoansHeader.text     = getString(R.string.text_loan)
+                    binding.textViewNoLoans.visibility =
+                        if (!hasLoans && !isClosedFund) View.VISIBLE else View.GONE
+                    binding.textViewLoansHeader.text = getString(R.string.text_loan)
                     adapter?.setLoans(loans ?: emptyList())
                 }
             }
@@ -301,14 +341,13 @@ class UserSummaryFragment : Fragment() {
 
             )
         }
-        if (Converters.userHasPrivilege(ApnaBankConstants.ADD_APPLY_LOAN_PRIV))
-            binding.loanAddFab.visibility = View.VISIBLE
-        else
-            binding.loanAddFab.visibility = View.GONE
+        val selectedFundName = binding.textViewSelectedFund.text.toString()
+
+        val fund =
+            userSummaryViewModel.userFunds.value
+                ?.find { it.fundName == selectedFundName }
+
         binding.loanAddFab.setOnClickListener {
-            val selectedFundName = binding.textViewSelectedFund.text.toString()
-            val fund =
-                userSummaryViewModel.userFunds.value?.find { it.fundName == selectedFundName }
 
             if (fund != null) {
                 showApplyLoanDialog(
@@ -380,7 +419,10 @@ class UserSummaryFragment : Fragment() {
                         issueDate = issueDate,
                         period = period.toDouble(),
                         rateOfInt = fundRateOfInterest,
-                        maturityDate = loanMaturityDate
+                        maturityDate = loanMaturityDate,
+                        autoapprove = false,
+                        requestorId = SessionManager.userId
+
                     )
                 }
             }
@@ -390,10 +432,14 @@ class UserSummaryFragment : Fragment() {
 
     fun saveUserProfilesSession(userProfiles: List<UserProfile>) {
         if (userProfiles.isEmpty()) return
-
+        Log.d(
+            "FirebaseAuth",
+            "Session Manager firebase on profile setting: ${SessionManager.firebaseUid}"
+        )
         val userId = userProfiles[0].userId
         val userName = userProfiles[0].userName
         val groupId = userProfiles[0].groupId
+        val groupName = userProfiles[0].groupName
         val firstName = userProfiles[0].firstName
         val lastName = userProfiles[0].lastName
         val emailId = userProfiles[0].emailId
@@ -413,7 +459,9 @@ class UserSummaryFragment : Fragment() {
             firstName = firstName,
             lastName = lastName ?: "",
             emailId = emailId,
-            phoneNumber = phoneNumber
+            phoneNumber = phoneNumber,
+            firebaseUid = SessionManager.firebaseUid,
+            groupName = groupName ?: "Default Group"
         )
         prefsHelper.loadSession()
     }
@@ -422,5 +470,28 @@ class UserSummaryFragment : Fragment() {
         binding.recyclerViewLoans.adapter = null
         adapter = null
         super.onDestroyView()
+    }
+
+    private fun forceLogout() {
+        PreferencesHelper(requireContext()).clearSession()
+
+        findNavController().navigate(
+            R.id.loginFragment,
+            null,
+            NavOptions.Builder()
+                .setPopUpTo(R.id.nav_graph, inclusive = true)
+                .build()
+        )
+    }
+
+    private fun updateLoanAddVisibility(fundStatus: String?) {
+        val canAddLoan =
+            fundStatus != null &&
+                    Converters.userHasPrivilege(ApnaBankConstants.ADD_APPLY_LOAN_PRIV) &&
+                    fundStatus != ApnaBankConstants.INACTIVE_STATUS &&
+                    fundStatus != ApnaBankConstants.CLOSED_STATUS
+
+        binding.loanAddFab.visibility = if (canAddLoan) View.VISIBLE else View.GONE
+        binding.loanAddText.visibility = if (canAddLoan) View.VISIBLE else View.GONE
     }
 }

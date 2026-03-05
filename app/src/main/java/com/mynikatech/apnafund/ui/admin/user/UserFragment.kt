@@ -36,6 +36,7 @@ import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.databinding.DialogAddUserBinding
 import com.mynikatech.apnafund.databinding.FragmentUserBinding
 import com.mynikatech.apnafund.net.HttpClientProvider
+import com.mynikatech.apnafund.net.dto.UserSaveSource
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.GroupViewModel
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
@@ -208,7 +209,10 @@ class UserFragment : Fragment() {
 
                 val updatedUser = existingUser.copy(status = updatedStatus)
 
-                userViewModel.saveOrUpdateUser(updatedUser)
+                userViewModel.saveOrUpdateUser(
+                    updatedUser,
+                    userSaveSource = UserSaveSource.ADMIN_UPDATE
+                )
 
                 Toast.makeText(
                     requireContext(),
@@ -390,7 +394,10 @@ class UserFragment : Fragment() {
                         lastName
                     )
                 )
-                userViewModel.saveOrUpdateUser(userToSave, groupId = selectedGroupId ?: 0)
+                userViewModel.saveOrUpdateUser(
+                    userToSave, groupId = selectedGroupId ?: 0,
+                    UserSaveSource.ADMIN_CREATE
+                )
                 dialog.dismiss()
                 fetchAllUsers()
             }

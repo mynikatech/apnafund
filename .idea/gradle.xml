@@ -12,6 +12,9 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/api" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/lambda" />
+            <option value="$PROJECT_DIR$/lambda/email-processor" />
+            <option value="$PROJECT_DIR$/lambda/whatsapp-processor" />
             <option value="$PROJECT_DIR$/server" />
           </set>
         </option>

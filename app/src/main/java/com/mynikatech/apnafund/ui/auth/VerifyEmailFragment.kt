@@ -1,0 +1,309 @@
+package com.mynikatech.apnafund.ui.auth
+
+import android.os.Bundle
+import android.os.CountDownTimer
+import android.view.View
+import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.mynikatech.apnafund.R
+import com.mynikatech.apnafund.constants.ApnaBankConstants
+import com.mynikatech.apnafund.databinding.FragmentVerifyEmailBinding
+import com.mynikatech.apnafund.net.ApiException
+import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
+import kotlinx.coroutines.launch
+
+class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
+
+    private lateinit var binding: FragmentVerifyEmailBinding
+    private val userViewModel: UserViewModel by viewModels()
+    private val args: VerifyEmailFragmentArgs by navArgs()
+
+    private var userId: Int = 0
+    private lateinit var email: String
+    private lateinit var userName: String
+    private lateinit var purpose: String
+    private var shouldSetPin: Boolean = false
+    private var emailOtpExpiresAt = 0L
+    private var otpTimer: CountDownTimer? = null
+    private var resendTimer: CountDownTimer? = null
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        binding = FragmentVerifyEmailBinding.bind(view)
+
+        userId = args.userId
+        email = args.email
+        userName = args.userName
+        shouldSetPin = args.shouldSetPin
+        emailOtpExpiresAt = args.emailOtpExpiresAtMillis
+        purpose = args.purpose
+
+        binding.textEmail.text = email
+
+        binding.buttonVerify.setOnClickListener {
+            val otp = binding.editTextOtp.text.toString().trim()
+
+            if (otp.length != 6) {
+                Toast.makeText(requireContext(), "Enter valid 6-digit code", Toast.LENGTH_SHORT)
+                    .show()
+                return@setOnClickListener
+            }
+
+            lifecycleScope.launch {
+                try {
+                    // Will throw ApiException on 400 / 500
+                    userViewModel.verifyEmailOtp(otp, userId, purpose)
+
+                    // SUCCESS
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.successful_email_verification_message),
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    when (purpose) {
+                        "EMAIL_VERIFY" -> {
+                            if (shouldSetPin) {
+                                val action =
+                                    VerifyEmailFragmentDirections
+                                        .actionVerifyEmailFragmentToSetPinFragment(userId)
+                                findNavController().navigate(action)
+                            } else {
+                                val action =
+                                    VerifyEmailFragmentDirections
+                                        .actionVerifyEmailFragmentToLoginFragment()
+                                findNavController().navigate(action)
+                            }
+                        }
+
+                        "RESET_PASSWORD" -> {
+                            val action =
+                                VerifyEmailFragmentDirections
+                                    .actionVerifyEmailFragmentToChangePasswordFragment(userId)
+                            findNavController().navigate(action)
+                        }
+
+                    }
+
+                } catch (e: ApiException) {
+
+                    if (e.code == 400) {
+                        // Expected validation failure (wrong / expired OTP)
+                        Toast.makeText(
+                            requireContext(),
+                            getString(R.string.invalid_expired_code_message),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        // Real server issue
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.server_issue_message,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                } catch (e: Exception) {
+                    // Network / unexpected crash
+                    Toast.makeText(
+                        requireContext(),
+                        "Unexpected error. Please try again.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+
+        binding.authToolbar.setNavigationOnClickListener {
+            showExitWarning()
+        }
+
+        // System back (same behavior)
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    showExitWarning()
+                }
+            }
+        )
+
+        binding.textBackToLogin.setOnClickListener {
+            showLoginBackWarning()
+        }
+
+        binding.textResend.setOnClickListener {
+
+            binding.textResend.isEnabled = false
+            binding.textResend.alpha = 0.5f
+            lifecycleScope.launch {
+                try {
+
+                    val resp = userViewModel.resendEmailVerification(
+                        userId, email, userName, purpose
+                    )
+                    emailOtpExpiresAt = resp.emailOtpExpiresAtMillis
+                    startOtpFlow(emailOtpExpiresAt)
+
+                    Toast.makeText(
+                        requireContext(),
+                        "Verification code resent",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } catch (e: ApiException) {
+
+                    // Cooldown from server (HTTP 429)
+                    if (e.code == 429) {
+                        Toast.makeText(
+                            requireContext(),
+                            e.message ?: getString(R.string.error_resend_wait),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Unable to resend code. Try again later.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        }
+        startOtpFlow(emailOtpExpiresAt)
+    }
+
+    private fun onOtpExpired() {
+        otpTimer?.cancel()
+        otpTimer = null
+
+        binding.textTimer.text = getString(R.string.code_expired_message)
+
+        binding.buttonVerify.isEnabled = false
+        binding.buttonVerify.alpha = 0.5f
+    }
+
+    private fun onOtpActive() {
+        binding.buttonVerify.isEnabled = true
+        binding.buttonVerify.alpha = 1.0f
+
+        binding.textResend.isEnabled = false
+        binding.textResend.isClickable = false
+        binding.textResend.alpha = 0.5f
+        binding.textTimer.visibility = View.VISIBLE
+        binding.textResendTimer.visibility = View.VISIBLE
+    }
+
+    private fun startOtpFlow(otpExpiresAtMillis: Long) {
+        startOtpValidityTimer(otpExpiresAtMillis)
+        startResendCooldownTimer()
+    }
+
+    private fun startOtpValidityTimer(expiresAtMillis: Long) {
+        val remaining = expiresAtMillis - System.currentTimeMillis()
+
+        if (remaining <= 0) {
+            onOtpExpired()
+            return
+        }
+
+        otpTimer?.cancel()
+
+        onOtpActive()
+
+        otpTimer = object : CountDownTimer(remaining, 1000) {
+
+            override fun onTick(ms: Long) {
+                val min = (ms / 1000) / 60
+                val sec = (ms / 1000) % 60
+                binding.textTimer.text =
+                    getString(R.string.code_expiry_timer).format(min, sec)
+            }
+
+            override fun onFinish() {
+                onOtpExpired()
+            }
+        }.start()
+    }
+
+    private fun startResendCooldownTimer() {
+        resendTimer?.cancel()
+
+        onResendCooldownActive()
+
+        resendTimer = object : CountDownTimer(ApnaBankConstants.RESEND_COOLDOWN_MS, 1000) {
+
+            override fun onTick(ms: Long) {
+                val min = (ms / 1000) / 60
+                val sec = (ms / 1000) % 60
+                binding.textResendTimer.text =
+                    getString(R.string.resend_available_timer).format(min, sec)
+            }
+
+            override fun onFinish() {
+                onResendCooldownFinished()
+            }
+        }.start()
+    }
+
+    private fun onResendCooldownActive() {
+        binding.textResend.isEnabled = false
+        binding.textResend.isClickable = false
+        binding.textResend.alpha = 0.5f
+        binding.textResendTimer.visibility = View.VISIBLE
+    }
+
+    private fun onResendCooldownFinished() {
+        resendTimer?.cancel()
+        resendTimer = null
+
+        binding.textResendTimer.visibility = View.GONE
+        binding.textResend.isEnabled = true
+        binding.textResend.isClickable = true
+        binding.textResend.alpha = 1.0f
+    }
+
+    private fun showExitWarning() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(getString(R.string.cancel_email_verify_message))
+            .setMessage(
+                "If you leave this screen, you will be redirected to the Auth Screen. " +
+                        " the Code will become invalid and You’ll need to resend the code again to continue."
+            )
+            .setPositiveButton(R.string.text_leave) { _, _ ->
+                findNavController().navigate(
+                    VerifyEmailFragmentDirections.actionVerifyEmailFragmentToChangePasswordFragment()
+                )
+            }
+            .setNegativeButton(R.string.text_stay, null)
+            .show()
+    }
+
+    private fun showLoginBackWarning() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(getString(R.string.cancel_email_verify_message))
+            .setMessage(
+                "If you leave this screen, you will be redirected to the Login Screen. " +
+                        "The code will become invalid and you will have to restart."
+            )
+            .setPositiveButton(R.string.text_leave) { _, _ ->
+
+                findNavController().navigate(
+                    VerifyEmailFragmentDirections.actionVerifyEmailFragmentToLoginFragment()
+                )
+            }
+            .setNegativeButton(R.string.text_stay, null)
+            .show()
+    }
+
+    override fun onDestroyView() {
+        otpTimer?.cancel()
+        otpTimer = null
+        super.onDestroyView()
+    }
+}

@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.EditText
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
@@ -66,7 +67,12 @@ class FundFragment : Fragment() {
     private val groupSharedViewModel: GroupSharedViewModel by activityViewModels()
 
     val isAdmin = SessionManager.isAdmin()
-    private val moderatorGroupId = SessionManager.groupId ?: 0
+    private val moderatorGroupId = SessionManager.groupId ?: -1
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private val onCloseFundClick: (FundWithDetails) -> Unit = { fund ->
+        showCloseFundDialog(fund)
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreateView(
@@ -129,6 +135,18 @@ class FundFragment : Fragment() {
                         groupId = groupId
                     )
                 findNavController().navigate(action)
+            },
+            onCloseFundClick = onCloseFundClick,
+            onFundLoansClick = { fund ->
+
+                val action =
+                    FundFragmentDirections
+                        .actionFundFragmentToFundLoanSummaryFragment(
+                            fundId = fund.fundId,
+                            fundName = fund.fundName
+                        )
+
+                findNavController().navigate(action)
             }
         )
         binding.recyclerView.adapter = adapter
@@ -143,6 +161,63 @@ class FundFragment : Fragment() {
                     fetchAllFunds(adapter)
                     fundSharedViewModel.resetRefresh()
                 }// prevent repeated reloads
+            }
+        }
+    }
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun showCloseFundDialog(fund: FundWithDetails) {
+
+        val input = EditText(requireContext()).apply {
+            hint = "Reason for closure"
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Close Fund")
+            .setMessage("No further deposits or loans will be allowed.")
+            .setView(input)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Close Fund") { _, _ ->
+
+                val reason =
+                    input.text.toString().ifBlank {
+                        "Fund closed by moderator"
+                    }
+
+                closeFund(fund, reason)
+            }
+            .show()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun closeFund(
+        fund: FundWithDetails,
+        reason: String
+    ) {
+
+        lifecycleScope.launch {
+
+            try {
+
+                fundViewModel.closeFund(
+                    fundId = fund.fundId,
+                    reason = reason,
+                    userId = SessionManager.userId
+                )
+                fetchAllFunds(adapter)
+
+                Toast.makeText(
+                    requireContext(),
+                    "Fund closed successfully",
+                    Toast.LENGTH_LONG
+                ).show()
+
+            } catch (e: Exception) {
+
+                Toast.makeText(
+                    requireContext(),
+                    "Unable to close fund",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -257,7 +332,7 @@ class FundFragment : Fragment() {
                 }
                 dialogBinding.editTextAutoGroup.addTextChangedListener {
                     if (it.isNullOrBlank()) {
-                        groupId = 0
+                        groupId = -1
                         dialogBinding.buttonSaveFund.isEnabled =
                             validateInputs(dialogBinding, groupId, moderator)
                     }
@@ -302,77 +377,94 @@ class FundFragment : Fragment() {
         }
 
         dialogBinding.buttonSaveFund.setOnClickListener {
+            dialogBinding.buttonSaveFund.isEnabled = false
+            dialogBinding.buttonSaveFund.text = "Saving..."
             lifecycleScope.launch {
-                // add Save Fund code
-                // Calculate the Maturity Date from Period
-                val maturityDate = ApnaBankDate.calculateMatDate(
-                    dialogBinding.editTextFundStartDate.text.toString().trim(),
-                    dialogBinding.editTextPeriod.text.toString().trim().toDouble()
-                )
-                var recalculateFinance = false
-                // check if fund period or deposit amount has been updated, if so recalculate everything
-                val fundPeriod = dialogBinding.editTextPeriod.text.toString().trim().toDouble()
-                val fundName = dialogBinding.editTextFundName.text.toString().trim()
-                val recurringDepositAmount = dialogBinding.editTextDepAmount.text.toString().trim()
-                    .toDouble()
-                if (existingFund?.fundPeriod != fundPeriod || existingFund.recurringDepositAmount != recurringDepositAmount)
-                    recalculateFinance = true
-                val fundToSave = Funds(
-                    fundId = existingFund?.fundId ?: 0,
-                    fundName = fundName,
-                    fundStartDate = dialogBinding.editTextFundStartDate.text.toString().trim(),
-                    fundMaturityDate = maturityDate.trim(),
-                    fundPeriod = dialogBinding.editTextPeriod.text.toString().trim().toDouble(),
-                    depositionFrequency = dialogBinding.editTextDepFrequency.text.toString().trim(),
-                    recurringDepositAmount = dialogBinding.editTextDepAmount.text.toString().trim()
-                        .toDouble(),
-                    loanInterestRate = dialogBinding.editTextLoanIntRate.text.toString().trim()
-                        .toDouble(),
-                    lateFeeRate = dialogBinding.editTextLateFeeRate.text.toString().trim()
-                        .toDouble(),
-                    monthlyDepDateBy = dialogBinding.editTextDepositLastDate.text.toString()
-                        .toInt(),
-                    groupId = groupId,
-                    moderator = moderator,
-                    fundStatus = existingFund?.fundStatus ?: "ACTIVE",
-                    fundCode = Converters.generateFundCode(fundName)
-                )
-                val fundDetailsToSave = FundDetails(
-                    totalExpectedDeposit = existingFund?.totalExpectedDeposit ?: 0.0,
-                    totalCurrentDeposit = existingFund?.totalCurrentDeposit ?: 0.0,
-                    totalCurrentLateFee = existingFund?.totalCurrentLateFee ?: 0.0,
-                    totalCurrentInterestCollected = existingFund?.totalCurrentInterestCollected
-                        ?: 0.0,
-                    totalExpectedMaturityAmount = existingFund?.totalExpectedMaturityAmount
-                        ?: 0.0, // defaulted as no loans interest or fee, this will change
-                    totalCurrAmount = existingFund?.totalCurrAmount ?: 0.0,
-                    fundDetailsId = existingFund?.fundDetailsId ?: 0,
-                    fundId = existingFund?.fundId ?: 0
+                try {
+                    // add Save Fund code
+                    // Calculate the Maturity Date from Period
+                    val maturityDate = ApnaBankDate.calculateMatDate(
+                        dialogBinding.editTextFundStartDate.text.toString().trim(),
+                        dialogBinding.editTextPeriod.text.toString().trim().toDouble()
+                    )
+                    var recalculateFinance = false
+                    // check if fund period or deposit amount has been updated, if so recalculate everything
+                    val fundPeriod = dialogBinding.editTextPeriod.text.toString().trim().toDouble()
+                    val fundName = dialogBinding.editTextFundName.text.toString().trim()
+                    val recurringDepositAmount =
+                        dialogBinding.editTextDepAmount.text.toString().trim()
+                            .toDouble()
+                    if (existingFund?.fundPeriod != fundPeriod || existingFund.recurringDepositAmount != recurringDepositAmount)
+                        recalculateFinance = true
+                    val fundToSave = Funds(
+                        fundId = existingFund?.fundId ?: 0,
+                        fundName = fundName,
+                        fundStartDate = dialogBinding.editTextFundStartDate.text.toString().trim(),
+                        fundMaturityDate = maturityDate.trim(),
+                        fundPeriod = dialogBinding.editTextPeriod.text.toString().trim().toDouble(),
+                        depositionFrequency = dialogBinding.editTextDepFrequency.text.toString()
+                            .trim(),
+                        recurringDepositAmount = dialogBinding.editTextDepAmount.text.toString()
+                            .trim()
+                            .toDouble(),
+                        loanInterestRate = dialogBinding.editTextLoanIntRate.text.toString().trim()
+                            .toDouble(),
+                        lateFeeRate = dialogBinding.editTextLateFeeRate.text.toString().trim()
+                            .toDouble(),
+                        monthlyDepDateBy = dialogBinding.editTextDepositLastDate.text.toString()
+                            .toInt(),
+                        groupId = groupId,
+                        moderator = moderator,
+                        fundStatus = existingFund?.fundStatus ?: "ACTIVE",
+                        fundCode = Converters.generateFundCode(fundName)
+                    )
+                    val fundDetailsToSave = FundDetails(
+                        totalExpectedDeposit = existingFund?.totalExpectedDeposit ?: 0.0,
+                        totalCurrentDeposit = existingFund?.totalCurrentDeposit ?: 0.0,
+                        totalCurrentLateFee = existingFund?.totalCurrentLateFee ?: 0.0,
+                        totalCurrentInterestCollected = existingFund?.totalCurrentInterestCollected
+                            ?: 0.0,
+                        totalExpectedMaturityAmount = existingFund?.totalExpectedMaturityAmount
+                            ?: 0.0, // defaulted as no loans interest or fee, this will change
+                        totalCurrAmount = existingFund?.totalCurrAmount ?: 0.0,
+                        fundDetailsId = existingFund?.fundDetailsId ?: 0,
+                        fundId = existingFund?.fundId ?: 0
 
-                )
-                val newFundId = fundViewModel.saveOrUpdateFund(
-                    fundToSave,
-                    fundDetailsToSave,
-                    groupId,
-                    recalculateFinance
-                )
-                fetchAllFunds(adapter)
-                // set the funds in the User summary screen
-                val userDetails = userSummaryViewModel.getUserDetails(SessionManager.userId)
-                userSummaryViewModel.userFunds.postValue(userDetails!!.userFunds)
+                    )
+                    val newFundId = fundViewModel.saveOrUpdateFund(
+                        fundToSave,
+                        fundDetailsToSave,
+                        groupId,
+                        recalculateFinance
+                    )
+                    fetchAllFunds(adapter)
+                    // set the funds in the User summary screen
+                    val userDetails = userSummaryViewModel.getUserDetails(SessionManager.userId)
+                    userSummaryViewModel.userFunds.postValue(userDetails!!.userFunds)
 
-                binding.noFundMessageContainer.visibility = View.GONE
-                AlertDialog.Builder(requireContext())
-                    .setTitle("Fund update/created Successfully")
-                    .setMessage("Do you want to add/update members now?")
-                    .setPositiveButton("Yes") { _, _ ->
-                        val action = FundFragmentDirections
-                            .actionFundFragmentToFundMemberDetailsFragment(fundId = newFundId)
-                        findNavController().navigate(action)
-                    }
-                    .setNegativeButton("Cancel", null)
-                    .show()
-                dialog.dismiss()
+                    binding.noFundMessageContainer.visibility = View.GONE
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("Fund update/created Successfully")
+                        .setMessage("Do you want to add/update members now?")
+                        .setPositiveButton("Yes") { _, _ ->
+                            val action = FundFragmentDirections
+                                .actionFundFragmentToFundMemberDetailsFragment(fundId = newFundId)
+                            findNavController().navigate(action)
+                        }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                    dialog.dismiss()
+                } catch (e: Exception) {
+
+                    dialogBinding.buttonSaveFund.isEnabled = true
+                    dialogBinding.buttonSaveFund.text = getString(R.string.text_save_button)
+
+                    Toast.makeText(
+                        requireContext(),
+                        "Something went wrong. Please try again.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
 
         }
@@ -487,7 +579,9 @@ class FundFragment : Fragment() {
                         issueDate = issueDate,
                         period = period.toDouble(),
                         rateOfInt = fundRateOfInterest,
-                        maturityDate = loanMaturityDate
+                        maturityDate = loanMaturityDate,
+                        autoapprove = true,
+                        requestorId = SessionManager.userId
                     )
                 }
             }

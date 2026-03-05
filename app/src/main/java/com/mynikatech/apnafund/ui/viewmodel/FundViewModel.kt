@@ -84,7 +84,7 @@ class FundViewModel : ViewModel() {
 
     suspend fun addFundMembers(fundId: Int, selectedUserIds: List<Int>) {
         // get existing number of fund members
-        if(selectedUserIds.isNotEmpty()) {
+        if (selectedUserIds.isNotEmpty()) {
             val totExitingFundMembers = fundRepository.fetchAllMembersforFund(fundId).size
             val existingFundDetails = fundRepository.getFundDetails(fundId)
             val existingFund = fundRepository.getFund(fundId)!!
@@ -134,6 +134,21 @@ class FundViewModel : ViewModel() {
             "${it.firstName} ${it.lastName}".trim()
                 .equals(name.trim(), ignoreCase = true)
         }
+    }
+
+    suspend fun closeFund(fundId: Int, reason: String, userId: Int) {
+
+        try {
+
+            fundRepository.closeFund(
+                fundId,
+                userId,
+                reason
+            )
+
+        } catch (e: Exception) {
+        }
+
     }
 
 }

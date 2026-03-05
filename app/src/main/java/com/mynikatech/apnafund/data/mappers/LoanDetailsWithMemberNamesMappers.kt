@@ -22,7 +22,8 @@ fun LoanDetailsWithMemberNamesDto.toEntity(): LoanDetailsWithMemberNames =
         userId = userId,
         loanDetailsId = loanDetailsId,
         currTotalIntPaid = currTotalIntPaid,
-        totalInterest = totalInterest
+        totalInterest = totalInterest,
+        workflowStatus = workflowStatus
     )
 
 fun LoanDetailsWithMemberNames.toDto(): LoanDetailsWithMemberNamesDto =
@@ -44,7 +45,8 @@ fun LoanDetailsWithMemberNames.toDto(): LoanDetailsWithMemberNamesDto =
         userId = userId,
         loanDetailsId = loanDetailsId,
         currTotalIntPaid = currTotalIntPaid,
-        totalInterest = totalInterest
+        totalInterest = totalInterest,
+        workflowStatus = workflowStatus
     )
 
 fun List<LoanDetailsWithMemberNamesDto>.toEntity(): List<LoanDetailsWithMemberNames> = map { it.toEntity() }

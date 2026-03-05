@@ -4,7 +4,7 @@ object ApnaBankConstants {
 
     const val ACTIVE_STATUS = "Active"
     const val INACTIVE_STATUS = "InActive"
-    const val CLOSED_STATUS = "Closed"
+    const val CLOSED_STATUS = "CLOSED"
     const val ADD_GROUP_PRIV = "ADDGROUP"
     const val ADD_USER_PRIV = "ADDUSER"
     const val ADD_FUND_PRIV = "ADDFUND"
@@ -26,7 +26,7 @@ object ApnaBankConstants {
     const val INVALID_PHONE_ERROR_MESSAGE = "Enter 10-digit phone (not starting with 0)"
     const val WARNING_CONFIRMATION = "Are you sure you want to"
     const val ZERO_AMOUNT = "₹0.0"
-    const val ADMIN_EMAIL = "sunilagl@gmail.com"
+    const val ADMIN_EMAIL = "apnafundaws@gmail.com"
     const val ROLE_MODERATOR = "MODERATOR"
     const val ROLE_MEMBER = "MEMBER"
     const val STATUS_PENDING = "PENDING"
@@ -34,6 +34,9 @@ object ApnaBankConstants {
     const val STATUS_ACTIVE = "ACTIVE"
     const val STATUS_INACTIVE = "INACTIVE"
     const val MESSAGE_NOT_PART_OF_ANY_GROUP = "Group: Not part of any Group yet"
+    const val TYPING_DEBOUNCE_MS = 2000L
+    const val DAILY_MESSAGE_LIMIT = 100
+    const val RESEND_COOLDOWN_MS = 2 * 60 * 1000L // 2 minutes
 
 
 }

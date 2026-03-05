@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 029-approval-function-update
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/029-approval-function-update.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

@@ -103,6 +103,15 @@
             android:text="Verify OTP"
             android:textSize="14sp"
             android:visibility="gone" />
+        <!-- Cancel phone login button -->
+        <Button
+            android:id="@+id/cancelOtpButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Cancel"
+            android:visibility="gone"
+            android:minHeight="36dp" />
 
         <!-- Login Button -->
         <Button

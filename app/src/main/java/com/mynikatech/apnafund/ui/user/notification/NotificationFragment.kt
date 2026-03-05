@@ -9,11 +9,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.appbar.MaterialToolbar
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.databinding.FragmentNotificationBinding
+import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.NotificationSharedViewModel
 
 class NotificationFragment : Fragment() {
@@ -21,7 +24,7 @@ class NotificationFragment : Fragment() {
 
     private lateinit var adapter: NotificationAdapter
 
-    val notificationViewModel: NotificationSharedViewModel by viewModels()
+    val notificationViewModel: NotificationSharedViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,15 +44,30 @@ class NotificationFragment : Fragment() {
             setDisplayShowHomeEnabled(true)
             title = "Notifications"
         }
-        setHasOptionsMenu(true)
+        binding.recyclerView.layoutManager =
+            LinearLayoutManager(requireContext())
+
+        adapter = NotificationAdapter { notification ->
+            if (notification.readFlag) return@NotificationAdapter
+
+            notificationViewModel.markAsRead(
+                notification.userNotificationId,
+                SessionManager.userId
+            )
+        }
+        binding.recyclerView.adapter = adapter
+
         notificationViewModel.notifications.observe(viewLifecycleOwner) { list ->
-            if (list.isNullOrEmpty())
+            if (list.isNullOrEmpty()) {
                 binding.textViewNoNotifications.visibility = View.VISIBLE
-            else {
-                adapter = NotificationAdapter(list)
-                binding.recyclerView.adapter = adapter
+            } else {
+                binding.textViewNoNotifications.visibility = View.GONE
+                adapter.updateList(list)
             }
         }
+
+        notificationViewModel.loadNotifications(SessionManager.userId)
+
         // to add notifications impl later for now consider there is no notifications
 
 

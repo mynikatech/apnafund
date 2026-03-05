@@ -109,4 +109,18 @@ interface GroupsSql {
 
     @SqlQuery("""SELECT * FROM get_group_members_for_fund(:fundId)""")
     fun getGroupMembersForFundOnce(@Bind("fundId") fundId: Int): List<GroupMembersDto>
+
+    @SqlQuery("""
+    SELECT activate_group(:groupId)
+    """)
+    fun activateGroup(
+        @Bind("groupId") groupId: Int
+    ): Boolean
+
+    @SqlQuery("""
+    SELECT reject_group(:groupId)
+    """)
+    fun rejectGroup(
+        @Bind("groupId") groupId: Int
+    ): Boolean
 }

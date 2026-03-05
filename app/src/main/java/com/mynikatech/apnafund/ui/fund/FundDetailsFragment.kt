@@ -20,6 +20,7 @@ import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.model.FundWithDetails
 import com.mynikatech.apnafund.data.model.LoanDetailsWithMemberNames
 import com.mynikatech.apnafund.databinding.FragmentFundDetailsBinding
+import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.loan.AddLoanDialog
 import com.mynikatech.apnafund.ui.user.UserFundDepositsFragmentArgs
 import com.mynikatech.apnafund.ui.viewmodel.FundViewModel
@@ -221,7 +222,9 @@ class FundDetailsFragment : Fragment() {
                         issueDate = issueDate,
                         period = period.toDouble(),
                         rateOfInt = fundRateOfInterest,
-                        maturityDate = loanMaturityDate
+                        maturityDate = loanMaturityDate,
+                        autoapprove = true,
+                        requestorId = SessionManager.userId
                     )
                 }
             }

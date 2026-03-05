@@ -11,6 +11,7 @@ import com.mynikatech.apnafund.data.model.FundWithDetails
 import com.mynikatech.apnafund.data.model.Funds
 import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.net.FundsApi
+import com.mynikatech.apnafund.net.dto.CloseFundRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -150,5 +151,21 @@ class FundRepository(
     suspend fun insertFundDetails(details: FundDetails) {
         api.insertFundDetails(details.toDto())
     }
+
+    suspend fun closeFund(
+        fundId: Int,
+        userId: Int,
+        reason: String
+    ) {
+
+        api.closeFund(
+            fundId,
+            CloseFundRequest(
+                closedBy = userId,
+                reason = reason
+            )
+        )
+    }
+
 
 }

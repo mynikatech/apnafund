@@ -1,0 +1,10 @@
+databaseChangeLog:
+    - changeSet:
+          id: 005-2026-01-13-get-pending-moderator-requests_1
+          author: apnafund
+          changes:
+              - sqlFile:
+                    path: 005-2026-01-13-get_pending_moderator_requests.sql
+                    relativeToChangelogFile: true
+                    splitStatements: false
+                    stripComments: false

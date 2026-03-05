@@ -1,18 +1,31 @@
 package com.mynikatech.apnafund.net
 
+import com.mynikatech.apnafund.net.api.ApiResponse
+import com.mynikatech.apnafund.net.dto.ChangePasswordRequest
+import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
 import com.mynikatech.apnafund.net.dto.FundWithDetailsDto
 import com.mynikatech.apnafund.net.dto.FundsDto
 import com.mynikatech.apnafund.net.dto.GroupMembersDto
 import com.mynikatech.apnafund.net.dto.GroupsDto
+import com.mynikatech.apnafund.net.dto.LoginUserResponse
+import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
+import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
+import com.mynikatech.apnafund.net.dto.RegisterOrUpdateUserRequest
+import com.mynikatech.apnafund.net.dto.SaveOrUpdateUserResponse
+import com.mynikatech.apnafund.net.dto.SendEmailVerificationReq
+import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
+import com.mynikatech.apnafund.net.dto.UnreadCountDto
+import com.mynikatech.apnafund.net.dto.UpdateFirebaseUidReq
 import com.mynikatech.apnafund.net.dto.UserDetailsDto
 import com.mynikatech.apnafund.net.dto.UserFundDetailsDto
 import com.mynikatech.apnafund.net.dto.UserNotificationsDto
-import com.mynikatech.apnafund.net.dto.UserPasswordHistoryDto
 import com.mynikatech.apnafund.net.dto.UserPinHistoryDto
 import com.mynikatech.apnafund.net.dto.UserProfileDto
 import com.mynikatech.apnafund.net.dto.UserWithGroupDto
 import com.mynikatech.apnafund.net.dto.UsersDto
 import com.mynikatech.apnafund.net.dto.ValidateUserRequest
+import com.mynikatech.apnafund.net.dto.VerifyEmailReq
+import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.delete
@@ -25,6 +38,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+
 
 class UsersApiKtor(
     private val clientProvider: () -> io.ktor.client.HttpClient = { HttpClientProvider.client }
@@ -91,19 +105,31 @@ class UsersApiKtor(
             0
         }
 
-    override suspend fun getUserByEmail(email: String): UsersDto? =
-        try {
-            client.get("/users/get/by-email") { parameter("email", email) }.unwrap<UsersDto>()
-        } catch (_: ClientRequestException) {
-            null
-        }
+    override suspend fun getUserByEmail(email: String): LoginUserResponse =
+        safeApiCall {
+            client.get("/users/get/by-email") {
+                parameter("email", email)
+            }
+        }.unwrap()
 
-    override suspend fun getUserByPhone(phone: String): UsersDto? =
-        try {
-            client.get("/users/get/by-phone") { parameter("phone", phone) }.unwrap<UsersDto>()
-        } catch (_: ClientRequestException) {
-            null
-        }
+    override suspend fun getUserByPhone(phone: String): UsersDto =
+        safeApiCall {
+            client.get("/users/get/by-phone") {
+                parameter("phone", phone)
+            }
+        }.unwrap()
+
+    override suspend fun validateUserPasswordChange(
+        userId: Int,
+        password: String
+    ) {
+        safeApiCall {
+            client.get("/users/check/password-change") {
+                parameter("userId", userId)
+                parameter("password", password)
+            }
+        }.unwrapNoContent()
+    }
 
     override suspend fun validateUser(email: String, password: String): UsersDto? =
         try {
@@ -127,7 +153,6 @@ class UsersApiKtor(
         }.unwrap<Boolean>()
 
     // ---- with group / profiles ----
-
     override suspend fun getUserWithGroup(groupId: Int?): List<UserWithGroupDto> =
         client.get("/users/get/with-group") { parameter("groupId", groupId) }
             .unwrap<List<UserWithGroupDto>>()
@@ -160,12 +185,13 @@ class UsersApiKtor(
             emptyList()
         }
 
-    override suspend fun updateUserPassword(id: Int, passwordHash: String): Boolean {
-        val response: HttpResponse = client.put("/users/update/$id/password") {
-            contentType(ContentType.Application.Json)
-            setBody(UserPasswordHistoryDto(passwordHash = passwordHash, userId = id))
-        }
-        return response.status == HttpStatusCode.NoContent || response.status == HttpStatusCode.OK
+    override suspend fun updateUserPassword(id: Int, newPassword: String) {
+        safeApiCall {
+            client.post("/users/update/$id/password") {
+                contentType(ContentType.Application.Json)
+                setBody(ChangePasswordRequest(newPassword))
+            }
+        }.unwrapNoContent()
     }
 
     override suspend fun updateUserPIN(id: Int, pinHash: String): Boolean {
@@ -238,4 +264,83 @@ class UsersApiKtor(
         } catch (_: Exception) {
             null
         }
+
+    override suspend fun registerModeratorAndGroup(
+        regModReq: RegisterModeratorRequest
+    ): ModeratorRegistrationResponse {
+        return client.post("/users/groups/register-moderator") {
+            contentType(ContentType.Application.Json)
+            setBody(regModReq)
+        }.unwrap<ModeratorRegistrationResponse>()
+    }
+
+    override suspend fun registerOrUpdateUser(registerOrUpdateUserRequest: RegisterOrUpdateUserRequest): SaveOrUpdateUserResponse {
+        return client.post("/users/register-update") {
+            contentType(ContentType.Application.Json)
+            setBody(registerOrUpdateUserRequest)
+        }.unwrap<SaveOrUpdateUserResponse>()
+    }
+
+    override suspend fun verifyEmailOtp(req: VerifyEmailReq): Boolean {
+        return client.post("/users/email/verify/confirm") {
+            contentType(ContentType.Application.Json)
+            setBody(req)
+        }.unwrap<Boolean>()
+    }
+
+    override suspend fun sendEmailVerification(req: SendEmailVerificationReq): SendEmailVerificationResp {
+        return client.post("/users/email/verify/send") {
+            contentType(ContentType.Application.Json)
+            setBody(req)
+        }.unwrap<SendEmailVerificationResp>()
+    }
+
+    override suspend fun isEmailVerified(userId: Int): Boolean {
+        return client.get("/users/is-email-verified/$userId")
+            .unwrap<Boolean>()
+    }
+
+    override suspend fun updateFirebaseUserId(req: UpdateFirebaseUidReq): Boolean {
+        val response = client.post("/users/firebase-uid/${req.userId}") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                mapOf("firebaseUserId" to req.firebaseUid)
+            )
+        }
+        return response.status == HttpStatusCode.NoContent
+    }
+    override suspend fun getFirebaseTokenForUser(userId: Int): FirebaseTokenResp {
+        return client.post("/users/firebase-token/$userId")
+            .unwrap<FirebaseTokenResp>()
+    }
+
+    override suspend fun getUnreadNotificationCount(userId: Int): Int {
+        return try {
+            val response: HttpResponse =
+                client.get("/notifications/users/$userId/unread-count")
+
+            if (response.status == HttpStatusCode.OK) {
+
+                val body: ApiResponse<UnreadCountDto> = response.body()
+
+                body.data?.unreadCount ?: 0
+            } else {
+                0
+            }
+
+        } catch (e: Exception) {
+            0
+        }
+    }
+
+    override suspend fun markNotificationRead(notificationId: Int): Boolean {
+        return try {
+            val response: HttpResponse = client.post(
+                "/notifications/users/$notificationId/read"
+            )
+            response.status == HttpStatusCode.OK
+        } catch (e: Exception) {
+            false
+        }
+    }
 }

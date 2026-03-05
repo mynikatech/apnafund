@@ -130,4 +130,19 @@ interface FundsSql {
 
     @SqlQuery("""SELECT add_fund_with_details(CAST(:fund AS jsonb), CAST(:details AS jsonb))""")
     fun addFundWithDetails(@Bind("fund") fundJson: String, @Bind("details") detailsJson: String): Int
+
+    @SqlQuery("""
+    SELECT close_fund(
+        :fundId,
+        :closedBy,
+        :reason
+    )
+""")
+    fun closeFund(
+        @Bind("fundId") fundId: Int,
+        @Bind("closedBy") closedBy: Int,
+        @Bind("reason") reason: String
+    ): Boolean
+
+
 }

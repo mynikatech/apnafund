@@ -9,7 +9,8 @@ data class FundMemberWithNameDto(
     val fundId: Int,
     val joiningDate: String,
     val firstName: String,
-    val lastName: String
+    val lastName: String,
+    val emailId: String
 ) {
     val fullName: String get() = "$firstName $lastName"
 }

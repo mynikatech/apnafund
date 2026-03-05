@@ -1,13 +1,23 @@
 package com.mynikatech.apnafund.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.mynikatech.apnafund.ApnaFundApplication
-import com.mynikatech.apnafund.data.model.GroupMembers
+import com.mynikatech.apnafund.constants.ApnaBankConstants
+import com.mynikatech.apnafund.data.mappers.toDto
 import com.mynikatech.apnafund.data.model.PendingModeratorRequest
 import com.mynikatech.apnafund.data.model.UserRoles
 import com.mynikatech.apnafund.data.model.UserWithGroup
 import com.mynikatech.apnafund.data.model.Users
-import com.mynikatech.apnafund.util.ApnaBankDate
+import com.mynikatech.apnafund.net.ApiException
+import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
+import com.mynikatech.apnafund.net.dto.LoginUserResponse
+import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
+import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
+import com.mynikatech.apnafund.net.dto.RegisterOrUpdateUserRequest
+import com.mynikatech.apnafund.net.dto.SaveOrUpdateUserResponse
+import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
+import com.mynikatech.apnafund.net.dto.UserSaveSource
 import com.mynikatech.apnafund.util.Converters
 import kotlinx.coroutines.flow.Flow
 
@@ -45,38 +55,20 @@ class UserViewModel : ViewModel() {
         return exists
     }
 
-    suspend fun saveOrUpdateUser(user: Users, groupId: Int = 0): Int {
-        // 1) Create/Update on server, then cache in Room via the repo helpers
-        val userId = try {
-            if (user.userId == 0) {
-                userRolesRepository.createUserRemoteAndCache(user)   // returns new id
-            } else {
-                userRolesRepository.updateUserRemoteAndCache(user)   // remote + local
-                user.userId
-            }
-        } catch (t: Throwable) {
-            if (user.userId == 0) {
-                val id = userRolesRepository.createUserAndReturnId(user)
-                id
-            } else {
-                userRolesRepository.updateUser(user.userId, user)
-                user.userId
-            }
-        }
+    suspend fun saveOrUpdateUser(
+        user: Users,
+        groupId: Int = 0,
+        userSaveSource: UserSaveSource
+    ): Result<SaveOrUpdateUserResponse> {
 
-        // Ensure MEMBER role (remote + cache)
-        userRolesRepository.ensureRoleRemoteAndCache(userId, roleCode = "MEMBER")
+        val regUpdReq = RegisterOrUpdateUserRequest(
+            user = user.toDto(),
+            source = userSaveSource,
+            roleCode = ApnaBankConstants.ROLE_MEMBER,
+            groupId = groupId
+        )
 
-        // Optional: ensure group membership & moderator role
-        if (groupId > 0) {
-            userRolesRepository.ensureGroupMemberRemoteAndCache(
-                GroupMembers(userId = userId, groupId = groupId, joiningDate = ApnaBankDate.getCurrentDate())
-            )
-            // If no moderator in this group, grant current user MODERATOR
-            userRolesRepository.ensureModeratorIfNoneRemoteAndCache(userId, groupId)
-        }
-
-        return userId
+        return userRolesRepository.registerOrUpdateUser(regUpdReq)
     }
 
     suspend fun isDuplicate(email: String, phone: String, excludeUserId: Int = 0): Boolean {
@@ -106,8 +98,7 @@ class UserViewModel : ViewModel() {
     }
 
     suspend fun changeUserPassword(userId: Int, newPassword: String) {
-        val hash = Converters.hashPassword(newPassword)
-        userRolesRepository.updateUserPassword(userId, hash)
+        userRolesRepository.updateUserPassword(userId, newPassword)
     }
 
     suspend fun changeUserPIN(userId: Int, newPIN: String) {
@@ -121,7 +112,7 @@ class UserViewModel : ViewModel() {
         return userRolesRepository.checkUserPIN(userId, hashPIN)
     }
 
-    suspend fun getUserByEmail(email: String): Users? {
+    suspend fun getUserByEmail(email: String): LoginUserResponse? {
 
         return userRolesRepository.getUserByEmail(email)
     }
@@ -142,12 +133,40 @@ class UserViewModel : ViewModel() {
         return userRolesRepository.getPendingModeratorRequests()
     }
 
-    suspend fun approveModeratorAndGroup(userId: Int, roleId: Int, groupId: Int) {
-        return userRolesRepository.approveModeratorAndGroup(userId, roleId, groupId)
+    suspend fun approveModeratorAndGroup(
+        userId: Int,
+        roleId: Int,
+        groupId: Int,
+        moderatorName: String,
+        moderatorEmail: String,
+        groupName: String
+    ) {
+        return userRolesRepository.approveModeratorAndGroup(
+            userId,
+            roleId,
+            groupId,
+            moderatorName,
+            moderatorEmail,
+            groupName
+        )
     }
 
-    suspend fun rejectModeratorAndGroup(userId: Int, roleId: Int, groupId: Int) {
-        return userRolesRepository.rejectModeratorAndGroup(userId, roleId, groupId)
+    suspend fun rejectModeratorAndGroup(
+        userId: Int,
+        roleId: Int,
+        groupId: Int,
+        moderatorName: String,
+        moderatorEmail: String,
+        groupName: String
+    ) {
+        return userRolesRepository.rejectModeratorAndGroup(
+            userId,
+            roleId,
+            groupId,
+            moderatorName,
+            moderatorEmail,
+            groupName
+        )
     }
 
     suspend fun getUserWithGroup(groupId: Int): Flow<List<UserWithGroup>> {
@@ -167,5 +186,47 @@ class UserViewModel : ViewModel() {
             getAllUsersWithGroup()
         else
             getUserWithGroup(moderatorGroup)
+    }
+
+    suspend fun registerModeratorAndGroup(
+        regModReq: RegisterModeratorRequest
+    ): Result<ModeratorRegistrationResponse> {
+
+        return userRolesRepository.registerModeratorAndGroup(regModReq)
+    }
+
+    suspend fun registerOrUpdateUser(regUpdateReq: RegisterOrUpdateUserRequest) {
+        userRolesRepository.registerOrUpdateUser(regUpdateReq)
+    }
+
+    suspend fun verifyEmailOtp(otp: String, userId: Int, purpose: String): Boolean {
+        return userRolesRepository.verifyEmailOtp(otp, userId, purpose)
+    }
+
+    suspend fun resendEmailVerification(
+        userId: Int,
+        email: String,
+        userName: String,
+        purpose: String
+    ): SendEmailVerificationResp {
+        return userRolesRepository.resendEmailVerification(userId, email, userName, purpose)
+    }
+
+    suspend fun isEmailVerified(userId: Int): Boolean {
+        return userRolesRepository.isEmailVerified(userId)
+    }
+
+    suspend fun updateFirebaseUserIdSafely(userId: Int, firebaseUid: String): Boolean {
+        return try {
+            userRolesRepository.updateFirebaseUserId(userId, firebaseUid)
+            true
+        } catch (e: ApiException) {
+            Log.e("AUTH", "Failed to update firebase uid", e)
+            false
+        }
+    }
+
+    suspend fun getFirebaseTokenForUser(userId: Int): FirebaseTokenResp {
+        return userRolesRepository.getFirebaseTokenForUser(userId)
     }
 }

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 025-approval-request-workflow
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/025-approval-request-workflow.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

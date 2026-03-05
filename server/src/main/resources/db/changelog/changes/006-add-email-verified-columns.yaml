@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-add-email-verified-columns
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/006-add-email-verified-columns.sql
+            relativeToChangelogFile: true

@@ -20,5 +20,6 @@ data class LoanCmplDetailsDto(
     val currPrincipal: Double,
     val origPrincipal: Double,
     val totalInterest: Double,
-    val currTotalIntPaid: Double
+    val currTotalIntPaid: Double,
+    val workflowStatus: String
 )

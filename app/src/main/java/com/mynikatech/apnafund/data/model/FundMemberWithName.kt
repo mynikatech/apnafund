@@ -6,5 +6,6 @@ data class FundMemberWithName(
     val fundId: Int,
     val joiningDate: String,
     val firstName: String,
-    val lastName: String
+    val lastName: String,
+    val emailId: String
 )

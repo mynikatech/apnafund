@@ -5,6 +5,8 @@ import com.mynikatech.apnafund.net.dto.UpdateGroupStatusReq
 import com.mynikatech.apnafund.net.dto.UpdateUserRoleStatusReq
 import com.mynikatech.apnafund.server.api.respondError
 import com.mynikatech.apnafund.server.api.respondOk
+import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
+import com.mynikatech.apnafund.server.common.messaging.factories.UserNotificationFactory
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.routing.Route
@@ -14,12 +16,19 @@ import io.ktor.server.routing.route
 
 
 
-fun Route.adminRoutes(sql: AdminSql) = route("/admin") {
+fun Route.adminRoutes(sql: AdminSql, eventDispatchService: EventDispatchService) = route("/admin") {
 
     // Approve moderator + group
     post("approve/moderator-and-group") {
         val req = call.receive<ApproveRejectReq>()
         sql.approveModeratorAndGroup(req.userId, req.roleId, req.groupId)
+        val event = UserNotificationFactory.moderatorGroupApproved(
+            moderatorUserId = req.userId.toString(),
+            moderatorName = req.userName,
+            moderatorEmail = req.userEmail,
+            groupName = req.groupName
+        )
+        eventDispatchService.dispatchUser(event)
         call.respondOk(Unit, HttpStatusCode.NoContent)
     }
 
@@ -27,6 +36,16 @@ fun Route.adminRoutes(sql: AdminSql) = route("/admin") {
     post("reject/moderator-and-group") {
         val req = call.receive<ApproveRejectReq>()
         sql.rejectModeratorAndGroup(req.userId, req.roleId, req.groupId)
+
+        val event = UserNotificationFactory.moderatorGroupRejected(
+            moderatorUserId = req.userId.toString(),
+            moderatorName = req.userName,
+            moderatorEmail = req.userEmail,
+            groupName = req.groupName,
+            reason = "" // optional field
+        )
+
+        eventDispatchService.dispatchUser(event)
         call.respondOk(Unit, HttpStatusCode.NoContent)
     }
 

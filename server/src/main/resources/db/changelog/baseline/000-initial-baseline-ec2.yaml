@@ -1,0 +1,241 @@
+databaseChangeLog:
+  # ------------- 0. Create Schema (idempotent) -------------
+  - changeSet:
+      id: 000-create-schema
+      author: devuser
+      labels: baselineSchema
+      context: dev
+      preConditions:
+        - sqlCheck:
+            expectedResult: "0"
+            sql: "SELECT COUNT(*) FROM pg_namespace WHERE nspname = '${schemaName}'"
+          onFail: MARK_RAN
+      changes:
+          - sql: |
+                CREATE SCHEMA IF NOT EXISTS "${schemaName}";
+      rollback:
+          - sql: "DROP SCHEMA IF EXISTS ${schemaName} CASCADE;"
+
+  # ------------- 1. Set search_path -------------
+  - changeSet:
+      id: 000-set-search-path
+      author: devuser
+      labels: baselineSchema
+      context: dev
+      changes:
+        - sql: |
+            SET search_path TO "${schemaName}", pg_catalog;
+
+  # ------------- 2. Bootstrap DB Roles -------------
+  - changeSet:
+      id: 005-bootstrap-db-roles
+      author: devuser
+      labels: baselineSchema
+      context: dev
+      changes:
+        - sqlFile:
+            path: 0000-ec2-dev-bootstrap.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  # ------------- 3. Baseline Objects (tables, indexes, types, roles, admin, etc.) -------------
+
+  - changeSet:
+      id: 010-tables
+      author: devuser
+      labels: baselineObjects
+      context: dev
+      changes:
+        - sqlFile:
+            path: sql/010-tables.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: true
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 020-index
+      author: devuser
+      labels: baselineObjects
+      context: dev
+      changes:
+        - sqlFile:
+            path: sql/020-index.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: true
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 030-types
+      author: devuser
+      labels: baselineObjects
+      context: dev
+      changes:
+        - sqlFile:
+            path: sql/030-types.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 040-roles
+      author: devuser
+      labels: baselineObjects
+      context: dev
+      changes:
+        - sqlFile:
+            path: sql/040-roles.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 050-admin
+      author: devuser
+      labels: baselineObjects
+      context: dev
+      changes:
+        - sqlFile:
+            path: sql/050-admin.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 060-users
+      author: devuser
+      labels: baselineObjects
+      context: dev
+      changes:
+        - sqlFile:
+            path: sql/060-users.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 070-fund
+      author: devuser
+      labels: baselineObjects
+      context: dev
+      changes:
+        - sqlFile:
+            path: sql/070-fund.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 080-deposit
+      author: devuser
+      labels: baselineObjects
+      context: dev
+      changes:
+        - sqlFile:
+            path: sql/080-deposit.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 090-group
+      author: devuser
+      labels: baselineObjects
+      context: dev
+      changes:
+        - sqlFile:
+            path: sql/090-group.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 100-loans
+      author: devuser
+      labels: baselineObjects
+      context: dev
+      changes:
+        - sqlFile:
+            path: sql/100-loans.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 110-notifications
+      author: devuser
+      labels: baselineObjects
+      context: dev
+      changes:
+        - sqlFile:
+            path: sql/110-notifications.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 120-password
+      author: devuser
+      labels: baselineObjects
+      context: dev
+      changes:
+        - sqlFile:
+            path: sql/120-password.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  - changeSet:
+      id: 130-pin
+      author: devuser
+      labels: baselineObjects
+      context: dev
+      changes:
+        - sqlFile:
+            path: sql/130-pin.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"
+
+  # ------------- 4. Seed Data (all envs) -------------
+  - changeSet:
+      id: 200-dml-setup
+      author: devuser
+      labels: baselineObjects
+      context: all
+      changes:
+        - sqlFile:
+            path: sql/200-dml-setup.sql
+            relativeToChangelogFile: true
+            expandExpressions: true
+            splitStatements: false
+            stripComments: false
+            endDelimiter: ";"

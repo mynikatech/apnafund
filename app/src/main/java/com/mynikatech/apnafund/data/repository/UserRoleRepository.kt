@@ -3,6 +3,8 @@ package com.mynikatech.apnafund.data.repository
 // Removed: androidx.room.withTransaction
 // Removed: AppLocator
 
+import android.util.Log
+import com.mynikatech.apnafund.Exception.InvalidSessionException
 import com.mynikatech.apnafund.data.model.GroupMembers
 import com.mynikatech.apnafund.data.model.PendingModeratorRequest
 import com.mynikatech.apnafund.data.model.Roles
@@ -15,15 +17,28 @@ import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.data.mappers.toDto
 import com.mynikatech.apnafund.data.mappers.toEntity
 import com.mynikatech.apnafund.net.AdminApi
+import com.mynikatech.apnafund.net.ApiException
 import com.mynikatech.apnafund.net.GroupsApi
 import com.mynikatech.apnafund.net.PasswordHistoryApi
 import com.mynikatech.apnafund.net.PinHistoryApi
 import com.mynikatech.apnafund.net.RolesApi
 import com.mynikatech.apnafund.net.UserRolesApi
 import com.mynikatech.apnafund.net.UsersApi
+import com.mynikatech.apnafund.net.dto.ChangePasswordRequest
+import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
+import com.mynikatech.apnafund.net.dto.LoginUserResponse
+import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
+import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
+import com.mynikatech.apnafund.net.dto.RegisterOrUpdateUserRequest
 import com.mynikatech.apnafund.net.dto.RolesDto
-import com.mynikatech.apnafund.net.dto.UserProfileDto
+import com.mynikatech.apnafund.net.dto.SaveOrUpdateUserResponse
+import com.mynikatech.apnafund.net.dto.SendEmailVerificationReq
+import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
+import com.mynikatech.apnafund.net.dto.UpdateFirebaseUidReq
 import com.mynikatech.apnafund.net.dto.UsersDto
+import com.mynikatech.apnafund.net.dto.VerifyEmailReq
+import com.mynikatech.apnafund.net.unwrap
+import io.ktor.client.request.get
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -68,7 +83,7 @@ class UserRoleRepository(
         usersApi.addUser(user.toDto())
     }
 
-    suspend fun updateUserRemoteAndCache(user: Users): Boolean = withContext(Dispatchers.IO) {
+    suspend fun updateUserRemote(user: Users): Boolean = withContext(Dispatchers.IO) {
         val id = requireNotNull(user.userId.takeIf { it != 0 }) { "userId required" }
         usersApi.updateUser(id, user.toDto())
     }
@@ -170,10 +185,17 @@ class UserRoleRepository(
         return userRolesApi.getAllUserRoleIds(userId)
     }
 
-    suspend fun getUserProfile(userId: Int): List<UserProfile> = withContext(Dispatchers.IO) {
-        val remote: List<UserProfileDto> = usersApi.getUserProfile(userId).orEmpty()
-        remote.map { it.toEntity() } // network only
-    }
+    suspend fun getUserProfile(userId: Int): List<UserProfile> =
+        withContext(Dispatchers.IO) {
+
+            val remote = usersApi.getUserProfile(userId)
+
+            if (remote.isNullOrEmpty()) {
+                throw InvalidSessionException("User profile not found for userId=$userId")
+            }
+
+            remote.map { it.toEntity() }
+        }
 
     suspend fun insertPasswordHistory(entry: UserPasswordHistory) {
         passwordHistoryApi.insertPasswordHistory(entry)
@@ -185,6 +207,10 @@ class UserRoleRepository(
 
     suspend fun getLast3PasswordHashes(userId: Int): List<String> {
         return passwordHistoryApi.getLast3PasswordHashes(userId)
+    }
+
+    suspend fun validateUserPasswordChange(userId: Int, password: String) {
+        return usersApi.validateUserPasswordChange(userId, password)
     }
 
     suspend fun getLast3PINHashes(userId: Int): List<String> {
@@ -199,8 +225,8 @@ class UserRoleRepository(
         return pinHistoryApi.getLastPINChangeDate(userId)
     }
 
-    suspend fun getUserByEmail(email: String): Users? {
-        return usersApi.getUserByEmail(email)?.toEntity()
+    suspend fun getUserByEmail(email: String): LoginUserResponse? {
+        return usersApi.getUserByEmail(email)
     }
 
     suspend fun getUserByPhone(phone: String): Users? {
@@ -224,12 +250,12 @@ class UserRoleRepository(
         return userRolesApi.getPendingModeratorRequests().toEntity()
     }
 
-    suspend fun approveModeratorAndGroup(userId: Int, roleId: Int, groupId: Int) {
-        adminApi.approveModeratorAndGroup(userId, roleId, groupId)
+    suspend fun approveModeratorAndGroup(userId: Int, roleId: Int, groupId: Int, moderatorName: String,moderatorEmail: String, groupName: String) {
+        adminApi.approveModeratorAndGroup(userId, roleId, groupId, moderatorName,moderatorEmail,groupName)
     }
 
-    suspend fun rejectModeratorAndGroup(userId: Int, roleId: Int, groupId: Int) {
-        adminApi.rejectModeratorAndGroup(userId, roleId, groupId)
+    suspend fun rejectModeratorAndGroup(userId: Int, roleId: Int, groupId: Int, moderatorName: String,moderatorEmail: String, groupName: String) {
+        adminApi.rejectModeratorAndGroup(userId, roleId, groupId, moderatorName,moderatorEmail,groupName)
     }
 
     fun getUserWithGroup(groupId: Int): Flow<List<UserWithGroup>> =
@@ -250,11 +276,10 @@ class UserRoleRepository(
         groupsApi.addGroupMember(groupMembers)
     }
 
-    suspend fun updateUserPassword(userId: Int, passwordHash: String) =
+    suspend fun updateUserPassword(userId: Int, newPassword: String) =
         withContext(Dispatchers.IO) {
             // Remote only; server should handle history.
-            val ok = usersApi.updateUserPassword(userId, passwordHash)
-            if (!ok) error("Server rejected password update (userId=$userId)")
+            usersApi.updateUserPassword(userId, newPassword)
         }
 
     suspend fun updateUserPIN(userId: Int, pinHash: String) =
@@ -272,5 +297,71 @@ class UserRoleRepository(
     // One-shot details (network only)
     suspend fun loadUser(id: Int, forceRefresh: Boolean = true): Users? {
         return usersApi.getUser(id)?.toEntity()
+    }
+
+    suspend fun registerModeratorAndGroup(
+        regModReq: RegisterModeratorRequest
+    ): Result<ModeratorRegistrationResponse> = withContext(Dispatchers.IO) {
+        try {
+            val resp = usersApi.registerModeratorAndGroup(regModReq)
+            Result.success(resp)
+        } catch (e: ApiException) {
+            Result.failure(e)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun registerOrUpdateUser(
+        regUpdateReq: RegisterOrUpdateUserRequest
+    ): Result<SaveOrUpdateUserResponse> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response = usersApi.registerOrUpdateUser(regUpdateReq)
+                Result.success(response)
+            } catch (e: ApiException) {
+                Result.failure(e)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    suspend fun verifyEmailOtp(otp: String, userId: Int, purpose: String): Boolean {
+        return usersApi.verifyEmailOtp(
+            VerifyEmailReq(token = otp, userId = userId, purpose = purpose)
+        )
+    }
+
+    suspend fun resendEmailVerification(
+        userId: Int,
+        email: String,
+        userName: String,
+        purpose: String
+    ): SendEmailVerificationResp {
+        return usersApi.sendEmailVerification(
+            SendEmailVerificationReq(
+                userId = userId,
+                emailId = email,
+                userName = userName,
+                purpose = purpose
+            )
+        )
+    }
+
+    suspend fun isEmailVerified(userId: Int): Boolean {
+        return usersApi.isEmailVerified(userId)
+    }
+
+    suspend fun updateFirebaseUserId(userId: Int, firebaseUid: String) {
+        usersApi.updateFirebaseUserId(
+            UpdateFirebaseUidReq(
+                userId = userId,
+                firebaseUid = firebaseUid
+            )
+        )
+    }
+
+    suspend fun getFirebaseTokenForUser(userId: Int): FirebaseTokenResp {
+        return usersApi.getFirebaseTokenForUser(userId)
     }
 }

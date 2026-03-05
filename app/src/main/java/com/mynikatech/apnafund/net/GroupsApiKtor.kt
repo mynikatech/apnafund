@@ -97,5 +97,18 @@ class GroupsApiKtor(
         client.get("/groups/members/count/$groupId")
             .unwrap<Int>()
 
+    override suspend fun syncFirebaseUid(userId: Int, groupId: Int, firebaseUid: String) {
+        client.post("/groups/sync/firebase-uid") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                mapOf(
+                    "userId"  to userId,
+                    "groupId" to groupId,
+                    "firebaseUid" to firebaseUid
+                )
+            )
+        }
+    }
+
 
 }

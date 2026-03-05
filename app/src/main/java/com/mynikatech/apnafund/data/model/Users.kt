@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.util.ApnaBankDate
+import java.sql.Timestamp
 
 @Entity ( tableName = "users")
 data class Users(
@@ -18,5 +19,7 @@ data class Users(
     val isPinSet: Boolean = false,
     val hashPIN: String? = null,
     val firebaseUserId: String? = null,
+    val emailVerified: Boolean = false,
+    val emailVerifiedAt: String? = null,
     val userCode: String  // Construct as first 2 letters of FirstName+ 2 letters of lastname+ random 5 digit number with trailing zeroes
 )

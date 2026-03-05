@@ -23,4 +23,6 @@ rootProject.name = "Apna Bank"
 include(":app")
 include(":server")
 include(":api")
+include("lambda:email-processor")
+include("lambda:whatsapp-processor")
 
