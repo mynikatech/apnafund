@@ -1,9 +1,9 @@
 package com.mynikatech.apnafund.server.groups
 
 import com.mynikatech.apnafund.net.dto.AddMemberRequest
+import com.mynikatech.apnafund.net.dto.FirebaseSyncRequest
 import com.mynikatech.apnafund.net.dto.GroupMembersDto
 import com.mynikatech.apnafund.net.dto.GroupsDto
-import com.mynikatech.apnafund.net.dto.SyncFirebaseUidRequest
 import com.mynikatech.apnafund.server.api.respondError
 import com.mynikatech.apnafund.server.api.respondOk
 import com.mynikatech.apnafund.server.auth.FirebaseGroupService
@@ -263,30 +263,43 @@ fun Route.groupsRoutes(groups: GroupsSql) = route("/groups") {
     // 17) POST /groups/sync/firebase-uid
     post("sync/firebase-uid") {
 
-        val req = call.receive<SyncFirebaseUidRequest>()
+        val req = call.receive<FirebaseSyncRequest>()
 
-        // 1️⃣ Validate membership in YOUR DB
-        val isMember = groups.checkIfGroupMemberAlreadyAdded(
-            userId = req.userId,
-            groupId = req.groupId
+        call.application.log.info(
+            "FIREBASE SYNC: user=${req.userId} uid=${req.firebaseUid} groups=${req.groupIds}"
         )
 
-        if (!isMember) {
-            call.respondError(
-                HttpStatusCode.Forbidden,
-                "forbidden",
-                "User is not a member of this group"
+        val syncedGroups = mutableListOf<Int>()
+
+        for (groupId in req.groupIds) {
+
+            // 1️⃣ Validate membership in YOUR DB
+            val isMember = groups.checkIfGroupMemberAlreadyAdded(
+                userId = req.userId,
+                groupId = groupId
             )
-            return@post
+
+            if (!isMember) {
+                call.application.log.warn(
+                    "FIREBASE SYNC SKIPPED: user=${req.userId} not member of group=$groupId"
+                )
+                continue
+            }
+
+            // 2️⃣ Update Firestore
+            FirebaseChatService.addMemberToGroup(
+                groupId = groupId,
+                firebaseUid = req.firebaseUid
+            )
+
+            syncedGroups.add(groupId)
         }
 
-        // 2️⃣ Update Firestore
-        FirebaseChatService.addMemberToGroup(
-            groupId = req.groupId,
-            firebaseUid = req.firebaseUid
+        call.respondOk(
+            mapOf(
+                "syncedGroups" to syncedGroups
+            )
         )
-
-        call.respondOk(Unit)
     }
 
 }

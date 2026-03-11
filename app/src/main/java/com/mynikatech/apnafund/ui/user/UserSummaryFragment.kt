@@ -30,7 +30,7 @@ import com.mynikatech.apnafund.ui.loan.LoanAdapter
 import com.mynikatech.apnafund.ui.viewmodel.FundSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.LoansViewModel
 import com.mynikatech.apnafund.ui.viewmodel.NotificationSharedViewModel
-import com.mynikatech.apnafund.ui.viewmodel.ProfileSharedViewModel
+import com.mynikatech.apnafund.ui.viewmodel.StartupViewModel
 import com.mynikatech.apnafund.ui.viewmodel.UserSummaryViewModel
 import com.mynikatech.apnafund.util.Converters
 import kotlinx.coroutines.launch
@@ -45,8 +45,6 @@ class UserSummaryFragment : Fragment() {
 
     private val fundSharedViewModel: FundSharedViewModel by activityViewModels()
 
-    private val profileSharedViewModel: ProfileSharedViewModel by activityViewModels()
-
     private val notificationViewModel: NotificationSharedViewModel by activityViewModels()
 
     private var adapter: LoanAdapter? = null
@@ -59,12 +57,38 @@ class UserSummaryFragment : Fragment() {
 
     private var userId = -1
 
+    private val startUpViewModel: StartupViewModel by viewModels()
+
+    private val firebaseAuthListener = FirebaseAuth.AuthStateListener { auth ->
+
+        val firebaseUser = auth.currentUser
+
+        if (firebaseUser != null) {
+
+            SessionManager.firebaseUid = firebaseUser.uid
+
+            Log.d(
+                "FirebaseAuth",
+                "Firebase UID ready: ${SessionManager.firebaseUid}"
+            )
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                userSummaryViewModel.syncFirebaseUidIfNeeded()
+            }
+
+        } else {
+            Log.w("FirebaseAuth", "Firebase user not ready yet")
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onResume() {
         super.onResume()
+        Log.d("UserSummary", "On Resume called")
+        Log.d("UserSummary", "The group name in session is ${SessionManager.groupName}")
         binding.textViewWelcomeMessage.text =
             getString(R.string.text_welcome_message, SessionManager.userName)
-
+        refreshGroupChip()
     }
 
     override fun onCreateView(
@@ -79,52 +103,68 @@ class UserSummaryFragment : Fragment() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        Log.d("UserSummary", "On View Created called")
+
         // Session invalidation observer
         viewLifecycleOwner.lifecycleScope.launch {
             userSummaryViewModel.sessionInvalid.collect {
                 forceLogout()
             }
         }
+
         arguments?.let {
             userId = it.getInt("userId")
         }
-        Log.d("ApnaFund", "UserFragment: The user Id is  $userId")
-        val firebaseUser = FirebaseAuth.getInstance().currentUser
-        if (firebaseUser == null) {
-            Log.w("UserSummary", "Firebase not ready yet")
-            // Do NOT crash
-            // Just disable Firebase-dependent features
-        } else {
-            SessionManager.firebaseUid = firebaseUser.uid
-            SessionManager.isFirebaseSynced = true
-        }
 
-        lifecycleScope.launch {
+        Log.d("ApnaFund", "UserFragment: The user Id is $userId")
+
+        /* ---------------- LOAD USER PROFILE ---------------- */
+
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
+
                 val userProfile = userSummaryViewModel.getUserProfile(userId)
+
                 saveUserProfilesSession(userProfile)
+
+                refreshGroupChip()
+                ensureFirebaseLogin()
+
                 notificationViewModel.loadUnreadCount(SessionManager.userId)
+                //userSummaryViewModel.syncFirebaseUidIfNeeded()
+
             } catch (_: InvalidSessionException) {
                 // already handled
             }
 
-            userSummaryViewModel.syncFirebaseUidIfNeeded()
             val roleCodes = SessionManager.roleNames
+
             val bottomNav =
                 requireActivity().findViewById<BottomNavigationView>(R.id.bottom_navigation_view)
-            val isOnlyMember = roleCodes.contains("MEMBER") && roleCodes.size == 1
-            bottomNav.menu.findItem(R.id.adminFragment)?.isVisible = !isOnlyMember
+
+            val isOnlyMember =
+                roleCodes.contains("MEMBER") && roleCodes.size == 1
+
+            bottomNav.menu
+                .findItem(R.id.adminFragment)
+                ?.isVisible = !isOnlyMember
+
             userSummaryViewModel.userName.observe(viewLifecycleOwner) { nameFromVm ->
+
                 val preferred = SessionManager.getFormattedUserName()
+
                 val display = preferred.ifBlank { nameFromVm }
+
                 binding.textViewWelcomeMessage.text =
                     getString(R.string.text_welcome_message, display)
-
             }
+
             findNavController().currentBackStackEntry
                 ?.savedStateHandle
                 ?.getLiveData<Boolean>("profile_updated")
                 ?.observe(viewLifecycleOwner) {
+
                     if (it == true) {
                         binding.textViewWelcomeMessage.text =
                             getString(
@@ -135,21 +175,28 @@ class UserSummaryFragment : Fragment() {
                 }
 
             val hasGroup = SessionManager.groupId != null
+
             if (!hasGroup) {
+
                 binding.noGroupMessageContainer.visibility = View.VISIBLE
                 binding.GroupMessageContainer.visibility = View.GONE
+
                 if (!(SessionManager.isModerator() || SessionManager.isAdmin()))
                     binding.buttonGoToGroups.visibility = View.GONE
+
             } else {
+
                 binding.noGroupMessageContainer.visibility = View.GONE
                 binding.GroupMessageContainer.visibility = View.VISIBLE
+
                 lazyLoadContent()
             }
 
             binding.buttonGoToGroups.setOnClickListener {
-                //redirect to Amin Tab Group Tab
+
                 val action = UserSummaryFragmentDirections
                     .actionUserSummaryFragmentToAdminFragment("Group")
+
                 findNavController().navigate(action)
             }
         }
@@ -179,30 +226,52 @@ class UserSummaryFragment : Fragment() {
             binding.recyclerViewLoans.adapter = adapter
         }
 
-        if (userSummaryViewModel.userFunds.value == null) {
-            userSummaryViewModel.loadUserSummary(userId)
-        }
+        userSummaryViewModel.loadUserSummary(userId, SessionManager.groupId)
+
 
         userSummaryViewModel.userName.observe(viewLifecycleOwner) {
             binding.textViewWelcomeMessage.text = getString(R.string.text_welcome_message, it)
         }
 
         userSummaryViewModel.groupName.observe(viewLifecycleOwner) {
-            binding.chipGroupName.text = getString(R.string.text_group_user, it)
+            binding.chipGroupName.text =
+                "Group: ${SessionManager.groupName ?: "--"}"
 
+            binding.chipGroupName.isClickable =
+                SessionManager.isMultiGroupUser()
 
         }
-        userSummaryViewModel.groupId.observe(viewLifecycleOwner) { groupId ->
-            binding.chipGroupName.setOnClickListener {
+        binding.chipGroupName.setOnClickListener {
+
+            val groups = SessionManager.userGroups ?: emptyList()
+
+            if (groups.size <= 1) {
+                val groupId = SessionManager.groupId ?: return@setOnClickListener
                 val action = UserSummaryFragmentDirections
-                    .actionUserSummaryFragmentToGroupDetailsFragment(
-                        groupId = groupId
-                    )
+                    .actionUserSummaryFragmentToGroupDetailsFragment(groupId)
                 findNavController().navigate(action)
+                return@setOnClickListener
             }
+
+            AlertDialog.Builder(requireContext())
+                .setTitle("Select Group")
+                .setItems(groups.map { it.groupName }.toTypedArray()) { _, which ->
+
+                    val selected = groups[which]
+
+                    if (selected.groupId == SessionManager.groupId) return@setItems
+
+                    SessionManager.setSelectedGroup(selected)
+
+                    binding.chipGroupName.text = "Group: ${selected.groupName}"
+
+                    reloadForSelectedGroup()
+                }
+                .show()
         }
         userSummaryViewModel.userFunds.observe(viewLifecycleOwner) { funds ->
             val fundNames = funds.map { it.fundName }
+
 
             binding.layoutFundSelector.setOnClickListener {
                 val fundNamesMap = userSummaryViewModel.userFunds.value?.map { it.fundName }
@@ -228,6 +297,8 @@ class UserSummaryFragment : Fragment() {
 
             if (fundNames.isNotEmpty()) {
                 //check if the fundSharedModel has the selectedFund
+                binding.noFundsMessageContainer.visibility = View.GONE
+                binding.FundMessageContainer.visibility = View.VISIBLE
                 val selectedFund = fundSharedViewModel.selectedFund.value
                 val fundId: Int
                 val fundStatus: String
@@ -243,7 +314,8 @@ class UserSummaryFragment : Fragment() {
                     updateLoanAddVisibility(selectedFund.fundStatus)
                 }
                 userSummaryViewModel.loadFundDetails(userId, fundId)
-                val isInactive = fundStatus == ApnaBankConstants.INACTIVE_STATUS || fundStatus == ApnaBankConstants.CLOSED_STATUS
+                val isInactive =
+                    fundStatus == ApnaBankConstants.INACTIVE_STATUS || fundStatus == ApnaBankConstants.CLOSED_STATUS
                 if (isInactive) {
                     binding.imageFundStatus.setBackgroundResource(R.drawable.status_inactive_dot)
                     binding.imageFundStatus.tooltipText = ApnaBankConstants.INACTIVE_STATUS
@@ -430,38 +502,50 @@ class UserSummaryFragment : Fragment() {
         }
     }
 
-    fun saveUserProfilesSession(userProfiles: List<UserProfile>) {
-        if (userProfiles.isEmpty()) return
+    fun saveUserProfilesSession(userProfiles: UserProfile) {
+        if (userProfiles == null) return
         Log.d(
             "FirebaseAuth",
             "Session Manager firebase on profile setting: ${SessionManager.firebaseUid}"
         )
-        val userId = userProfiles[0].userId
-        val userName = userProfiles[0].userName
-        val groupId = userProfiles[0].groupId
-        val groupName = userProfiles[0].groupName
-        val firstName = userProfiles[0].firstName
-        val lastName = userProfiles[0].lastName
-        val emailId = userProfiles[0].emailId
-        val phoneNumber = userProfiles[0].phoneNumber
+        val userId = userProfiles.userId
+        val userName = userProfiles.userName
 
-        val roleIds = userProfiles.map { it.roleId }.distinct()
-        val roleNames = userProfiles.map { it.roleCode }.distinct()
+        val groups = userProfiles.groups
+        SessionManager.userGroups = groups
+        if (groups.isNullOrEmpty()) {
+            // Admin or user without group
+            SessionManager.groupId = null
+            SessionManager.groupName = null
+        } else if (SessionManager.groupId == null) {
+            // First login or session not yet initialized
+            SessionManager.setSelectedGroup(groups.first())
+        }
+
+        val firstName = userProfiles.firstName
+        val lastName = userProfiles.lastName
+        val emailId = userProfiles.emailId
+        val phoneNumber = userProfiles.phoneNumber
+
+        val roleIds = userProfiles.roles.mapNotNull { it.roleId }.distinct()
+        val roleNames = userProfiles.roles.map { it.roleCode }.distinct()
+        val selectedGroupId = SessionManager.groupId
+        val selectedGroupName = SessionManager.groupName
         val prefsHelper = PreferencesHelper(requireContext())
         prefsHelper.saveSession(
             userId = userId,
             userName = userName,
             roleIds = roleIds,
             roleNames = roleNames,
-            groupId = groupId,
+            groupId = selectedGroupId,
             token = null, // Actual token if available(todo)
-            isPinSet = userProfiles[0].isPinSet ?: false,
+            isPinSet = userProfiles.isPinSet ?: false,
             firstName = firstName,
             lastName = lastName ?: "",
             emailId = emailId,
             phoneNumber = phoneNumber,
             firebaseUid = SessionManager.firebaseUid,
-            groupName = groupName ?: "Default Group"
+            groupName = selectedGroupName ?: "Default Group"
         )
         prefsHelper.loadSession()
     }
@@ -493,5 +577,60 @@ class UserSummaryFragment : Fragment() {
 
         binding.loanAddFab.visibility = if (canAddLoan) View.VISIBLE else View.GONE
         binding.loanAddText.visibility = if (canAddLoan) View.VISIBLE else View.GONE
+    }
+
+    private fun reloadForSelectedGroup() {
+
+        val groupId = SessionManager.groupId ?: return
+
+        fundSharedViewModel.clearSelectedFund()
+
+        userSummaryViewModel.loadUserSummary(
+            userId = SessionManager.userId,
+            selectedGroupId = groupId
+        )
+
+    }
+
+    private fun refreshGroupChip() {
+        binding.chipGroupName.text =
+            "Group: ${SessionManager.groupName ?: "--"}"
+    }
+
+    override fun onStart() {
+        super.onStart()
+        FirebaseAuth.getInstance().addAuthStateListener(firebaseAuthListener)
+    }
+
+    override fun onStop() {
+        super.onStop()
+
+        FirebaseAuth.getInstance()
+            .removeAuthStateListener(firebaseAuthListener)
+    }
+
+    private fun ensureFirebaseLogin() {
+
+        Log.d("Firebase", "Called ensureFirebaseLogin")
+
+        val firebaseUser = FirebaseAuth.getInstance().currentUser
+
+        // If already logged in → nothing to do
+        if (firebaseUser != null) {
+            Log.d("Firebase", "Firebase already logged in")
+            return
+        }
+        Log.d("Firebase", "Session Email Id ${SessionManager.emailId}")
+        val email = SessionManager.emailId
+
+        if (email.isNullOrBlank()) {
+            Log.w("Firebase", "Email missing in session — cannot restore Firebase session")
+            return
+        }
+
+        lifecycleScope.launch {
+            Log.d("Firebase", "Restoring Firebase session for $email")
+            startUpViewModel.restoreFirebaseSession(email)
+        }
     }
 }

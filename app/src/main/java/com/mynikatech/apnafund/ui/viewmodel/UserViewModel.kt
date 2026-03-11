@@ -11,6 +11,7 @@ import com.mynikatech.apnafund.data.model.UserWithGroup
 import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.net.ApiException
 import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
+import com.mynikatech.apnafund.net.dto.GroupsDto
 import com.mynikatech.apnafund.net.dto.LoginUserResponse
 import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
 import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
@@ -20,6 +21,14 @@ import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
 import com.mynikatech.apnafund.net.dto.UserSaveSource
 import com.mynikatech.apnafund.util.Converters
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 class UserViewModel : ViewModel() {
 
@@ -228,5 +237,12 @@ class UserViewModel : ViewModel() {
 
     suspend fun getFirebaseTokenForUser(userId: Int): FirebaseTokenResp {
         return userRolesRepository.getFirebaseTokenForUser(userId)
+    }
+
+    suspend fun getGroupsForUser(userId: Int): List<GroupsDto>? {
+        return userRolesRepository.getGroupsForUser(userId)
+    }
+    fun getGroupsForModeratorUser(userId: Int): Flow<List<GroupsDto>> = flow {
+        emit(userRolesRepository.getGroupsForModeratorUser(userId))
     }
 }

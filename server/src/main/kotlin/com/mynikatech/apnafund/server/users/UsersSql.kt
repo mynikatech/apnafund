@@ -8,6 +8,7 @@ import com.mynikatech.apnafund.net.dto.GroupsDto
 import com.mynikatech.apnafund.net.dto.UserBasicDto
 import com.mynikatech.apnafund.net.dto.UserDetailsDto
 import com.mynikatech.apnafund.net.dto.UserFundDetailsDto
+import com.mynikatech.apnafund.net.dto.UserGroup
 import com.mynikatech.apnafund.net.dto.UserProfileDto
 import com.mynikatech.apnafund.net.dto.UserWithGroupDto
 import com.mynikatech.apnafund.net.dto.UsersDto
@@ -126,8 +127,19 @@ interface UsersSql {
     @SqlQuery("""SELECT * FROM get_group_for_user(:userId)""")
     fun getGroupForUser(@Bind("userId") userId: Int): List<GroupsDto>
 
+    @SqlQuery("""SELECT * FROM get_groups_for_user(:userId)""")
+    fun getGroupsForUser(@Bind("userId") userId: Int): List<GroupsDto>
+    @SqlQuery("""SELECT * FROM get_groups_for_moderator(:userId)""")
+    fun getGroupsForModeratorUser(@Bind("userId") userId: Int): List<GroupsDto>
+
+    @SqlQuery("""SELECT * FROM get_basic_group_for_user(:userId)""")
+    fun getBasicGroupsForUser(@Bind("userId") userId: Int): List<UserGroup>
+
     @SqlQuery("""SELECT * FROM get_funds_for_user(:userId)""")
     fun getFundsForUser(@Bind("userId") userId: Int): List<FundsDto>
+
+    @SqlQuery("""SELECT * FROM get_funds_for_user_for_group(:userId, :groupId)""")
+    fun getFundsForUserForGroup(@Bind("userId") userId: Int, @Bind("groupId") groupId: Int): List<FundsDto>
 
     @SqlQuery("""SELECT get_total_deposit(:userId,:fundId)""")
     fun getTotalDeposit(@Bind("userId") userId: Int, @Bind("fundId") fundId: Int): Double?

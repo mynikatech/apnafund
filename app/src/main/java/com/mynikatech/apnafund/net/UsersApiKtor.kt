@@ -176,13 +176,13 @@ class UsersApiKtor(
             null
         }
 
-    override suspend fun getUserProfile(userId: Int): List<UserProfileDto>? =
+    override suspend fun getUserProfile(userId: Int): UserProfileDto? =
         try {
-            client.get("/users/get/profile/$userId").unwrap<List<UserProfileDto>>()
+            client.get("/users/get/profile/$userId").unwrap<UserProfileDto>()
         } catch (_: ApiException) {
-            emptyList()
+            null
         } catch (_: Exception) {
-            emptyList()
+            null
         }
 
     override suspend fun updateUserPassword(id: Int, newPassword: String) {
@@ -209,6 +209,22 @@ class UsersApiKtor(
             client.get("/users/get/group-for-user/$userId").unwrap<GroupsDto>()
         } catch (_: Exception) {
             null
+        }
+
+
+    override suspend fun getGroupsForUser(userId: Int): List<GroupsDto> =
+        try {
+            client.get("/users/get/groups-for-user/$userId").unwrap()
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+
+    override suspend fun getGroupsForModeratorUser(userId: Int): List<GroupsDto> =
+        try {
+            client.get("/users/get/groups-for-moderator-user/$userId").unwrap()
+        } catch (_: Exception) {
+            emptyList()
         }
 
     override suspend fun getFundsForUser(userId: Int): List<FundsDto> =
@@ -243,8 +259,14 @@ class UsersApiKtor(
             null
         }
 
-    override suspend fun getUserDetails(userId: Int): UserDetailsDto =
-        client.get("/users/get/details/$userId").unwrap<UserDetailsDto>()
+    override suspend fun getUserDetails(userId: Int, groupId: Int?): UserDetailsDto {
+
+        return if (groupId != null) {
+            client.get("/users/get/details/$userId/$groupId").unwrap()
+        } else {
+            client.get("/users/details/$userId").unwrap()
+        }
+    }
 
     override suspend fun getTotalLoanAmount(userId: Int, fundId: Int): Double =
         client.get("/users/get/total-loan-amount") {

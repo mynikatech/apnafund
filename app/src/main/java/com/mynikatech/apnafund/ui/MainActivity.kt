@@ -12,6 +12,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.core.view.MenuProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.firebase.auth.FirebaseAuth
@@ -20,6 +21,8 @@ import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.databinding.ActivityMainBinding
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.NotificationSharedViewModel
+import com.mynikatech.apnafund.ui.viewmodel.StartupViewModel
+import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 
 class MainActivity : AppCompatActivity() {
@@ -28,7 +31,7 @@ class MainActivity : AppCompatActivity() {
 
     private val notificationViewModel by viewModels<NotificationSharedViewModel>()
 
-    private var currentBadgeView: WeakReference<TextView>? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +65,6 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
         setupToolbarMenu(navController)
-        //ensureFirebaseSignedIn()
         val toolbarRef = WeakReference(binding.toolbar)
         val hideToolbarFor = setOf(
             R.id.loginFragment, R.id.registerFragment,
@@ -80,7 +82,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.changePasswordFragment, R.id.setPasswordFragment,
                 R.id.fundMemberDetailsFragment, R.id.fundAddMembersFragment,
                 R.id.verifyEmailFragment, R.id.resetPasswordFragment,
-                R.id.loginPinFragment, R.id.fundLoanSummaryFragment-> View.GONE
+                R.id.loginPinFragment, R.id.fundLoanSummaryFragment -> View.GONE
 
                 else -> View.VISIBLE
             }
@@ -203,4 +205,6 @@ class MainActivity : AppCompatActivity() {
             notificationViewModel.loadUnreadCount(userId)
         }
     }
+
+
 }

@@ -26,6 +26,7 @@ import com.mynikatech.apnafund.net.UserRolesApi
 import com.mynikatech.apnafund.net.UsersApi
 import com.mynikatech.apnafund.net.dto.ChangePasswordRequest
 import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
+import com.mynikatech.apnafund.net.dto.GroupsDto
 import com.mynikatech.apnafund.net.dto.LoginUserResponse
 import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
 import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
@@ -185,16 +186,16 @@ class UserRoleRepository(
         return userRolesApi.getAllUserRoleIds(userId)
     }
 
-    suspend fun getUserProfile(userId: Int): List<UserProfile> =
+    suspend fun getUserProfile(userId: Int):UserProfile =
         withContext(Dispatchers.IO) {
 
             val remote = usersApi.getUserProfile(userId)
 
-            if (remote.isNullOrEmpty()) {
+            if (remote == null) {
                 throw InvalidSessionException("User profile not found for userId=$userId")
             }
 
-            remote.map { it.toEntity() }
+            remote.toEntity()
         }
 
     suspend fun insertPasswordHistory(entry: UserPasswordHistory) {
@@ -363,5 +364,12 @@ class UserRoleRepository(
 
     suspend fun getFirebaseTokenForUser(userId: Int): FirebaseTokenResp {
         return usersApi.getFirebaseTokenForUser(userId)
+    }
+
+    suspend fun getGroupsForUser(userId: Int): List<GroupsDto> {
+        return usersApi.getGroupsForUser(userId)
+    }
+    suspend fun getGroupsForModeratorUser(userId: Int): List<GroupsDto> {
+        return usersApi.getGroupsForModeratorUser(userId)
     }
 }

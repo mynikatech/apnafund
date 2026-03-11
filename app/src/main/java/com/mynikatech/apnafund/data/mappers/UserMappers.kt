@@ -69,7 +69,7 @@ fun UserDetails.toDto(): UserDetailsDto = UserDetailsDto(
     userRoles = userRoles,
     userNotifications = userNotifications.toDto(),
     userFunds = userFunds.toDto(),
-    group = group?.toDto()
+    groups = groups?: emptyList()
 
 )
 
@@ -84,7 +84,7 @@ fun UserDetailsDto.toEntity(): UserDetails = UserDetails(
     userRoles = userRoles,
     userNotifications = userNotifications.toEntity(),
     userFunds = userFunds.toEntity(),
-    group = group?.toEntity()
+    groups = groups
 
 )
 

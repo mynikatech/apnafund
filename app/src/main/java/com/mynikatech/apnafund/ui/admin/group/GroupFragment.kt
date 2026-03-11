@@ -27,6 +27,7 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
+import com.mynikatech.apnafund.data.mappers.toEntity
 import com.mynikatech.apnafund.data.model.Groups
 import com.mynikatech.apnafund.databinding.DialogAddGroupBinding
 import com.mynikatech.apnafund.databinding.FragmentGroupBinding
@@ -39,6 +40,7 @@ import com.mynikatech.apnafund.util.Converters.toTitleCase
 import com.mynikatech.apnafund.util.GroupInputValidator
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 class GroupFragment : Fragment() {
@@ -57,6 +59,8 @@ class GroupFragment : Fragment() {
 
     private val isAdmin = SessionManager.isAdmin()
     private val moderatorGroupId = SessionManager.groupId ?: 0
+
+    private val userGroups = SessionManager.userGroups ?: emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -87,11 +91,19 @@ class GroupFragment : Fragment() {
     }
 
     private fun fetchAllGroups() {
+
         lifecycleScope.launch {
-            groupViewModel.fetchAllGroups(isAdmin, moderatorGroupId)
-                .collectLatest { groups ->
-                    populateUserTable(groups)
-                }
+            if (isAdmin) {
+                groupViewModel.fetchAllGroups()
+                    .collectLatest { groups ->
+                        populateUserTable(groups ?: emptyList())
+                    }
+            } else {
+                userViewModel.getGroupsForModeratorUser(SessionManager.userId)
+                    .collectLatest { groups ->
+                        populateUserTable(groups.toEntity() ?: emptyList())
+                    }
+            }
         }
     }
 
@@ -204,6 +216,9 @@ class GroupFragment : Fragment() {
         }
 
         // Load user list and handle selection
+        // when the user is admin all the users should be made available
+        // however when the user is not admin only the user should be available
+
         lifecycleScope.launch {
             userViewModel.fetchUsers().collectLatest { users ->
                 val userNames = users.map { "${it.firstName} ${it.lastName}" }

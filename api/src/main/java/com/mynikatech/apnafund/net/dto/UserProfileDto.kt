@@ -7,10 +7,6 @@ import kotlinx.serialization.Serializable
 data class UserProfileDto(
     var userId: Int,
     var userName: String,
-    var roleId: Int,
-    var roleCode: String,
-    var groupId: Int? = null,
-    var groupName: String? = null,
     var token: String? = null,
     var isLoggedIn: Boolean? = false,
     var isPinSet: Boolean? = false,
@@ -18,4 +14,8 @@ data class UserProfileDto(
     var lastName: String? = null,
     var emailId: String,
     var phoneNumber: String
-)
+
+){
+    var roles: List<RolesDto> = emptyList()
+    var groups: List<UserGroup> = emptyList()
+}

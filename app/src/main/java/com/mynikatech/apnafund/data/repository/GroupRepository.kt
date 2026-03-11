@@ -89,7 +89,6 @@ class GroupRepository(
     suspend fun fetchGroup(groupId: Int): Groups? {
         return api.getGroup(groupId)?.toEntity()
     }
-
     suspend fun fetchGroupByMod(moderator: Int): Groups {
         return api.getGroupByMod(moderator).toEntity()
     }

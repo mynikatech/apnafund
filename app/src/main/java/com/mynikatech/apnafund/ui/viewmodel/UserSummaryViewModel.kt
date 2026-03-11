@@ -19,6 +19,7 @@ import com.mynikatech.apnafund.session.SessionManager
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class UserSummaryViewModel : ViewModel() {
     private val userSummaryRepository = ApnaFundApplication.userSummaryRepository
@@ -37,7 +38,7 @@ class UserSummaryViewModel : ViewModel() {
     val userName = MutableLiveData<String>()
     private val userRoles = MutableLiveData<List<String>>()
     val groupName = MutableLiveData<String>()
-    val groupId = MutableLiveData<Int>()
+    val groupId = MutableLiveData<Int?>()
     var userFunds = MutableLiveData<List<Funds>>()
     private val userNoifications = MutableLiveData<List<UserNotifications>?>()
     val userLoans = MutableLiveData<List<LoanDetailsWithMemberNames>>()
@@ -48,18 +49,45 @@ class UserSummaryViewModel : ViewModel() {
     val fundMaturity = MutableLiveData<Double?>()
     private val fundLoan = MutableLiveData<Double?>()
 
-    fun loadUserSummary(userId: Int) {
+    fun loadUserSummary(userId: Int, selectedGroupId: Int?) {
+
         viewModelScope.launch {
-            val userDetails = userSummaryRepository.getUserDetails(userId)
-            val group = userDetails.group
+
+            val userDetails = userSummaryRepository.getUserDetails(userId, selectedGroupId)
+
+            val groups = userDetails.groups ?: emptyList()
             val funds = userDetails.userFunds
             val notifications = userDetails.userNotifications
+
             userRoles.postValue(userDetails.userRoles)
             userName.postValue("${userDetails.firstName} ${userDetails.lastName}")
-            if (null != group) {
-                groupName.postValue(group.groupName)
-                groupId.postValue((group.groupId))
+
+            SessionManager.userGroups = groups
+
+            if (groups.isEmpty()) {
+                SessionManager.userGroups = emptyList()
+                SessionManager.groupId = null
+                SessionManager.groupName = null
+
+                groupName.postValue("--")
+                groupId.postValue(null)
+
+                userFunds.postValue(emptyList())
+                userNoifications.postValue(notifications)
+
+                return@launch
             }
+
+            val selectedGroup =
+                groups.firstOrNull { it.groupId == selectedGroupId }
+                    ?: groups.first()
+
+            SessionManager.groupId = selectedGroup.groupId
+            SessionManager.groupName = selectedGroup.groupName
+
+            groupName.postValue(selectedGroup.groupName)
+            groupId.postValue(selectedGroup.groupId)
+
             userFunds.postValue(funds)
             userNoifications.postValue(notifications)
         }
@@ -174,7 +202,7 @@ class UserSummaryViewModel : ViewModel() {
         return loanRepository.getTotalCurrIntPaid(userId, fundId)
     }
 
-    suspend fun getUserProfile(userId: Int): List<UserProfile> {
+    suspend fun getUserProfile(userId: Int): UserProfile {
         return try {
             userRoleRepository.getUserProfile(userId)
         } catch (e: InvalidSessionException) {
@@ -188,21 +216,31 @@ class UserSummaryViewModel : ViewModel() {
     }
 
     fun syncFirebaseUidIfNeeded() {
+
+        Log.d("FireBase"," Firebase Synced ${SessionManager.isFirebaseSynced}")
+        Log.d("FireBase"," Firebase UID ${SessionManager.firebaseUid}")
+        Log.d("FireBase"," Groups ${SessionManager.userGroups}")
+
         if (SessionManager.isFirebaseSynced ||
-            SessionManager.groupId == null ||
             SessionManager.firebaseUid.isBlank()
         ) return
 
+        val groups = SessionManager.userGroups ?: return
+
         viewModelScope.launch {
             try {
-                groupsRepository.syncFirebaseUid(
-                    userId = SessionManager.userId,
-                    groupId = SessionManager.groupId!!,
-                    firebaseUid = SessionManager.firebaseUid
-                )
+
+                groups.forEach { group ->
+                    groupsRepository.syncFirebaseUid(
+                        userId = SessionManager.userId,
+                        groupId = group.groupId,
+                        firebaseUid = SessionManager.firebaseUid
+                    )
+                }
+
                 SessionManager.isFirebaseSynced = true
+
             } catch (e: Exception) {
-                // Log only — do not break user flow
                 e.printStackTrace()
             }
         }

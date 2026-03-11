@@ -56,7 +56,7 @@ fun Application.registerRoutes(
     approvalDao: ApprovalSql, approvalService: ApprovalService
 ) {
     routing {
-        usersRoutes(usersDao,eventDispatchService, moderatorRegistrationService,userManagementService,emailVerificationService)
+        usersRoutes(usersDao,eventDispatchService, moderatorRegistrationService,userManagementService,emailVerificationService, userRolesDao)
         groupsRoutes(groupsDao)
         rolesRoutes(roleDao)
         userRolesRoutes(userRolesDao)

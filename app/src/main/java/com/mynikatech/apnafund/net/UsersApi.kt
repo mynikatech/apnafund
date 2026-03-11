@@ -44,15 +44,17 @@ interface UsersApi {
     suspend fun getUserWithGroup(groupId: Int? = null): List<UserWithGroupDto>
     suspend fun getAllUsersWithGroup(): List<UserWithGroupDto>
     suspend fun getGroupMember(userId: Int, groupId: Int): GroupMembersDto?
-    suspend fun getUserProfile(userId: Int): List<UserProfileDto>?
+    suspend fun getUserProfile(userId: Int): UserProfileDto?
     suspend fun updateUserPassword(id: Int, passwordHash: String)
     suspend fun updateUserPIN(id: Int, pinHash: String): Boolean
     suspend fun getGroupForUser(userId: Int): GroupsDto?
+    suspend fun getGroupsForUser(userId: Int): List<GroupsDto>
+    suspend fun getGroupsForModeratorUser(userId: Int): List<GroupsDto>
     suspend fun getFundsForUser(userId: Int): List<FundsDto>
     suspend fun getTotalDeposit(userId: Int, fundId: Int): Double?
     suspend fun getPerMemberExpectedMaturityAmount(fundId: Int): Double?
     suspend fun getUserNotifications(userId: Int): List<UserNotificationsDto>?
-    suspend fun getUserDetails(userId: Int): UserDetailsDto
+    suspend fun getUserDetails(userId: Int, groupId: Int?): UserDetailsDto
     suspend fun getTotalLoanAmount(userId: Int, fundId: Int): Double
     suspend fun getFundWithDetails(fundId: Int): FundWithDetailsDto
     suspend fun getUserFundDetails(userId: Int, fundId: Int): UserFundDetailsDto?

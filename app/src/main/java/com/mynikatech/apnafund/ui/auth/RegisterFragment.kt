@@ -117,7 +117,6 @@ class RegisterFragment : Fragment() {
             }
             if (!validatePasswordInputs()) return@setOnClickListener
             viewLifecycleOwner.lifecycleScope.launch {
-                val userId: Int
                 if (isModerator) {
                     saveModeratorUser(
                         "1", firstName, lastName,

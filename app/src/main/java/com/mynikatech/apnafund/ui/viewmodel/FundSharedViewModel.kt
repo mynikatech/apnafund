@@ -24,4 +24,7 @@ class FundSharedViewModel : ViewModel() {
     fun resetRefresh() {
         _refreshTrigger.value = false
     }
+    fun clearSelectedFund() {
+        _selectedFund.value = null
+    }
 }

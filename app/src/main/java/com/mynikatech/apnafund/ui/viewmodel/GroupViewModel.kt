@@ -6,6 +6,7 @@ import com.mynikatech.apnafund.ApnaFundApplication
 import com.mynikatech.apnafund.data.model.GroupMemberWithName
 import com.mynikatech.apnafund.data.model.GroupMembers
 import com.mynikatech.apnafund.data.model.Groups
+import com.mynikatech.apnafund.net.dto.UserGroup
 import com.mynikatech.apnafund.util.ApnaBankDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -94,9 +95,9 @@ class GroupViewModel : ViewModel() {
         return groups
     }
 
-    suspend fun fetchAllGroups(isAdmin: Boolean, moderatorGroupId: Int = 0): Flow<List<Groups>> {
+    suspend fun fetchAllGroups(isAdmin: Boolean, userId: Int): Flow<List<Groups>> {
         return if (!isAdmin) {
-            val group = groupRepository.fetchGroup(moderatorGroupId)!!
+            val group = groupRepository.fetchGroup(userId)!!
             flowOf(listOf(group))
         } else {
             groupRepository.fetchAllGroups()

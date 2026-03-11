@@ -6,10 +6,6 @@ import com.mynikatech.apnafund.net.dto.UserProfileDto
 fun UserProfile.toDto(): UserProfileDto = UserProfileDto(
     userId = userId,
     userName = userName,
-    roleId = roleId,
-    roleCode = roleCode,
-    groupId = groupId,
-    groupName = groupName,
     token = token,
     isLoggedIn = isLoggedIn,
     isPinSet = isPinSet,
@@ -17,15 +13,14 @@ fun UserProfile.toDto(): UserProfileDto = UserProfileDto(
     lastName = lastName,
     emailId = emailId,
     phoneNumber = phoneNumber
-)
+).apply {
+    roles = this@toDto.roles
+    groups = this@toDto.groups
+}
 
 fun UserProfileDto.toEntity(): UserProfile = UserProfile(
     userId = userId,
     userName = userName,
-    roleId = roleId,
-    roleCode = roleCode,
-    groupId = groupId,
-    groupName = groupName,
     token = token,
     isLoggedIn = isLoggedIn,
     isPinSet = isPinSet,
@@ -33,6 +28,9 @@ fun UserProfileDto.toEntity(): UserProfile = UserProfile(
     lastName = lastName,
     emailId = emailId,
     phoneNumber = phoneNumber
-)
+).apply {
+    roles = this@toEntity.roles
+    groups = this@toEntity.groups
+}
 
 fun List<UserProfileDto>.toEntity(): List<UserProfile> = map { it.toEntity() }

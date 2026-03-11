@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 035-get-user-profile
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/035-get-user-profile.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

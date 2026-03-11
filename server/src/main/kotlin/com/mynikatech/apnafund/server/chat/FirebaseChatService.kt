@@ -2,6 +2,7 @@ package com.mynikatech.apnafund.server.chat
 
 import com.google.cloud.firestore.FieldValue
 import com.google.firebase.cloud.FirestoreClient
+import com.google.cloud.firestore.SetOptions
 
 object FirebaseChatService {
 
@@ -11,9 +12,11 @@ object FirebaseChatService {
         firestore
             .collection("groups")
             .document(groupId.toString())
-            .update(
-                "members",
-                FieldValue.arrayUnion(firebaseUid)
+            .set(
+                mapOf(
+                    "members" to FieldValue.arrayUnion(firebaseUid)
+                ),
+                SetOptions.merge()
             )
     }
 }

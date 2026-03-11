@@ -2,6 +2,8 @@ package com.mynikatech.apnafund.session
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.mynikatech.apnafund.data.model.Groups
+import com.mynikatech.apnafund.net.dto.UserGroup
 
 object SessionManager {
     var userId: Int = -1
@@ -21,12 +23,22 @@ object SessionManager {
     var firebaseToken: String? = null
     private lateinit var prefs: SharedPreferences
     var isFirebaseSynced: Boolean = false
+    var userGroups: List<UserGroup>? = emptyList()
 
     val hasValidSession: Boolean
         get() = userId > 0
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
+    }
+
+    fun isMultiGroupUser(): Boolean {
+        return userGroups?.size ?: 0 > 1
+    }
+
+    fun setSelectedGroup(group: UserGroup) {
+        groupId = group.groupId
+        groupName = group.groupName
     }
 
     fun clearSession() {

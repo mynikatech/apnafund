@@ -1,5 +1,7 @@
 package com.mynikatech.apnafund.data.model
 
+import com.mynikatech.apnafund.net.dto.UserGroup
+
 data class UserDetails(
 
     val firstName: String,
@@ -11,5 +13,5 @@ data class UserDetails(
     val userRoles: List<String>,
     val userNotifications: List<UserNotifications>,
     val userFunds: List<Funds>,
-    val group: Groups?
+    val groups: List<UserGroup>?
 )

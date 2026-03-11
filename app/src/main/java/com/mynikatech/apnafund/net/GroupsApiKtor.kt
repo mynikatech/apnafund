@@ -14,6 +14,9 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import android.util.Log
+import com.mynikatech.apnafund.net.dto.FirebaseSyncRequest
+import com.mynikatech.apnafund.session.SessionManager
 
 class GroupsApiKtor(
     private val clientProvider: () -> io.ktor.client.HttpClient = { HttpClientProvider.client }
@@ -98,15 +101,25 @@ class GroupsApiKtor(
             .unwrap<Int>()
 
     override suspend fun syncFirebaseUid(userId: Int, groupId: Int, firebaseUid: String) {
+        Log.d("FireBase Chat","Calling syncFirebaseUid")
+        val groupIds = SessionManager.userGroups
+            ?.mapNotNull { it.groupId }
+            ?: emptyList()
+
+        if (groupIds.isEmpty()) {
+            Log.d("Firebase", "Skipping Firebase sync - no groups")
+            return
+        }
+
+        val request = FirebaseSyncRequest(
+            userId = SessionManager.userId,
+            firebaseUid = SessionManager.firebaseUid,
+            groupIds = groupIds
+        )
+
         client.post("/groups/sync/firebase-uid") {
             contentType(ContentType.Application.Json)
-            setBody(
-                mapOf(
-                    "userId"  to userId,
-                    "groupId" to groupId,
-                    "firebaseUid" to firebaseUid
-                )
-            )
+            setBody(request)
         }
     }
 

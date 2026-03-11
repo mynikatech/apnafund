@@ -28,6 +28,8 @@ class UserSummaryRepository(
         loansApi.getTotalLoanAmount(userId, fundId)
 
     suspend fun getGroupForUser(userId: Int) = usersApi.getGroupForUser(userId)
+    suspend fun getGroupsForUser(userId: Int) = usersApi.getGroupsForUser(userId)
+    suspend fun getGroupForModeratorUser(userId: Int) = usersApi.getGroupsForModeratorUser(userId)
     suspend fun getFundsForUser(userId: Int) = usersApi.getFundsForUser(userId)
     suspend fun getRateOfInterestforFund(fundId: Int) = fundsApi.getRateOfInterestforFund(fundId)
     suspend fun getTotalDeposit(userId: Int, fundId: Int): Double? {
@@ -45,8 +47,8 @@ class UserSummaryRepository(
         return notificationsApi.getUserNotifications(userId)?.toEntity()
     }
 
-    suspend fun getUserDetails(userId: Int): UserDetails {
-        return usersApi.getUserDetails(userId).toEntity()
+    suspend fun getUserDetails(userId: Int, groupId: Int? = null): UserDetails {
+        return usersApi.getUserDetails(userId, groupId).toEntity()
     }
 
     suspend fun getUserFundDetails(userId: Int, fundId: Int): UserFundDetails? {

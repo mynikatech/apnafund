@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 036-get-groups-for-user
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/036-get-groups-for-user.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

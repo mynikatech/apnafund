@@ -33,8 +33,8 @@ interface UserSummaryDao {
             INNER JOIN group_members gm 
             ON g.groupId = gm.groupId
             WHERE gm.userId = :userId
-            LIMIT 1""")
-    suspend fun getGroupForUser(userId: Int): Groups?
+            """)
+    suspend fun getGroupForUser(userId: Int): List<Groups>?
 
     @Query("""SELECT f.* FROM funds f 
             INNER JOIN group_members gm ON f.groupId = gm.groupId 
@@ -75,60 +75,9 @@ interface UserSummaryDao {
     @Delete
     suspend fun deleteUserRoles(userRoles: UserRoles)
 
-    @Query("""SELECT 
-        u.userId, 
-        u.firstName || ' ' || IFNULL(u.lastName, '') AS userName,
-        r.roleId, 
-        r.roleCode,
-        (
-            SELECT gm.groupId
-            FROM group_members gm
-            WHERE gm.userId = u.userId
-            LIMIT 1
-        ) AS groupId,
-        (
-            SELECT g.groupName
-            FROM group_members gm
-            JOIN `groups` g ON g.groupId = gm.groupId
-            WHERE gm.userId = u.userId
-            LIMIT 1
-        ) AS groupCode,
-        u.firstName,
-        u.lastName,
-        u.emailId,
-        u.phoneNumber
-    FROM user_roles ur
-    JOIN roles r ON r.roleId = ur.roleId
-    JOIN users u ON u.userId = ur.userId
-    WHERE u.userId = :userId
-        """)
-    suspend fun getUserProfile(userId: Int): List<UserProfile>
-
     @Query("SELECT * from user_notifications where userId = :userId")
     suspend fun getUserNotifications(userId: Int): List<UserNotifications>?
 
-    @Transaction
-    suspend fun getUserDetails(userId: Int): UserDetails{
-
-        val user = getUser(userId) ?: throw IllegalStateException("User not found for ID $userId")
-        val roles = getAllUserRoles(userId) ?: emptyList()
-        val notifications = getUserNotifications(userId) ?: emptyList()
-        val funds = getFundsForUser(userId)
-        val group = getGroupForUser(userId)
-
-        return UserDetails(
-            firstName = user.firstName,
-            lastName = user.lastName,
-            emailId = user.emailId,
-            phoneNumber = user.phoneNumber,
-            status = user.status,
-            userCode = user.userCode,
-            userRoles = roles,
-            userNotifications = notifications,
-            userFunds = funds,
-            group = group
-        )
-    }
 
     @Query(
         """SELECT SUM(loanAmount) FROM loans 

@@ -24,6 +24,7 @@ import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchSer
 import com.mynikatech.apnafund.server.common.messaging.factories.UserNotificationFactory
 import com.mynikatech.apnafund.server.common.ratelimit.RateLimiters
 import com.mynikatech.apnafund.server.common.ratelimit.RateLimiters.loginLimiter
+import com.mynikatech.apnafund.server.userroles.UserRolesSql
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.log
 import io.ktor.server.plugins.BadRequestException
@@ -41,7 +42,7 @@ fun Route.usersRoutes(
     users: UsersSql, eventDispatchService: EventDispatchService,
     moderatorRegistrationService: ModeratorRegistrationService,
     userManagementService: UserManagementService,
-    emailVerificationService: EmailVerificationService,
+    emailVerificationService: EmailVerificationService, userRoles: UserRolesSql
 ) = route("/users") {
 
     // ---- GETs ----
@@ -89,25 +90,18 @@ fun Route.usersRoutes(
                     "internal",
                     "Invalid userId"
                 )
-
-            val userProf = users.getUserProfile(userId).firstOrNull()
-                ?: return@get call.respondError(
-                    HttpStatusCode.InternalServerError,
-                    "internal",
-                    "User profile not found"
-                )
-
-            val groupId = userProf.groupId
+            val userGroups = users.getBasicGroupsForUser(userId)
 
             val firebaseToken = FirebaseTokenService.generateFirebaseCustomToken(
                 userId = userId,
                 email = user.emailId,
-                groupId = groupId
+                groupId = null
             )
 
             call.respondOk(
                 LoginUserResponse(
                     user = user,
+                    groups = userGroups,
                     firebaseToken = firebaseToken
                 )
             )
@@ -172,7 +166,15 @@ fun Route.usersRoutes(
             call.respondError(HttpStatusCode.BadRequest, "validation", "userId must be an integer")
             return@get
         }
-        val rows = users.getUserProfile(id)
+        val rows = users.getUserProfile(id).firstOrNull()
+        if( null  == rows){
+            call.respondError(HttpStatusCode.BadRequest, "validation", "No User Profile exists")
+            return@get
+        }
+        val userRoles = userRoles.getRolesOfUser(id)
+        val userGroups = users.getBasicGroupsForUser(id)
+        rows.groups = userGroups
+        rows.roles = userRoles
         call.respondOk(rows) // 200 with [] if empty
     }
 
@@ -238,6 +240,30 @@ fun Route.usersRoutes(
                 "userId required"
             )
         val g = users.getGroupForUser(userId).firstOrNull()
+        if (g == null) call.respondError(HttpStatusCode.NotFound, "not_found", "No group found")
+        else call.respondOk(g)
+    }
+
+    get("get/groups-for-user/{userId}") {
+        val userId = call.parameters["userId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "userId required"
+            )
+        val g = users.getGroupsForUser(userId)
+        if (g == null) call.respondError(HttpStatusCode.NotFound, "not_found", "No groups found")
+        else call.respondOk(g)
+    }
+
+    get("get/groups-for-moderator-user/{moderatorUserId}") {
+        val userId = call.parameters["moderatorUserId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "userId required"
+            )
+        val g = users.getGroupsForModeratorUser(userId)
         if (g == null) call.respondError(HttpStatusCode.NotFound, "not_found", "No group found")
         else call.respondOk(g)
     }
@@ -628,17 +654,10 @@ fun Route.usersRoutes(
             val user = users.getUserById(userId)
                 ?: return@post call.respond(HttpStatusCode.NotFound)
 
-            val userProf = users.getUserProfile(userId).firstOrNull()
-                ?: return@post call.respondError(
-                    HttpStatusCode.InternalServerError,
-                    "internal",
-                    "User profile not found"
-                )
-
             val firebaseToken = FirebaseTokenService.generateFirebaseCustomToken(
                 userId = userId,
                 email = user.emailId,
-                groupId = userProf.groupId
+                groupId = null
             )
 
             call.respondOk(
