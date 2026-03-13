@@ -128,9 +128,34 @@ fun Route.usersRoutes(
             )
         try {
             val u = users.getUserByPhone(phone).firstOrNull()
+                ?: return@get call.respondError(
+                    HttpStatusCode.NotFound,
+                    "not_found",
+                    "User not found"
+                )
 
-            if (u != null) call.respondOk(u)
-            else call.respondError(HttpStatusCode.NotFound, "not_found", "User not found")
+            val userId = u.userId
+                ?: return@get call.respondError(
+                    HttpStatusCode.InternalServerError,
+                    "internal",
+                    "Invalid userId"
+                )
+            val userGroups = users.getBasicGroupsForUser(userId)
+
+            val firebaseToken = FirebaseTokenService.generateFirebaseCustomToken(
+                userId = userId,
+                email = u.emailId,
+                groupId = null
+            )
+
+            call.respondOk(
+                LoginUserResponse(
+                    user = u,
+                    groups = userGroups,
+                    firebaseToken = firebaseToken
+                )
+            )
+
         } catch (e: Exception) {
             // THIS is what was missing
             call.application.log.error(
@@ -143,6 +168,7 @@ fun Route.usersRoutes(
                 e.message ?: "Failed to fetch user"
             )
         }
+
     }
 
     get("get/with-group") {

@@ -216,7 +216,8 @@ fun Application.module() {
         emailVerificationService,
         eventDispatchService,
         emailVerificationEnabled,
-        passwordHistoryDao
+        passwordHistoryDao,
+        approvalDao
     )
     val userManagemnentService = UserManagementService(
         usersDao,

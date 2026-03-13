@@ -60,7 +60,7 @@ class UserSummaryViewModel : ViewModel() {
             val notifications = userDetails.userNotifications
 
             userRoles.postValue(userDetails.userRoles)
-            userName.postValue("${userDetails.firstName} ${userDetails.lastName}")
+            userName.value = "${userDetails.firstName} ${userDetails.lastName}"
 
             SessionManager.userGroups = groups
 

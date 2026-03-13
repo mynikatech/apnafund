@@ -1,12 +1,15 @@
 package com.mynikatech.apnafund.server.approval
 
 import com.mynikatech.apnafund.net.dto.ApprovalInfoDto
+import com.mynikatech.apnafund.server.auth.FirebaseGroupService
 import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
+import com.mynikatech.apnafund.server.db.Db.jdbi
 import com.mynikatech.apnafund.server.funds.FundsSql
 import com.mynikatech.apnafund.server.groups.GroupsSql
 import com.mynikatech.apnafund.server.loans.LoansSql
 import com.mynikatech.apnafund.server.notifications.NotificationService
 import com.mynikatech.apnafund.server.users.UsersSql
+import io.ktor.server.application.log
 
 class ApprovalService(
     private val approvalSql: ApprovalSql,
@@ -17,6 +20,7 @@ class ApprovalService(
     private val notificationService: NotificationService,
     private val eventDispatchService: EventDispatchService
 ) {
+    private val log = org.slf4j.LoggerFactory.getLogger(this::class.java)
 
     fun approve(
         approvalId: Int,
@@ -141,13 +145,34 @@ class ApprovalService(
 
         val groupId = approval.entityId
 
-        approvalSql.approveApproval(
-            approval.approvalId,
-            approvedBy,
-            reason
-        )
+        // DB TRANSACTION
+        jdbi.useTransaction<Exception> { handle ->
 
-        groupsSql.activateGroup(groupId)
+            approvalSql.approveApproval(
+                approval.approvalId,
+                approvedBy,
+                reason
+            )
+
+            groupsSql.activateGroup(groupId)
+
+        }
+        val group = groupsSql.getGroup(groupId).firstOrNull() ?: error("Group not found")
+
+        // create firebase group
+
+        try {
+            FirebaseGroupService.createGroup(
+                groupId = group.groupId!!,
+                groupName = group.groupName
+            )
+        } catch (e: Exception) {
+
+            log.error(
+                "🔥 Firebase group creation failed for groupId=${group.groupId}",
+                e
+            )
+        }
 
         notificationService.notifyGroupApproved(groupId)
     }

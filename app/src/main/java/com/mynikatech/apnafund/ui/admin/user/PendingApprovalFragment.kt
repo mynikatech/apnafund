@@ -13,13 +13,12 @@ import com.mynikatech.apnafund.databinding.FragmentPendingApprovalBinding
 import com.mynikatech.apnafund.net.dto.PendingApprovalDto
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.ApprovalViewModel
-import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 
 class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClickListener {
 
     private lateinit var binding: FragmentPendingApprovalBinding
-    private val viewModel: UserViewModel by viewModels()
+
     private val approvalViewModel: ApprovalViewModel by viewModels()
 
     private lateinit var adapter: PendingApprovalAdapter
@@ -54,7 +53,7 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
 
         lifecycleScope.launch {
 
-            when(item.entityType) {
+            when (item.entityType) {
 
                 "GROUP" ->
                     approvalViewModel.approveGroup(item.approvalId, SessionManager.userId)
@@ -63,7 +62,7 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
                     approvalViewModel.approveLoan(item.approvalId, SessionManager.userId)
             }
 
-            Toast.makeText(requireContext(),"Approved",Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Approved", Toast.LENGTH_SHORT).show()
             observePendingRequests()
         }
     }
@@ -72,7 +71,7 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
 
         lifecycleScope.launch {
 
-            when(item.entityType) {
+            when (item.entityType) {
 
                 "GROUP" ->
                     approvalViewModel.rejectGroup(item.approvalId, SessionManager.userId)
@@ -81,7 +80,7 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
                     approvalViewModel.rejectLoan(item.approvalId, SessionManager.userId)
             }
 
-            Toast.makeText(requireContext(),"Rejected",Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Rejected", Toast.LENGTH_SHORT).show()
             observePendingRequests()
         }
     }

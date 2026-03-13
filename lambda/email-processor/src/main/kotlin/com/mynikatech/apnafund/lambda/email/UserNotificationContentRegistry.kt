@@ -221,7 +221,16 @@ object UserNotificationContentRegistry {
                     fundName = fundName
                 )
             }
-        )
+        ),
+        "GROUP_REQUESTED" to Content(
+            subject = AdminGroupPendingApprovalEmail.subject(),
+            message = { event ->
+                AdminGroupPendingApprovalEmail.body(
+                    moderatorName = event.eventData["moderatorName"] ?: "",
+                    groupName = event.eventData["groupName"] ?: ""
+                )
+            }
+        ),
     )
 
     fun get(event: NotificationEvent): Content {

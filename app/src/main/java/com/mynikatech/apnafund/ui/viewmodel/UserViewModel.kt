@@ -126,7 +126,7 @@ class UserViewModel : ViewModel() {
         return userRolesRepository.getUserByEmail(email)
     }
 
-    suspend fun getUserByPhone(phone: String): Users? {
+    suspend fun getUserByPhone(phone: String): LoginUserResponse? {
         return userRolesRepository.getUserByPhone(phone)
     }
 

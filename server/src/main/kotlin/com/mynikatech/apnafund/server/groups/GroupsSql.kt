@@ -22,7 +22,7 @@ interface GroupsSql {
     fun getGroup(@Bind("id") id: Int): List<GroupsDto>   // returns 0..1 row; caller can firstOrNull()
 
     @SqlQuery("""
-        SELECT add_group(
+        SELECT * from add_group(
             :groupName,
             :description,
             :moderator,
@@ -31,7 +31,7 @@ interface GroupsSql {
             :status
         )
     """)
-    fun addGroup(@BindKotlin g: GroupsDto): Int
+    fun addGroup(@BindKotlin g: GroupsDto): GroupsDto
 
     @SqlQuery("""
         SELECT update_group(

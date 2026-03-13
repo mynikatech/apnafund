@@ -112,7 +112,7 @@ class UsersApiKtor(
             }
         }.unwrap()
 
-    override suspend fun getUserByPhone(phone: String): UsersDto =
+    override suspend fun getUserByPhone(phone: String): LoginUserResponse =
         safeApiCall {
             client.get("/users/get/by-phone") {
                 parameter("phone", phone)

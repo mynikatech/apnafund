@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 039-group-approval-table
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/039-group-approval-table.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

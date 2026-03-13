@@ -117,6 +117,7 @@ class GroupDetailsFragment : Fragment() {
     }
 
     private suspend fun updateTable(groupId: Int, groupMembers: List<GroupMembers>) {
+        if (groupId <= 0) return
         withContext(Dispatchers.Main) {
             cleanTable(binding.tableGroupDetails)
 
@@ -125,6 +126,7 @@ class GroupDetailsFragment : Fragment() {
             }
 
             val groupName = withContext(Dispatchers.IO) {
+
                 groupViewModel.fetchGroup(groupId)
             }
             binding.textViewGroupNameValue.text = groupName.groupName

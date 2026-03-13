@@ -8,7 +8,7 @@ import com.mynikatech.apnafund.net.dto.GroupMembersDto
 interface GroupsApi {
     suspend fun getAllGroups(): List<GroupsDto>
     suspend fun getGroup(id: Int): GroupsDto?
-    suspend fun addGroup(dto: GroupsDto): Int
+    suspend fun addGroup(dto: GroupsDto): GroupsDto
     suspend fun updateGroup(id: Int, dto: GroupsDto): Boolean
     suspend fun deleteGroup(id: Int): Boolean
     suspend fun getGroupByMod(moderator: Int): GroupsDto

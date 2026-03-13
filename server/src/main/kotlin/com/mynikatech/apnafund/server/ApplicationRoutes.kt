@@ -57,7 +57,7 @@ fun Application.registerRoutes(
 ) {
     routing {
         usersRoutes(usersDao,eventDispatchService, moderatorRegistrationService,userManagementService,emailVerificationService, userRolesDao)
-        groupsRoutes(groupsDao)
+        groupsRoutes(groupsDao,eventDispatchService,usersDao,notificationService,approvalDao)
         rolesRoutes(roleDao)
         userRolesRoutes(userRolesDao)
         fundsRoutes(fundDao,notificationService,usersDao )

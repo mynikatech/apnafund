@@ -9,8 +9,6 @@ object GroupRejectedEmail {
         userName: String,
         groupName: String
     ) = """
-        <p>Hi $userName,</p>
-
         <p>
             Your request to create the group
             <strong>$groupName</strong>
@@ -23,7 +21,5 @@ object GroupRejectedEmail {
         </p>
 
         <br/>
-        Regards,<br/>
-        Apna Fund Team
     """.trimIndent()
 }

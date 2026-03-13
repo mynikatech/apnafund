@@ -230,8 +230,8 @@ class UserRoleRepository(
         return usersApi.getUserByEmail(email)
     }
 
-    suspend fun getUserByPhone(phone: String): Users? {
-        return usersApi.getUserByPhone(phone)?.toEntity()
+    suspend fun getUserByPhone(phone: String): LoginUserResponse? {
+        return usersApi.getUserByPhone(phone)
     }
 
     suspend fun checkUserPIN(userId: Int, pin: String): Boolean {

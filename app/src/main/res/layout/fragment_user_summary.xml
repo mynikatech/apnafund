@@ -41,12 +41,24 @@
                 android:gravity="center"
                 android:text="You are not assigned to any group yet." />
 
-            <Button
-                android:id="@+id/buttonGoToGroups"
+            <ImageView
+                android:id="@+id/button_add_group_none"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="6dp"
+                android:src="@drawable/icon_add"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Add Group"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <TextView
+                android:id="@+id/textViewAddGroupMessageNone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Go to Groups" />
+                android:gravity="center"
+                android:textStyle="italic"
+                android:text="(Add Group)" />
         </LinearLayout>
 
         <LinearLayout
@@ -56,16 +68,40 @@
             android:orientation="vertical"
             android:padding="4dp">
             <!-- Group chip -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_group_name"
                 style="@style/Widget.Material3.Chip.Assist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="16dp"
                 android:clickable="true"
                 android:text="Group: --"
                 app:chipIcon="@drawable/ic_group" />
+            <ImageView
+                android:id="@+id/button_add_group"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="6dp"
+                android:src="@drawable/icon_add"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Add Group"
+                android:clickable="true"
+                android:focusable="true"/>
+
+                <TextView
+                    android:id="@+id/textViewAddGroupMessage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textStyle="italic"
+                    android:text="(Add Group)" />
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/FundMessageContainer"

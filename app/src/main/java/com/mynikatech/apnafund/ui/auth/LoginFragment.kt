@@ -74,7 +74,7 @@ class LoginFragment : Fragment() {
                 }
 
                 lifecycleScope.launch {
-                    val localUser = try {
+                    val loginResponse = try {
                         userViewModel.getUserByPhone(phone)
                     } catch (e: ApiException) {
                         when (e.code) {
@@ -84,7 +84,15 @@ class LoginFragment : Fragment() {
                         }
                         return@launch
                     }
+                    if (null == loginResponse)
+                        return@launch
 
+                    val localUser = loginResponse.user.toEntity()
+                    val firebaseToken = loginResponse.firebaseToken
+                        ?: run {
+                            showToast("Login failed. Please try again.")
+                            return@launch
+                        }
                     if (localUser == null) {
                         Toast.makeText(
                             requireContext(),
@@ -431,7 +439,20 @@ class LoginFragment : Fragment() {
                 Log.d("OTP_DEBUG", "OTP VERIFIED, uid=$firebaseUid")
 
                     lifecycleScope.launch {
-                        val localUser = userViewModel.getUserByPhone(phone)
+                        val loginResponse = try {
+                            userViewModel.getUserByPhone(phone)
+                        } catch (e: ApiException) {
+                            when (e.code) {
+                                404 -> showToast("User not found. Please register first")
+                                400 -> showToast(e.message ?: "Invalid request")
+                                else -> showToast("Server error. Please try again.")
+                            }
+                            return@launch
+                        }
+                        if (null == loginResponse)
+                            return@launch
+
+                        val localUser = loginResponse.user.toEntity()
                         if (localUser == null) {
                             Toast.makeText(requireContext(), "User not found", Toast.LENGTH_SHORT)
                                 .show()

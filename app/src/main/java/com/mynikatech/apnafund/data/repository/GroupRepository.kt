@@ -44,13 +44,6 @@ class GroupRepository(
         runCatching { api.getAllGroups() }.getOrNull()
     }
 
-    /** Create remotely, then insert into Room. */
-    suspend fun createGroupRemoteAndCache(group: Groups): Int = withContext(Dispatchers.IO) {
-        val newId = api.addGroup(group.toDto())
-        //groupsDao.addGroup(group.copy(groupId = newId))
-        newId
-    }
-
     /** Update remotely, then update Room. */
     suspend fun updateGroupRemoteAndCache(group: Groups): Boolean = withContext(Dispatchers.IO) {
         val id = requireNotNull(group.groupId) { "groupId required" }

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 037-group-approval-request
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/037-group-approval-request.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

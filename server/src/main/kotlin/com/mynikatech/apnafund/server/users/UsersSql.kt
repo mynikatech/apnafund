@@ -1,5 +1,6 @@
 package com.mynikatech.apnafund.server.users
 
+import com.mynikatech.apnafund.net.dto.AdminUserDto
 import com.mynikatech.apnafund.net.dto.FeedbackDto
 import com.mynikatech.apnafund.net.dto.FeedbackWithUserGroupDto
 import com.mynikatech.apnafund.net.dto.FundsDto
@@ -38,6 +39,9 @@ interface UsersSql {
 
     @SqlQuery("""SELECT * FROM get_user(:id)""")
     fun getUserById(@Bind("id") id: Int): UsersDto
+
+    @SqlQuery("""SELECT * FROM get_admin_user()""")
+    fun getAdminUser(): AdminUserDto
 
     @SqlQuery(
         """

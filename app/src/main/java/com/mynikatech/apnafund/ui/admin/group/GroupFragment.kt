@@ -157,10 +157,19 @@ class GroupFragment : Fragment() {
                 else
                     btnEdit.visibility = View.GONE
                 val status = groups[i].status
-                val drawable =
-                    if (status == ApnaBankConstants.STATUS_ACTIVE) R.drawable.ic_block else R.drawable.ic_check_circle
+                val drawable = when (status) {
+                    ApnaBankConstants.STATUS_ACTIVE -> R.drawable.ic_block
+                    ApnaBankConstants.STATUS_INACTIVE -> R.drawable.ic_check_circle
+                    ApnaBankConstants.STATUS_PENDING -> R.drawable.ic_pending // or ic_pending
+                    else -> R.drawable.ic_block
+                }
                 val btnToggleActive = createIconButton(drawable, status) {
                     showConfirmToggleGroupStatus(groups[i])
+                }
+                // Disable button when pending
+                if (status == ApnaBankConstants.STATUS_PENDING) {
+                    btnToggleActive.isEnabled = false
+                    btnToggleActive.alpha = 0.5f
                 }
 
                 val newRow = TableRow(activity).apply {
@@ -221,67 +230,66 @@ class GroupFragment : Fragment() {
 
         lifecycleScope.launch {
             userViewModel.fetchUsers().collectLatest { users ->
-                val userNames = users.map { "${it.firstName} ${it.lastName}" }
-                val adapter = ArrayAdapter(
-                    context,
-                    R.layout.dropdown_item_apnabank,
-                    userNames
-                )
-                dialogBinding.editTextAutoModerator.setAdapter(adapter)
 
-                // Preselect existing moderator if editing
-                if (addOrEditFlag == 1 && existingGroup != null) {
-                    val existingModerator = users.find { it.userId == existingGroup.moderator }
-                    val fullName = "${existingModerator?.firstName} ${existingModerator?.lastName}"
+                if (!isAdmin) {
+                    // Moderator → only themselves
+                    val currentUser = users.find { it.userId == SessionManager.userId }
+
+                    val fullName = "${currentUser?.firstName} ${currentUser?.lastName}"
+
                     dialogBinding.editTextAutoModerator.setText(fullName, false)
-                    userId = existingModerator?.userId ?: 0
-                    validateInputs()
-                }
-                dialogBinding.editTextAutoModerator.setOnClickListener {
-                    dialogBinding.editTextAutoModerator.showDropDown()
-                }
+                    userId = currentUser?.userId ?: 0
 
-                dialogBinding.editTextAutoModerator.setOnFocusChangeListener { _, hasFocus ->
-                    if (hasFocus) {
-                        dialogBinding.editTextAutoModerator.post {
-                            dialogBinding.editTextAutoModerator.showDropDown()
+                    dialogBinding.editTextAutoModerator.isEnabled = false
+                    dialogBinding.editTextAutoModerator.isClickable = false
+                    dialogBinding.editTextAutoModerator.isFocusable = false
+
+                    validateInputs()
+
+                } else {
+
+                    // Admin → show all users
+                    val userNames = users.map { "${it.firstName} ${it.lastName}" }
+
+                    val adapter = ArrayAdapter(
+                        requireContext(),
+                        R.layout.dropdown_item_apnabank,
+                        userNames
+                    )
+
+                    dialogBinding.editTextAutoModerator.setAdapter(adapter)
+
+                    // Preselect existing moderator if editing
+                    if (addOrEditFlag == 1 && existingGroup != null) {
+                        val existingModerator = users.find { it.userId == existingGroup.moderator }
+                        val fullName = "${existingModerator?.firstName} ${existingModerator?.lastName}"
+
+                        dialogBinding.editTextAutoModerator.setText(fullName, false)
+                        userId = existingModerator?.userId ?: 0
+                        validateInputs()
+                    }
+
+                    dialogBinding.editTextAutoModerator.setOnClickListener {
+                        dialogBinding.editTextAutoModerator.showDropDown()
+                    }
+
+                    dialogBinding.editTextAutoModerator.setOnFocusChangeListener { _, hasFocus ->
+                        if (hasFocus) {
+                            dialogBinding.editTextAutoModerator.post {
+                                dialogBinding.editTextAutoModerator.showDropDown()
+                            }
                         }
                     }
+
+                    dialogBinding.editTextAutoModerator.setOnItemClickListener { parent, _, position, _ ->
+                        val selectedName = parent.getItemAtPosition(position) as String
+                        val selectedUser =
+                            users.find { "${it.firstName} ${it.lastName}" == selectedName }
+
+                        userId = selectedUser?.userId ?: 0
+                        validateInputs()
+                    }
                 }
-
-                dialogBinding.editTextAutoModerator.setOnItemClickListener { parent, _, position, _ ->
-                    val selectedName = parent.getItemAtPosition(position) as String
-                    val selectedUser =
-                        users.find { "${it.firstName} ${it.lastName}" == selectedName }
-                    userId = selectedUser?.userId ?: 0
-                    validateInputs()
-                }
-                dialogBinding.editTextAutoModerator.addTextChangedListener(object : TextWatcher {
-                    override fun afterTextChanged(s: Editable?) {
-                        // If user clears the text manually
-                        if (s.isNullOrBlank()) {
-                            userId = 0
-                            dialogBinding.editTextAutoModerator.showDropDown()
-                            validateInputs()
-                        }
-                    }
-
-                    override fun beforeTextChanged(
-                        s: CharSequence?,
-                        start: Int,
-                        count: Int,
-                        after: Int
-                    ) {
-                    }
-
-                    override fun onTextChanged(
-                        s: CharSequence?,
-                        start: Int,
-                        before: Int,
-                        count: Int
-                    ) {
-                    }
-                })
             }
         }
 
@@ -289,6 +297,11 @@ class GroupFragment : Fragment() {
             viewLifecycleOwner.lifecycleScope.launch {
                 val groupName = dialogBinding.editTextGroupName.text.toString().trim()
                     .toTitleCase()
+                val status = if (isAdmin) {
+                    ApnaBankConstants.STATUS_ACTIVE
+                } else {
+                    ApnaBankConstants.STATUS_PENDING
+                }
                 val groupToSave = existingGroup?.copy(
                     groupName = groupName,
                     moderator = userId,
@@ -298,12 +311,31 @@ class GroupFragment : Fragment() {
                     groupName = dialogBinding.editTextGroupName.text.toString().trim()
                         .toTitleCase(),
                     moderator = userId,
-                    status = ApnaBankConstants.STATUS_ACTIVE,
+                    status = status,
                     createdDate = ApnaBankDate.getCurrentDate(),
                     description = dialogBinding.editTextGroupDesc.text.toString().trim(),
                     groupCode = Converters.generateGroupCode(groupName)
                 )
-                groupViewModel.saveOrUpdateGroup(groupToSave)
+                val savedGroup = groupViewModel.saveOrUpdateGroup(groupToSave)
+                if (savedGroup != null) {
+
+                    val message = if (isAdmin) {
+                        "Group created successfully."
+                    } else {
+                        "Group request submitted for approval. You will receive a notification once it is approved."
+                    }
+
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+
+                } else {
+
+                    Toast.makeText(
+                        requireContext(),
+                        "Failed to save group. Please try again.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
                 fetchAllGroups()
                 dialog.dismiss()
             }

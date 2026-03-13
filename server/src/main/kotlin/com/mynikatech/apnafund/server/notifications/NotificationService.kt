@@ -1,5 +1,6 @@
 package com.mynikatech.apnafund.server.notifications
 
+import com.mynikatech.apnafund.net.dto.AdminUserDto
 import com.mynikatech.apnafund.net.dto.Channel
 import com.mynikatech.apnafund.net.dto.EmailPayload
 import com.mynikatech.apnafund.net.dto.NotificationEvent
@@ -113,7 +114,7 @@ class NotificationService(
             sql.addUserNotification(
                 UserNotificationsDto(
                     notificationType = "FUND_MEMBER_ADDED",
-                    userId = member.userId!!,
+                    userId = member.userId,
                     message = "You have been added to fund '$fundName'.",
                     publishedFlag = true,
                     readFlag = false,
@@ -426,6 +427,67 @@ class NotificationService(
 
         } catch (e: Exception) {
             logger.error("ERROR inside notifyLoanRejected", e)
+        }
+    }
+
+    fun notifyGroupRequested(
+        groupId: Int,
+        groupName: String,
+        requestorName: String,
+        approver: AdminUserDto
+    ) {
+
+        try {
+
+            val group = groupsSql.getGroup(groupId).firstOrNull() ?: run {
+                logger.error("Loan not found for groupId=$groupId")
+                return
+            }
+
+            logger.info("Sending GROUP_REQUESTED to admin ${approver.userId}")
+
+            // ---------- IN APP ----------
+            sql.addUserNotification(
+                UserNotificationsDto(
+                    notificationType = "GROUP_REQUESTED",
+                    userId = approver.userId!!,
+                    message =
+                        "$requestorName has requested a new group: $groupName.",
+                    publishedFlag = true,
+                    readFlag = false,
+                    isExpiredFlag = false,
+                    status = "ACTIVE"
+                )
+            )
+
+            // ---------- EMAIL ----------
+            val event = NotificationEvent(
+                eventType = "GROUP_REQUESTED",
+                userId = approver.userId.toString(),
+                channels = setOf(Channel.EMAIL),
+
+                email = EmailPayload(
+                    to = approver.emailId,
+                    userName = approver.fullName,
+                    data = mapOf(
+                        "requestorName" to requestorName,
+                        "groupName" to groupName,
+                        "groupDescription" to group.description.toString()
+                    )
+                ),
+
+                eventData = mapOf(
+                    "groupId" to groupId.toString(),
+                    "groupName" to groupName
+                )
+            )
+
+            eventDispatchService.dispatchUser(event)
+
+            logger.info("notifyGroupRequested completed")
+
+        } catch (e: Exception) {
+            logger.error("ERROR inside notifyGroupRequested", e)
         }
     }
 

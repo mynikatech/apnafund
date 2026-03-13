@@ -2,12 +2,18 @@ package com.mynikatech.apnafund.server.groups
 
 import com.mynikatech.apnafund.net.dto.AddMemberRequest
 import com.mynikatech.apnafund.net.dto.FirebaseSyncRequest
+import com.mynikatech.apnafund.net.dto.GroupCreationRequest
 import com.mynikatech.apnafund.net.dto.GroupMembersDto
 import com.mynikatech.apnafund.net.dto.GroupsDto
 import com.mynikatech.apnafund.server.api.respondError
 import com.mynikatech.apnafund.server.api.respondOk
+import com.mynikatech.apnafund.server.approval.ApprovalSql
 import com.mynikatech.apnafund.server.auth.FirebaseGroupService
 import com.mynikatech.apnafund.server.chat.FirebaseChatService
+import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
+import com.mynikatech.apnafund.server.common.messaging.factories.UserNotificationFactory
+import com.mynikatech.apnafund.server.notifications.NotificationService
+import com.mynikatech.apnafund.server.users.UsersSql
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.log
 import io.ktor.server.request.receive
@@ -17,12 +23,17 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
+import java.time.LocalDate
 
 /**
  * SQL-object style (like UsersSql). If you kept a GroupsRepo façade,
  * you can adapt this easily—just change the parameter type and calls.
  */
-fun Route.groupsRoutes(groups: GroupsSql) = route("/groups") {
+fun Route.groupsRoutes(groups: GroupsSql,
+                       eventDispatchService: EventDispatchService,
+                       usersSql: UsersSql,
+                       notificationService: NotificationService,
+                       approvalSql: ApprovalSql) = route("/groups") {
 
     // 1) GET  /groups/get/all
     get("get/all") {
@@ -43,42 +54,120 @@ fun Route.groupsRoutes(groups: GroupsSql) = route("/groups") {
 
     // 3) POST /groups/add
     post("add") {
-        val dto = call.receive<GroupsDto>()
-
-        if (dto.groupName.isNullOrBlank()) {
-            call.respondError(
-                HttpStatusCode.BadRequest,
-                "validation",
-                "groupName required"
-            )
-            return@post
-        }
-
-        val id = groups.addGroup(dto)
-
-        call.application.log.info("Creating Firebase group for groupId=$id")
 
         try {
-            FirebaseGroupService.createGroup(
-                groupId = id,
-                groupName = dto.groupName
-            )
-        } catch (e: Exception) {
-            call.application.log.error(
-                "🔥 Firebase group creation failed for groupId=$id",
-                e
-            )
 
-            // IMPORTANT: decide your consistency strategy (see below)
+            val request = call.receive<GroupCreationRequest>()
+            val dto = request.group
+
+            if (dto.groupName.isNullOrBlank()) {
+                call.respondError(
+                    HttpStatusCode.BadRequest,
+                    "validation",
+                    "groupName required"
+                )
+                return@post
+            }
+
+            val group = groups.addGroup(dto)
+            val groupId = group.groupId ?: throw IllegalStateException("Group id missing")
+
+
+            val moderatorId = dto.moderator ?: 0
+            val joiningDate = LocalDate.now().toString()
+            // add group member
+            groups.addGroupMember(moderatorId, groupId, joiningDate)
+
+            if (moderatorId == request.requestorId) {
+
+                try {
+
+                    val moderatorUser =
+                        usersSql.getUserById(moderatorId)
+                            ?: throw IllegalStateException("Moderator user not found")
+
+                    val adminUser =
+                        usersSql.getAdminUser()
+                            ?: throw IllegalStateException("Admin user not found")
+
+                    approvalSql.createGroupApproval(
+                        groupId,
+                        request.requestorId,
+                        adminUser.userId!!
+                    )
+
+                    eventDispatchService.dispatchUser(
+                        UserNotificationFactory.adminGroupPendingApproval(
+                            moderatorName = moderatorUser.fullName,
+                            moderatorEmail = moderatorUser.emailId,
+                            groupName = group.groupName,
+                            groupId = groupId
+                        )
+                    )
+
+                    notificationService.notifyGroupRequested(
+                        groupId,
+                        group.groupName,
+                        moderatorUser.fullName,
+                        adminUser
+                    )
+
+                } catch (e: Exception) {
+
+                    call.application.log.error(
+                        "Error creating group approval for groupId=$groupId",
+                        e
+                    )
+
+                    call.respondError(
+                        HttpStatusCode.InternalServerError,
+                        "approval_error",
+                        "Failed to create approval request"
+                    )
+                    return@post
+                }
+
+            } else {
+
+                try {
+
+                    call.application.log.info(
+                        "Creating Firebase group for groupId=$groupId"
+                    )
+
+                    FirebaseGroupService.createGroup(
+                        groupId = groupId,
+                        groupName = group.groupName
+                    )
+
+                } catch (e: Exception) {
+
+                    call.application.log.error(
+                        "🔥 Firebase group creation failed for groupId=$groupId",
+                        e
+                    )
+
+                    call.respondError(
+                        HttpStatusCode.InternalServerError,
+                        "firebase_error",
+                        "Failed to create group in Firebase"
+                    )
+                    return@post
+                }
+            }
+
+            call.respondOk(group, HttpStatusCode.Created)
+
+        } catch (e: Exception) {
+
+            call.application.log.error("Error creating group", e)
+
             call.respondError(
                 HttpStatusCode.InternalServerError,
-                "firebase_error",
-                "Failed to create group in Firebase"
+                "group_creation_failed",
+                "Unable to create group"
             )
-            return@post
         }
-
-        call.respondOk(id, HttpStatusCode.Created)
     }
 
     // 4) PUT  /groups/update/{id}

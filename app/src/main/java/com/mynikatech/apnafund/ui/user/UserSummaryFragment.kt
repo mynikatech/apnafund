@@ -1,14 +1,17 @@
 package com.mynikatech.apnafund.ui.user
 
 import android.app.AlertDialog
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -16,23 +19,32 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.mynikatech.apnafund.Exception.InvalidSessionException
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
+import com.mynikatech.apnafund.data.model.Groups
 import com.mynikatech.apnafund.data.model.LoanDetailsWithMemberNames
 import com.mynikatech.apnafund.data.model.UserProfile
+import com.mynikatech.apnafund.databinding.DialogAddGroupBinding
 import com.mynikatech.apnafund.databinding.FragmentUserSummaryBinding
 import com.mynikatech.apnafund.session.PreferencesHelper
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.loan.AddLoanDialog
 import com.mynikatech.apnafund.ui.loan.LoanAdapter
 import com.mynikatech.apnafund.ui.viewmodel.FundSharedViewModel
+import com.mynikatech.apnafund.ui.viewmodel.GroupViewModel
 import com.mynikatech.apnafund.ui.viewmodel.LoansViewModel
 import com.mynikatech.apnafund.ui.viewmodel.NotificationSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.StartupViewModel
 import com.mynikatech.apnafund.ui.viewmodel.UserSummaryViewModel
+import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
+import com.mynikatech.apnafund.util.ApnaBankDate
 import com.mynikatech.apnafund.util.Converters
+import com.mynikatech.apnafund.util.Converters.toTitleCase
+import com.mynikatech.apnafund.util.GroupInputValidator
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class UserSummaryFragment : Fragment() {
@@ -41,7 +53,11 @@ class UserSummaryFragment : Fragment() {
 
     private val userSummaryViewModel: UserSummaryViewModel by viewModels()
 
+    private val userViewModel: UserViewModel by viewModels()
+
     private val loanViewModel: LoansViewModel by viewModels()
+
+    private val groupViewModel: GroupViewModel by viewModels()
 
     private val fundSharedViewModel: FundSharedViewModel by activityViewModels()
 
@@ -119,30 +135,41 @@ class UserSummaryFragment : Fragment() {
 
         Log.d("ApnaFund", "UserFragment: The user Id is $userId")
 
+        userSummaryViewModel.userName.observe(viewLifecycleOwner) { nameFromVm ->
+
+            val preferred = SessionManager.getFormattedUserName()
+
+            val display = preferred.ifBlank { nameFromVm }
+            Log.d("UserSummary", " User Name Observing: and display Name is $display")
+            binding.textViewWelcomeMessage.text =
+                getString(R.string.text_welcome_message, display)
+        }
+
         /* ---------------- LOAD USER PROFILE ---------------- */
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
 
                 val userProfile = userSummaryViewModel.getUserProfile(userId)
-
+                if (!isAdded) return@launch
                 saveUserProfilesSession(userProfile)
-
+                userSummaryViewModel.userName.value = SessionManager.getFormattedUserName()
                 refreshGroupChip()
                 ensureFirebaseLogin()
 
                 notificationViewModel.loadUnreadCount(SessionManager.userId)
+
                 //userSummaryViewModel.syncFirebaseUidIfNeeded()
 
             } catch (_: InvalidSessionException) {
                 // already handled
             }
-
+            if (!isAdded) return@launch
             val roleCodes = SessionManager.roleNames
 
+            val activity = activity ?: return@launch
             val bottomNav =
-                requireActivity().findViewById<BottomNavigationView>(R.id.bottom_navigation_view)
-
+                activity.findViewById<BottomNavigationView>(R.id.bottom_navigation_view)
             val isOnlyMember =
                 roleCodes.contains("MEMBER") && roleCodes.size == 1
 
@@ -150,15 +177,19 @@ class UserSummaryFragment : Fragment() {
                 .findItem(R.id.adminFragment)
                 ?.isVisible = !isOnlyMember
 
-            userSummaryViewModel.userName.observe(viewLifecycleOwner) { nameFromVm ->
+            val hasGroup = SessionManager.groupId != null && SessionManager.groupId!! > 0
+            val isAdmin = roleCodes.contains("ADMIN")
+            val isModerator = roleCodes.contains("MODERATOR")
 
-                val preferred = SessionManager.getFormattedUserName()
+            val canAccessGroupTabs = hasGroup || isAdmin
 
-                val display = preferred.ifBlank { nameFromVm }
+            bottomNav.menu.findItem(R.id.groupChatFragment)?.isVisible = canAccessGroupTabs
+            bottomNav.menu.findItem(R.id.fundFragment)?.isVisible = canAccessGroupTabs
 
-                binding.textViewWelcomeMessage.text =
-                    getString(R.string.text_welcome_message, display)
-            }
+            bottomNav.menu.findItem(R.id.adminFragment)?.isVisible =
+                (isAdmin || isModerator) && canAccessGroupTabs
+
+
 
             findNavController().currentBackStackEntry
                 ?.savedStateHandle
@@ -174,15 +205,15 @@ class UserSummaryFragment : Fragment() {
                     }
                 }
 
-            val hasGroup = SessionManager.groupId != null
+
 
             if (!hasGroup) {
 
                 binding.noGroupMessageContainer.visibility = View.VISIBLE
                 binding.GroupMessageContainer.visibility = View.GONE
 
-                if (!(SessionManager.isModerator() || SessionManager.isAdmin()))
-                    binding.buttonGoToGroups.visibility = View.GONE
+                /*if (!(SessionManager.isModerator() || SessionManager.isAdmin()))
+                    binding.buttonAddGroupNone.visibility = View.GONE*/
 
             } else {
 
@@ -191,13 +222,12 @@ class UserSummaryFragment : Fragment() {
 
                 lazyLoadContent()
             }
+            binding.buttonAddGroup.setOnClickListener {
+                showAddGroupDialog(requireContext(), 0)
+            }
+            binding.buttonAddGroupNone.setOnClickListener {
 
-            binding.buttonGoToGroups.setOnClickListener {
-
-                val action = UserSummaryFragmentDirections
-                    .actionUserSummaryFragmentToAdminFragment("Group")
-
-                findNavController().navigate(action)
+                showAddGroupDialog(requireContext(), 0)
             }
         }
     }
@@ -225,14 +255,7 @@ class UserSummaryFragment : Fragment() {
             )
             binding.recyclerViewLoans.adapter = adapter
         }
-
         userSummaryViewModel.loadUserSummary(userId, SessionManager.groupId)
-
-
-        userSummaryViewModel.userName.observe(viewLifecycleOwner) {
-            binding.textViewWelcomeMessage.text = getString(R.string.text_welcome_message, it)
-        }
-
         userSummaryViewModel.groupName.observe(viewLifecycleOwner) {
             binding.chipGroupName.text =
                 "Group: ${SessionManager.groupName ?: "--"}"
@@ -633,4 +656,163 @@ class UserSummaryFragment : Fragment() {
             startUpViewModel.restoreFirebaseSession(email)
         }
     }
+
+    private fun showAddGroupDialog(
+        context: Context,
+        addOrEditFlag: Int,
+        existingGroup: Groups? = null
+    ) {
+        val dialogBinding = DialogAddGroupBinding.inflate(LayoutInflater.from(context))
+        val dialog = BottomSheetDialog(context)
+        dialog.setContentView(dialogBinding.root)
+        dialog.show()
+        val isAdmin = SessionManager.isAdmin()
+        var userId = 0
+        dialogBinding.buttonSaveGrp.text = if (addOrEditFlag == 1) "Update Group" else "Add Group"
+
+        // Pre-fill group name
+        if (addOrEditFlag == 1) {
+            dialogBinding.editTextGroupName.setText(existingGroup?.groupName)
+            dialogBinding.editTextGroupDesc.setText(existingGroup?.description)
+        }
+
+        dialogBinding.buttonSaveGrp.isEnabled = false
+
+        // Validation helper
+        fun validateInputs() {
+            val name = dialogBinding.editTextGroupName.text.toString().trim()
+            val isValid = GroupInputValidator.isGroupFormValid(name, userId)
+            dialogBinding.buttonSaveGrp.isEnabled = isValid
+
+            if (!GroupInputValidator.isGroupNameValidInput(name) && name.isNotEmpty()) {
+                dialogBinding.editTextGroupName.error = "Group name must be more than 3 characters"
+            }
+        }
+
+        dialogBinding.editTextGroupName.addTextChangedListener {
+            validateInputs()
+        }
+
+        // Load user list and handle selection
+        // when the user is admin all the users should be made available
+        // however when the user is not admin only the user should be available
+
+        lifecycleScope.launch {
+            userViewModel.fetchUsers().collectLatest { users ->
+
+                if (!isAdmin) {
+                    // Moderator → only themselves
+                    val currentUser = users.find { it.userId == SessionManager.userId }
+
+                    val fullName = "${currentUser?.firstName} ${currentUser?.lastName}"
+
+                    dialogBinding.editTextAutoModerator.setText(fullName, false)
+                    userId = currentUser?.userId ?: 0
+
+                    dialogBinding.editTextAutoModerator.isEnabled = false
+                    dialogBinding.editTextAutoModerator.isClickable = false
+                    dialogBinding.editTextAutoModerator.isFocusable = false
+
+                    validateInputs()
+
+                } else {
+
+                    // Admin → show all users
+                    val userNames = users.map { "${it.firstName} ${it.lastName}" }
+
+                    val adapter = ArrayAdapter(
+                        requireContext(),
+                        R.layout.dropdown_item_apnabank,
+                        userNames
+                    )
+
+                    dialogBinding.editTextAutoModerator.setAdapter(adapter)
+
+                    // Preselect existing moderator if editing
+                    if (addOrEditFlag == 1 && existingGroup != null) {
+                        val existingModerator = users.find { it.userId == existingGroup.moderator }
+                        val fullName =
+                            "${existingModerator?.firstName} ${existingModerator?.lastName}"
+
+                        dialogBinding.editTextAutoModerator.setText(fullName, false)
+                        userId = existingModerator?.userId ?: 0
+                        validateInputs()
+                    }
+
+                    dialogBinding.editTextAutoModerator.setOnClickListener {
+                        dialogBinding.editTextAutoModerator.showDropDown()
+                    }
+
+                    dialogBinding.editTextAutoModerator.setOnFocusChangeListener { _, hasFocus ->
+                        if (hasFocus) {
+                            dialogBinding.editTextAutoModerator.post {
+                                dialogBinding.editTextAutoModerator.showDropDown()
+                            }
+                        }
+                    }
+
+                    dialogBinding.editTextAutoModerator.setOnItemClickListener { parent, _, position, _ ->
+                        val selectedName = parent.getItemAtPosition(position) as String
+                        val selectedUser =
+                            users.find { "${it.firstName} ${it.lastName}" == selectedName }
+
+                        userId = selectedUser?.userId ?: 0
+                        validateInputs()
+                    }
+                }
+            }
+        }
+
+        dialogBinding.buttonSaveGrp.setOnClickListener {
+            viewLifecycleOwner.lifecycleScope.launch {
+
+                val groupName = dialogBinding.editTextGroupName.text.toString().trim()
+                    .toTitleCase()
+                val status = if (isAdmin) {
+                    ApnaBankConstants.STATUS_ACTIVE
+                } else {
+                    ApnaBankConstants.STATUS_PENDING
+                }
+                val groupToSave = existingGroup?.copy(
+                    groupName = groupName,
+                    moderator = userId,
+                    status = existingGroup.status,
+                    description = dialogBinding.editTextGroupDesc.text.toString().trim()
+                ) ?: Groups(
+                    groupName = dialogBinding.editTextGroupName.text.toString().trim()
+                        .toTitleCase(),
+                    moderator = userId,
+                    status = status,
+                    createdDate = ApnaBankDate.getCurrentDate(),
+                    description = dialogBinding.editTextGroupDesc.text.toString().trim(),
+                    groupCode = Converters.generateGroupCode(groupName)
+                )
+                val savedGroup = groupViewModel.saveOrUpdateGroup(groupToSave)
+                if (savedGroup != null) {
+
+                    val message = if (isAdmin) {
+                        "Group created successfully."
+                    } else {
+                        "Group request submitted for approval. You will receive a notification once it is approved."
+                    }
+
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+
+                } else {
+
+                    Toast.makeText(
+                        requireContext(),
+                        "Failed to save group. Please try again.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                dialog.dismiss()
+            }
+        }
+        dialogBinding.buttonCancelGrp.setOnClickListener {
+            dialog.dismiss()
+        }
+    }
+
+
 }

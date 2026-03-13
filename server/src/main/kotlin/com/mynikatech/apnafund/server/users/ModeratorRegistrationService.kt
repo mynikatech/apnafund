@@ -2,6 +2,7 @@ package com.mynikatech.apnafund.server.users
 
 import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
 import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
+import com.mynikatech.apnafund.server.approval.ApprovalSql
 import com.mynikatech.apnafund.server.auth.FirebaseGroupService
 import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
 import com.mynikatech.apnafund.server.common.messaging.factories.UserNotificationFactory
@@ -19,7 +20,8 @@ class ModeratorRegistrationService(
     private val emailVerificationService: EmailVerificationService,
     private val eventDispatchService: EventDispatchService,
     private val emailVerificationEnabled: Boolean,
-    private val passwordHistSql: PasswordHistorySql
+    private val passwordHistSql: PasswordHistorySql,
+    private val approvalSql: ApprovalSql
 ) {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -98,11 +100,24 @@ class ModeratorRegistrationService(
         /* -------------------------------------------------
          * 5️⃣ CREATE GROUP (PENDING, MODERATOR = USER)
          * ------------------------------------------------- */
-        val groupId = groupsSql.addGroup(
+        val group = groupsSql.addGroup(
             req.group.copy(
                 moderator = userId,      // ✅ SET HERE
                 status = "PENDING"
             ))
+
+        val groupId = group.groupId ?: error("Group id missing")
+
+        // Create the pending approval requests
+        val adminUser =
+            usersSql.getAdminUser()
+                ?: throw IllegalStateException("Admin user not found")
+        approvalSql.createGroupApproval(
+            groupId,
+            userId,
+            adminUser.userId!!
+        )
+
         FirebaseGroupService.createGroup(
             groupId = groupId,
             groupName = req.group.groupName

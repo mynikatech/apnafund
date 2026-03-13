@@ -16,6 +16,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import android.util.Log
 import com.mynikatech.apnafund.net.dto.FirebaseSyncRequest
+import com.mynikatech.apnafund.net.dto.GroupCreationRequest
 import com.mynikatech.apnafund.session.SessionManager
 
 class GroupsApiKtor(
@@ -30,11 +31,14 @@ class GroupsApiKtor(
     override suspend fun getGroup(id: Int): GroupsDto? =
         client.get("/groups/get/$id").unwrap<GroupsDto>()
 
-    override suspend fun addGroup(dto: GroupsDto): Int =
+    override suspend fun addGroup(dto: GroupsDto): GroupsDto =
         client.post("/groups/add") {
             contentType(ContentType.Application.Json)
-            setBody(dto)
-        }.unwrap<Int>()
+            setBody(GroupCreationRequest(
+                group = dto,
+                requestorId = SessionManager.userId
+            ))
+        }.unwrap<GroupsDto>()
 
     override suspend fun updateGroup(id: Int, dto: GroupsDto): Boolean {
         val resp = client.put("/groups/update/$id") {

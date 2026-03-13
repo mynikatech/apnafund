@@ -34,7 +34,7 @@ interface UsersApi {
     suspend fun doesUserExists(emailId: String): Boolean
     suspend fun countMatchingUsers(email: String, phone: String, excludeUserId: Int): Int
     suspend fun getUserByEmail(email: String): LoginUserResponse?
-    suspend fun getUserByPhone(phone: String): UsersDto?
+    suspend fun getUserByPhone(phone: String): LoginUserResponse?
     suspend fun validateUser(email: String, password: String): UsersDto?
     suspend fun checkUserPIN(userId: Int, pin: String): Boolean
     suspend fun doesGroupHasModerator(groupId: Int): Boolean

@@ -24,6 +24,21 @@ interface ApprovalSql {
 
     @SqlQuery(
         """
+        SELECT create_group_approval(
+            :groupId,
+            :requestedBy,
+            :approver
+        )
+        """
+    )
+    fun createGroupApproval(
+        @Bind("groupId") loanId: Int,
+        @Bind("requestedBy") requestedBy: Int,
+        @Bind("approver") approver: Int
+    ): Boolean
+
+    @SqlQuery(
+        """
         SELECT *
         FROM get_pending_approvals(:userId)
         """

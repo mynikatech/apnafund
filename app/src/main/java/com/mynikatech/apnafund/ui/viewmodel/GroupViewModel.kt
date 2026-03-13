@@ -6,7 +6,6 @@ import com.mynikatech.apnafund.ApnaFundApplication
 import com.mynikatech.apnafund.data.model.GroupMemberWithName
 import com.mynikatech.apnafund.data.model.GroupMembers
 import com.mynikatech.apnafund.data.model.Groups
-import com.mynikatech.apnafund.net.dto.UserGroup
 import com.mynikatech.apnafund.util.ApnaBankDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,23 +47,7 @@ class GroupViewModel : ViewModel() {
             }
         }
     }
-    fun createOrUpdateGroupRemote(group: Groups) {
-        viewModelScope.launch {
-            _loading.value = true
-            _error.value = null
-            try {
-                if (group.groupId == 0) {
-                    groupRepository.createGroupRemoteAndCache(group)
-                } else {
-                    groupRepository.updateGroupRemoteAndCache(group)
-                }
-            } catch (t: Throwable) {
-                _error.value = t.message ?: "Save failed"
-            } finally {
-                _loading.value = false
-            }
-        }
-    }
+
     fun deleteGroupRemote(groupId: Int) {
         viewModelScope.launch {
             _loading.value = true
@@ -126,7 +109,7 @@ class GroupViewModel : ViewModel() {
     fun saveOrUpdateGroup(group: Groups) {
         viewModelScope.launch {
             try {
-          if (group.groupId == 0) {
+                if (group.groupId == 0) {
                     groupRepository.createGroup(group)
                 } else {
                     groupRepository.updateGroup(group)
