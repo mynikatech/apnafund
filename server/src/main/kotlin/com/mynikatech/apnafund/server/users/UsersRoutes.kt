@@ -26,6 +26,7 @@ import com.mynikatech.apnafund.server.common.ratelimit.RateLimiters
 import com.mynikatech.apnafund.server.common.ratelimit.RateLimiters.loginLimiter
 import com.mynikatech.apnafund.server.userroles.UserRolesSql
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.log
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.request.receive
@@ -46,16 +47,29 @@ fun Route.usersRoutes(
 ) = route("/users") {
 
     // ---- GETs ----
-    get("get/all") { call.respondOk(users.getUsers()) }
+    get("get/all") {
+        call.safeRoute(
+            logMessage = "GET /users/get/all failed",
+            clientMessage = "Failed to fetch all users"
+        ) {
+            users.getUsers()
+        }
+    }
 
     get("get/{id}") {
         val id = call.parameters["id"]?.toIntOrNull()
         if (id == null) {
             call.respond(HttpStatusCode.BadRequest, "id required"); return@get
         }
-        val u = users.getUser(id).firstOrNull()
-        if (u != null) call.respondOk(u)
-        else call.respondError(HttpStatusCode.NotFound, "not_found", "User not found")
+        call.safeRoute(
+            logMessage = "GET /users/get/id failed for user: $id",
+            clientMessage = "Failed to fetch user"
+        ) {
+
+            val u = users.getUser(id).firstOrNull()
+                ?: throw NoSuchElementException("User not found")
+            u
+        }
     }
 
     get("get/by-email") {
@@ -76,7 +90,10 @@ fun Route.usersRoutes(
                 "email required"
             )
 
-        try {
+        call.safeRoute(
+            logMessage = "GET /users/get/by-email failed for email=$email",
+            clientMessage = "Failed to fetch user"
+        ) {
             val user = users.getUserByEmail(email).firstOrNull()
                 ?: return@get call.respondError(
                     HttpStatusCode.NotFound,
@@ -106,16 +123,6 @@ fun Route.usersRoutes(
                 )
             )
 
-        } catch (e: Exception) {
-            call.application.log.error(
-                "GET /users/get/by-email failed for email=$email",
-                e
-            )
-            call.respondError(
-                HttpStatusCode.InternalServerError,
-                "internal",
-                "Failed to fetch user"
-            )
         }
     }
 
@@ -126,7 +133,10 @@ fun Route.usersRoutes(
                 "validation",
                 "phone required"
             )
-        try {
+        call.safeRoute(
+            logMessage = "GET /users/get/by-phone failed for phone=$phone",
+            clientMessage = "Failed to fetch user"
+        ) {
             val u = users.getUserByPhone(phone).firstOrNull()
                 ?: return@get call.respondError(
                     HttpStatusCode.NotFound,
@@ -155,20 +165,7 @@ fun Route.usersRoutes(
                     firebaseToken = firebaseToken
                 )
             )
-
-        } catch (e: Exception) {
-            // THIS is what was missing
-            call.application.log.error(
-                "GET /users/get/by-phone failed for phone=$phone",
-                e
-            )
-            call.respondError(
-                HttpStatusCode.InternalServerError,
-                "internal",
-                e.message ?: "Failed to fetch user"
-            )
         }
-
     }
 
     get("get/with-group") {
@@ -178,11 +175,21 @@ fun Route.usersRoutes(
                 "validation",
                 "groupId required"
             )
-        call.respondOk(users.getUserWithGroup(gid))
+        call.safeRoute(
+            logMessage = "GET /users/get/with-group failed for groupId: =$gid",
+            clientMessage = "Failed to fetch user"
+        ) {
+            users.getUserWithGroup(gid)
+        }
     }
 
     get("get/with-group/all") {
-        call.respondOk(users.getAllUsersWithGroup())
+        call.safeRoute(
+            logMessage = "GET /users/get/with-group/all",
+            clientMessage = "Failed to fetch user"
+        ) {
+            users.getAllUsersWithGroup()
+        }
     }
 
     get("get/profile/{userId}") {
@@ -192,16 +199,21 @@ fun Route.usersRoutes(
             call.respondError(HttpStatusCode.BadRequest, "validation", "userId must be an integer")
             return@get
         }
-        val rows = users.getUserProfile(id).firstOrNull()
-        if( null  == rows){
-            call.respondError(HttpStatusCode.BadRequest, "validation", "No User Profile exists")
-            return@get
+        call.safeRoute(
+            logMessage = "GET /users/get/profile/$id failed",
+            clientMessage = "Failed to fetch user profile"
+        ) {
+            val rows = users.getUserProfile(id).firstOrNull()
+            if (null == rows) {
+                call.respondError(HttpStatusCode.BadRequest, "validation", "No User Profile exists")
+                return@get
+            }
+            val userRoles = userRoles.getRolesOfUser(id)
+            val userGroups = users.getBasicGroupsForUser(id)
+            rows.groups = userGroups
+            rows.roles = userRoles
+            rows
         }
-        val userRoles = userRoles.getRolesOfUser(id)
-        val userGroups = users.getBasicGroupsForUser(id)
-        rows.groups = userGroups
-        rows.roles = userRoles
-        call.respondOk(rows) // 200 with [] if empty
     }
 
     // Group member lookup
@@ -214,9 +226,14 @@ fun Route.usersRoutes(
                 "validation",
                 "userId and groupId required"
             )
-        val gm = users.getGroupMember(userId, groupId).firstOrNull()
-        if (gm != null) call.respondOk(gm)
-        else call.respondError(HttpStatusCode.NotFound, "not_found", "Group member not found")
+        call.safeRoute(
+            logMessage = "GET /users/get/group-member failed for userId=$userId groupId=$groupId",
+            clientMessage = "Failed to fetch group member"
+        ) {
+
+            users.getGroupMember(userId, groupId).firstOrNull()
+                ?: throw NoSuchElementException("Group member not found")
+        }
     }
 
     get("get/exists/by-email") {
@@ -226,7 +243,12 @@ fun Route.usersRoutes(
                 "validation",
                 "email required"
             )
-        call.respondOk(users.doesUserExists(email))
+        call.safeRoute(
+            logMessage = "GET /users/get/exists/by-email failed for email=$email",
+            clientMessage = "Failed to check user existence"
+        ) {
+            users.doesUserExists(email)
+        }
     }
 
     get("check/pin") {
@@ -238,14 +260,24 @@ fun Route.usersRoutes(
                 "validation",
                 "userId & pin required"
             )
-        call.respondOk(users.checkUserPIN(userId, pin))
+        call.safeRoute(
+            logMessage = "GET /users/check/pin failed for userId=$userId",
+            clientMessage = "Failed to verify PIN"
+        ) {
+            users.checkUserPIN(userId, pin)
+        }
     }
 
     get("get/count-matching") {
         val email = call.request.queryParameters["email"] ?: ""
         val phone = call.request.queryParameters["phone"] ?: ""
         val exclude = call.request.queryParameters["excludeUserId"]?.toIntOrNull() ?: 0
-        call.respondOk(users.countMatchingUsers(email, phone, exclude))
+        call.safeRoute(
+            logMessage = "GET /users/get/count-matching failed",
+            clientMessage = "Failed to count users"
+        ) {
+            users.countMatchingUsers(email, phone, exclude)
+        }
     }
 
     get("check/group-moderator") {
@@ -253,7 +285,12 @@ fun Route.usersRoutes(
         if (gid == null) {
             call.respond(HttpStatusCode.BadRequest, "groupId required"); return@get
         }
-        call.respondOk(users.doesGroupHasModerator(gid))
+        call.safeRoute(
+            logMessage = "GET /users/check/group-moderator failed for groupId=$gid",
+            clientMessage = "Failed to check group moderator"
+        ) {
+            users.doesGroupHasModerator(gid)
+        }
     }
 
     // ---- Aggregates / extras used by client ----
@@ -265,9 +302,14 @@ fun Route.usersRoutes(
                 "validation",
                 "userId required"
             )
-        val g = users.getGroupForUser(userId).firstOrNull()
-        if (g == null) call.respondError(HttpStatusCode.NotFound, "not_found", "No group found")
-        else call.respondOk(g)
+        call.safeRoute(
+            logMessage = "GET /users/get/group-for-user/$userId failed",
+            clientMessage = "Failed to fetch group"
+        ) {
+
+            users.getGroupForUser(userId).firstOrNull()
+                ?: throw NoSuchElementException("No group found")
+        }
     }
 
     get("get/groups-for-user/{userId}") {
@@ -277,9 +319,14 @@ fun Route.usersRoutes(
                 "validation",
                 "userId required"
             )
-        val g = users.getGroupsForUser(userId)
-        if (g == null) call.respondError(HttpStatusCode.NotFound, "not_found", "No groups found")
-        else call.respondOk(g)
+        call.safeRoute(
+            logMessage = "GET /users/get/groups-for-user/$userId failed",
+            clientMessage = "Failed to fetch groups"
+        ) {
+
+            users.getGroupsForUser(userId)
+                ?: throw NoSuchElementException("No groups found")
+        }
     }
 
     get("get/groups-for-moderator-user/{moderatorUserId}") {
@@ -289,9 +336,14 @@ fun Route.usersRoutes(
                 "validation",
                 "userId required"
             )
-        val g = users.getGroupsForModeratorUser(userId)
-        if (g == null) call.respondError(HttpStatusCode.NotFound, "not_found", "No group found")
-        else call.respondOk(g)
+        call.safeRoute(
+            logMessage = "GET /users/get/groups-for-moderator-user/$userId failed",
+            clientMessage = "Failed to fetch moderator groups"
+        ) {
+
+            users.getGroupsForModeratorUser(userId)
+                ?: throw NoSuchElementException("No group found")
+        }
     }
 
     get("get/funds-for-user/{userId}") {
@@ -301,7 +353,12 @@ fun Route.usersRoutes(
                 "validation",
                 "userId required"
             )
-        call.respondOk(users.getFundsForUser(userId))
+        call.safeRoute(
+            logMessage = "GET /users/get/funds-for-user/$userId failed",
+            clientMessage = "Failed to fetch funds"
+        ) {
+            users.getFundsForUser(userId)
+        }
     }
 
     get("get/total-deposit") {
@@ -313,7 +370,12 @@ fun Route.usersRoutes(
                 "validation",
                 "userId & fundId required"
             )
-        call.respondOk(users.getTotalDeposit(uid, fid) ?: 0.0)
+        call.safeRoute(
+            logMessage = "GET /users/get/total-deposit failed for userId=$uid fundId=$fid",
+            clientMessage = "Failed to fetch total deposit"
+        ) {
+            users.getTotalDeposit(uid, fid) ?: 0.0
+        }
     }
 
     get("get/per-member-expected-maturity-amount/{fundId}") {
@@ -323,7 +385,12 @@ fun Route.usersRoutes(
                 "validation",
                 "fundId required"
             )
-        call.respondOk(users.getPerMemberExpectedMaturityAmount(fundId) ?: 0.0)
+        call.safeRoute(
+            logMessage = "GET /users/get/per-member-expected-maturity-amount/$fundId failed",
+            clientMessage = "Failed to fetch maturity amount"
+        ) {
+            users.getPerMemberExpectedMaturityAmount(fundId) ?: 0.0
+        }
     }
 
     get("get/total-loan-amount") {
@@ -335,7 +402,12 @@ fun Route.usersRoutes(
                 "validation",
                 "userId & fundId required"
             )
-        call.respondOk((users.getTotalLoanAmount(uid, fid) ?: 0.0).toDouble())
+        call.safeRoute(
+            logMessage = "GET /users/get/total-loan-amount failed for userId=$uid fundId=$fid",
+            clientMessage = "Failed to fetch total loan"
+        ) {
+            users.getTotalLoanAmount(uid, fid) ?: 0.0
+        }
     }
 
     get("get/user-fund-details") {
@@ -346,13 +418,17 @@ fun Route.usersRoutes(
                 HttpStatusCode.BadRequest, "validation", "userId & fundId required"
             )
         }
-        val jsonText = users.getUserFundDetails(uid, fid)
-            ?: return@get call.respondError(
-                HttpStatusCode.NotFound, "not_found", "No user fund details"
-            )
+        call.safeRoute(
+            logMessage = "GET /users/get/user-fund-details failed for userId=$uid fundId=$fid",
+            clientMessage = "Failed to fetch user fund details"
+        ) {
 
-        val dto = Json { ignoreUnknownKeys = true }.decodeFromString<UserFundDetailsDto>(jsonText)
-        call.respondOk(dto)
+            val jsonText = users.getUserFundDetails(uid, fid)
+                ?: throw NoSuchElementException("No user fund details")
+
+            Json { ignoreUnknownKeys = true }
+                .decodeFromString<UserFundDetailsDto>(jsonText)
+        }
     }
 
     // ---- Mutations ----
@@ -481,19 +557,24 @@ fun Route.usersRoutes(
     }
 
     get("feedback/all") {
-        val items = users.getAllFeedbacks()
-        if (items.isEmpty()) {
-            call.respond(HttpStatusCode.NoContent); return@get
+
+        call.safeRoute(
+            logMessage = "GET /users/feedback/all failed",
+            clientMessage = "Failed to fetch feedback"
+        ) {
+
+            users.getAllFeedbacks()
         }
-        call.respond(items)
     }
 
     get("feedback/all/usergroup") {
-        val items = users.getFeedbackWithUserGroup()
-        if (items.isEmpty()) {
-            call.respond(HttpStatusCode.NoContent); return@get
+
+        call.safeRoute(
+            logMessage = "GET /users/feedback/all/usergroup failed",
+            clientMessage = "Failed to fetch feedback"
+        ) {
+            users.getFeedbackWithUserGroup()
         }
-        call.respond(items)
     }
 
     post("validate") {
@@ -596,19 +677,11 @@ fun Route.usersRoutes(
                 "userId required"
             )
 
-        try {
-            val verified = emailVerificationService.isEmailVerified(userId)
-            call.respondOk(verified)
-        } catch (e: Exception) {
-            call.application.log.error(
-                "is-email-verified failed for userId=$userId",
-                e
-            )
-            call.respondError(
-                HttpStatusCode.InternalServerError,
-                "internal",
-                "Failed to check email verification status"
-            )
+        call.safeRoute(
+            logMessage = "GET /users/is-email-verified/$userId failed",
+            clientMessage = "Failed to check email verification status"
+        ) {
+            emailVerificationService.isEmailVerified(userId)
         }
     }
 
@@ -701,6 +774,25 @@ fun Route.usersRoutes(
                 "Failed to generate Firebase token"
             )
         }
+    }
+
+}
+inline suspend fun <reified T> ApplicationCall.safeRoute(
+    logMessage: String,
+    clientMessage: String,
+    block: suspend () -> T
+) {
+    try {
+        respondOk(block())
+    } catch (e: Exception) {
+
+        application.log.error(logMessage, e)
+
+        respondError(
+            HttpStatusCode.InternalServerError,
+            "internal",
+            clientMessage
+        )
     }
 }
 
