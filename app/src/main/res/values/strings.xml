@@ -55,7 +55,7 @@
     <string name="resend_available_timer">Resend available in %02d:%02d</string>
     <string name="successful_email_verification_message">Email verified successfully</string>
     <string name="error_resend_wait">Please wait a moment before requesting another code.</string>
-
+    <string name="group_label">Group: %1$s</string>
     <string name="text_loan">Loans:</string>
     <string name="text_warning_confirmation">Are you sure you want to %1$s %2$s %3$s?</string>
     <string name="text_existing_user_error_message">A user with this email or phone already exists.</string>

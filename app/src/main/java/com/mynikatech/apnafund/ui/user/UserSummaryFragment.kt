@@ -163,6 +163,15 @@ class UserSummaryFragment : Fragment() {
 
             } catch (_: InvalidSessionException) {
                 // already handled
+            } catch (e: Exception) {
+
+                Log.e("UserSummary", "Failed to load profile", e)
+
+                Toast.makeText(
+                    requireContext(),
+                    "Failed to load profile. Please try again.",
+                    Toast.LENGTH_LONG
+                ).show()
             }
             if (!isAdded) return@launch
             val roleCodes = SessionManager.roleNames
@@ -177,7 +186,7 @@ class UserSummaryFragment : Fragment() {
                 .findItem(R.id.adminFragment)
                 ?.isVisible = !isOnlyMember
 
-            val hasGroup = SessionManager.groupId != null && SessionManager.groupId!! > 0
+            val hasGroup = (SessionManager.groupId ?: 0) > 0
             val isAdmin = roleCodes.contains("ADMIN")
             val isModerator = roleCodes.contains("MODERATOR")
 
@@ -244,14 +253,31 @@ class UserSummaryFragment : Fragment() {
                     )
                 },
                 onLoanEmiClick = { loanDetails ->
-                    val action = UserSummaryFragmentDirections
-                        .actionUserSummaryFragmentToLoanEmiFragment(loanDetails.loanId!!)
-                    findNavController().navigate(action)
+                    loanDetails.loanId?.let { loanId ->
+                        val action = UserSummaryFragmentDirections
+                            .actionUserSummaryFragmentToLoanEmiFragment(loanId)
+                        findNavController().navigate(action)
+                    } ?: run {
+                        Toast.makeText(requireContext(), "Loan ID not available", Toast.LENGTH_SHORT).show()
+                        Log.w("UserSummary", "Loan EMI click attempted with null loanId")
+                    }
                 }
             )
             binding.recyclerViewLoans.adapter = adapter
         }
-        userSummaryViewModel.loadUserSummary(userId, SessionManager.groupId)
+        try {
+            userSummaryViewModel.loadUserSummary(userId, SessionManager.groupId)
+
+        } catch (e: Exception) {
+
+            Log.e("UserSummary", "Failed to load summary", e)
+
+            Toast.makeText(
+                requireContext(),
+                "Unable to load data",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
         userSummaryViewModel.groupName.observe(viewLifecycleOwner) {
             binding.chipGroupName.text =
                 "Group: ${SessionManager.groupName ?: "--"}"
@@ -282,7 +308,9 @@ class UserSummaryFragment : Fragment() {
 
                     SessionManager.setSelectedGroup(selected)
 
-                    binding.chipGroupName.text = "Group: ${selected.groupName}"
+                    binding.chipGroupName.setText(
+                        getString(R.string.group_label, selected.groupName)
+                    )
 
                     reloadForSelectedGroup()
                 }
@@ -299,7 +327,8 @@ class UserSummaryFragment : Fragment() {
                 AlertDialog.Builder(requireContext())
                     .setTitle("Select Fund")
                     .setItems(fundNamesMap.toTypedArray()) { _, which ->
-                        val selectedFund = userSummaryViewModel.userFunds.value!![which]
+                        val funds = userSummaryViewModel.userFunds.value ?: return@setItems
+                        val selectedFund = funds.getOrNull(which) ?: return@setItems
                         binding.textViewSelectedFund.text = selectedFund.fundName
 
                         // Update status dot
@@ -456,18 +485,15 @@ class UserSummaryFragment : Fragment() {
     }
 
     private fun updateUserSummary() {
-        if (totalDepositAmount == null && totalMaturityAmount != null) {
-            binding.textViewFundSummaryValue.text = """Total Deposit: ₹0.00  |  Maturity: ${
-                Converters.formatCurrency(totalMaturityAmount!!)
-            }"""
-        } else if (totalDepositAmount != null && totalMaturityAmount != null) {
-            binding.textViewFundSummaryValue.text =
-                "Total Deposit: ${Converters.formatCurrency(totalDepositAmount!!)} |  Maturity: ${
-                    Converters.formatCurrency(totalMaturityAmount!!)
-                }"
-        } else if (totalDepositAmount != null) {
-            binding.textViewFundSummaryValue.text =
-                "Total Deposit: ${Converters.formatCurrency(totalDepositAmount!!)} |  Maturity: ₹0.00"
+
+        val deposit = totalDepositAmount ?: 0.0
+        val maturity = totalMaturityAmount ?: 0.0
+
+        binding.textViewFundSummaryValue.text =
+            "Total Deposit: ${Converters.formatCurrency(deposit)} |  Maturity: ${Converters.formatCurrency(maturity)}"
+
+        if (deposit == 0.0 && maturity == 0.0) {
+            binding.textViewFundSummaryValue.text = "No fund activity yet"
         }
     }
 
@@ -480,7 +506,12 @@ class UserSummaryFragment : Fragment() {
     ) {
         viewLifecycleOwner.lifecycleScope.launch {
             val fundRateOfInterest = userSummaryViewModel.getfundRateOfInterest(fundId)
-            val fund = userSummaryViewModel.getFund(fundId)!!
+            val fund = userSummaryViewModel.getFund(fundId)
+
+            if (fund == null) {
+                Toast.makeText(requireContext(), "Fund not found", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
             //Get current available amount in the Fund display to the user and also add a validation
             val totalAmountAvailable = userSummaryViewModel.getTotalAmountAvailableforFund(fundId)
 
@@ -534,7 +565,7 @@ class UserSummaryFragment : Fragment() {
 
         val groups = userProfiles.groups
         SessionManager.userGroups = groups
-        if (groups.isNullOrEmpty()) {
+        if (groups.isEmpty()) {
             // Admin or user without group
             SessionManager.groupId = null
             SessionManager.groupName = null
@@ -644,14 +675,19 @@ class UserSummaryFragment : Fragment() {
         Log.d("Firebase", "Session Email Id ${SessionManager.emailId}")
         val email = SessionManager.emailId
 
-        if (email.isNullOrBlank()) {
+        if (email.isBlank()) {
             Log.w("Firebase", "Email missing in session — cannot restore Firebase session")
             return
         }
 
         lifecycleScope.launch {
             Log.d("Firebase", "Restoring Firebase session for $email")
-            startUpViewModel.restoreFirebaseSession(email)
+            try {
+                startUpViewModel.restoreFirebaseSession(email)
+            } catch (e: Exception) {
+
+                Log.e("Firebase", "Failed to restore Firebase session", e)
+            }
         }
     }
 
@@ -696,68 +732,80 @@ class UserSummaryFragment : Fragment() {
         // however when the user is not admin only the user should be available
 
         lifecycleScope.launch {
-            userViewModel.fetchUsers().collectLatest { users ->
+            try {
+                userViewModel.fetchUsers().collectLatest { users ->
 
-                if (!isAdmin) {
-                    // Moderator → only themselves
-                    val currentUser = users.find { it.userId == SessionManager.userId }
+                    if (!isAdmin) {
+                        // Moderator → only themselves
+                        val currentUser = users.find { it.userId == SessionManager.userId }
 
-                    val fullName = "${currentUser?.firstName} ${currentUser?.lastName}"
-
-                    dialogBinding.editTextAutoModerator.setText(fullName, false)
-                    userId = currentUser?.userId ?: 0
-
-                    dialogBinding.editTextAutoModerator.isEnabled = false
-                    dialogBinding.editTextAutoModerator.isClickable = false
-                    dialogBinding.editTextAutoModerator.isFocusable = false
-
-                    validateInputs()
-
-                } else {
-
-                    // Admin → show all users
-                    val userNames = users.map { "${it.firstName} ${it.lastName}" }
-
-                    val adapter = ArrayAdapter(
-                        requireContext(),
-                        R.layout.dropdown_item_apnabank,
-                        userNames
-                    )
-
-                    dialogBinding.editTextAutoModerator.setAdapter(adapter)
-
-                    // Preselect existing moderator if editing
-                    if (addOrEditFlag == 1 && existingGroup != null) {
-                        val existingModerator = users.find { it.userId == existingGroup.moderator }
-                        val fullName =
-                            "${existingModerator?.firstName} ${existingModerator?.lastName}"
+                        val fullName = "${currentUser?.firstName} ${currentUser?.lastName}"
 
                         dialogBinding.editTextAutoModerator.setText(fullName, false)
-                        userId = existingModerator?.userId ?: 0
+                        userId = currentUser?.userId ?: 0
+
+                        dialogBinding.editTextAutoModerator.isEnabled = false
+                        dialogBinding.editTextAutoModerator.isClickable = false
+                        dialogBinding.editTextAutoModerator.isFocusable = false
+
                         validateInputs()
-                    }
 
-                    dialogBinding.editTextAutoModerator.setOnClickListener {
-                        dialogBinding.editTextAutoModerator.showDropDown()
-                    }
+                    } else {
 
-                    dialogBinding.editTextAutoModerator.setOnFocusChangeListener { _, hasFocus ->
-                        if (hasFocus) {
-                            dialogBinding.editTextAutoModerator.post {
-                                dialogBinding.editTextAutoModerator.showDropDown()
+                        // Admin → show all users
+                        val userNames = users.map { "${it.firstName} ${it.lastName}" }
+
+                        val adapter = ArrayAdapter(
+                            requireContext(),
+                            R.layout.dropdown_item_apnabank,
+                            userNames
+                        )
+
+                        dialogBinding.editTextAutoModerator.setAdapter(adapter)
+
+                        // Preselect existing moderator if editing
+                        if (addOrEditFlag == 1 && existingGroup != null) {
+                            val existingModerator =
+                                users.find { it.userId == existingGroup.moderator }
+                            val fullName =
+                                "${existingModerator?.firstName} ${existingModerator?.lastName}"
+
+                            dialogBinding.editTextAutoModerator.setText(fullName, false)
+                            userId = existingModerator?.userId ?: 0
+                            validateInputs()
+                        }
+
+                        dialogBinding.editTextAutoModerator.setOnClickListener {
+                            dialogBinding.editTextAutoModerator.showDropDown()
+                        }
+
+                        dialogBinding.editTextAutoModerator.setOnFocusChangeListener { _, hasFocus ->
+                            if (hasFocus) {
+                                dialogBinding.editTextAutoModerator.post {
+                                    dialogBinding.editTextAutoModerator.showDropDown()
+                                }
                             }
                         }
-                    }
 
-                    dialogBinding.editTextAutoModerator.setOnItemClickListener { parent, _, position, _ ->
-                        val selectedName = parent.getItemAtPosition(position) as String
-                        val selectedUser =
-                            users.find { "${it.firstName} ${it.lastName}" == selectedName }
+                        dialogBinding.editTextAutoModerator.setOnItemClickListener { parent, _, position, _ ->
+                            val selectedName = parent.getItemAtPosition(position) as String
+                            val selectedUser =
+                                users.find { "${it.firstName} ${it.lastName}" == selectedName }
 
-                        userId = selectedUser?.userId ?: 0
-                        validateInputs()
+                            userId = selectedUser?.userId ?: 0
+                            validateInputs()
+                        }
                     }
                 }
+            } catch (e: Exception) {
+
+                Log.e("AddGroupDialog", "Failed to load users", e)
+
+                Toast.makeText(
+                    requireContext(),
+                    "Failed to load users",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
