@@ -65,11 +65,13 @@ class LoginFragment : Fragment() {
         }
 
         binding.loginButton.setOnClickListener {
+            binding.loginButton.isEnabled = false
             if (isPhoneLogin) {
                 val phone = binding.phoneEditText.text.toString()
                 if (phone.isEmpty()) {
                     Toast.makeText(requireContext(), "Phone number required", Toast.LENGTH_SHORT)
                         .show()
+                    binding.loginButton.isEnabled = true
                     return@setOnClickListener
                 }
 
@@ -82,15 +84,19 @@ class LoginFragment : Fragment() {
                             400 -> showToast(e.message ?: "Invalid request")
                             else -> showToast("Server error. Please try again.")
                         }
+                        binding.loginButton.isEnabled = true
                         return@launch
                     }
-                    if (null == loginResponse)
+                    if (null == loginResponse) {
+                        binding.loginButton.isEnabled = true
                         return@launch
+                    }
 
                     val localUser = loginResponse.user.toEntity()
                     val firebaseToken = loginResponse.firebaseToken
                         ?: run {
                             showToast("Login failed. Please try again.")
+                            binding.loginButton.isEnabled = true
                             return@launch
                         }
                     if (localUser == null) {
@@ -101,6 +107,7 @@ class LoginFragment : Fragment() {
                         ).show()
                         binding.otpLayout.visibility = View.GONE
                         binding.verifyOtpButton.visibility = View.GONE
+                        binding.loginButton.isEnabled = true
                         return@launch
                     }
                     binding.otpLayout.visibility = View.VISIBLE
@@ -118,6 +125,7 @@ class LoginFragment : Fragment() {
                         "Email and Password required",
                         Toast.LENGTH_SHORT
                     ).show()
+                    binding.loginButton.isEnabled = true
                 } else {
                     loginWithEmail(email, password)
                 }
@@ -215,21 +223,27 @@ class LoginFragment : Fragment() {
                     400 -> showToast(e.message ?: "Invalid request")
                     else -> showToast("Server error. Please try again.")
                 }
+                binding.loginButton.isEnabled = true
                 return@launch
             }
-            if (null == loginResponse)
+            if (null == loginResponse){
+                binding.loginButton.isEnabled = true
                 return@launch
+            }
+
 
             val localUser = loginResponse.user.toEntity()
             val firebaseToken = loginResponse.firebaseToken
                 ?: run {
                     showToast("Login failed. Please try again.")
+                    binding.loginButton.isEnabled = true
                     return@launch
                 }
 
 
             if (localUser == null) {
                 showToast("User not found. Please register as moderator first or request moderator to invite")
+                binding.loginButton.isEnabled = true
                 return@launch
             }
 
@@ -243,12 +257,14 @@ class LoginFragment : Fragment() {
                 val action = LoginFragmentDirections
                     .actionLoginFragmentToSetPasswordFragment(localUser.userId)
                 findNavController().navigate(action)
+                binding.loginButton.isEnabled = true
                 return@launch
             }
             val isPasswordMatch = Converters.verifyPassword(password, localUser.passwordHash)
 
             if (!isPasswordMatch) {
                 Toast.makeText(requireContext(), "Incorrect Password", Toast.LENGTH_SHORT).show()
+                binding.loginButton.isEnabled = true
                 return@launch
             }
             FirebaseAuthHelper.ensureFirebaseSignedIn(
@@ -274,6 +290,7 @@ class LoginFragment : Fragment() {
                                     )
                                 } catch (e: ApiException) {
                                     showToast(e.message ?: "Server error. Please try again.")
+                                    binding.loginButton.isEnabled = true
                                     return@launch
                                 }
                                 findNavController().navigate(
@@ -302,6 +319,7 @@ class LoginFragment : Fragment() {
                     }
                 },
                 onFailure = {
+                    binding.loginButton.isEnabled = true
                     showToast("Authentication failed. Please try again.")
                 }
             )
@@ -388,6 +406,7 @@ class LoginFragment : Fragment() {
                         "Verification failed: ${e.message}",
                         Toast.LENGTH_SHORT
                     ).show()
+                    binding.loginButton.isEnabled = true
                 }
 
                 override fun onCodeSent(
@@ -416,12 +435,14 @@ class LoginFragment : Fragment() {
                 if (!task.isSuccessful) {
                     Log.e("AUTH", "Firebase OTP failed", task.exception)
                     showToast("OTP verification failed")
+                    binding.loginButton.isEnabled = true
                     return@addOnCompleteListener
                 }
 
                 val firebaseUser = FirebaseAuth.getInstance().currentUser
                 if (firebaseUser == null) {
                     showToast("Authentication error. Please retry.")
+                    binding.loginButton.isEnabled = true
                     return@addOnCompleteListener
                 }
 
@@ -432,6 +453,7 @@ class LoginFragment : Fragment() {
                     Log.e("OTP_DEBUG", "User is not authenticated via PHONE")
                     FirebaseAuth.getInstance().signOut()
                     showToast("Phone verification failed. Please retry.")
+                    binding.loginButton.isEnabled = true
                     return@addOnCompleteListener
                 }
 
@@ -447,16 +469,20 @@ class LoginFragment : Fragment() {
                                 400 -> showToast(e.message ?: "Invalid request")
                                 else -> showToast("Server error. Please try again.")
                             }
+                            binding.loginButton.isEnabled = true
                             return@launch
                         }
-                        if (null == loginResponse)
+                        if (null == loginResponse) {
+                            binding.loginButton.isEnabled = true
                             return@launch
+                        }
 
                         val localUser = loginResponse.user.toEntity()
                         if (localUser == null) {
                             Toast.makeText(requireContext(), "User not found", Toast.LENGTH_SHORT)
                                 .show()
                             FirebaseAuth.getInstance().signOut()
+                            binding.loginButton.isEnabled = true
                             return@launch
                         }
 
@@ -469,6 +495,7 @@ class LoginFragment : Fragment() {
                         if (!updated) {
                             showToast("Login failed. Please contact support.")
                             FirebaseAuth.getInstance().signOut()
+                            binding.loginButton.isEnabled = true
                             return@launch
                         }
                         val isDue = userViewModel.isPasswordRotationDue(localUser.userId)

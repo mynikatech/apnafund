@@ -41,6 +41,7 @@ class SetPasswordFragment : Fragment() {
         binding.textViewEmail.text = userEmail
 
         binding.buttonSubmit.setOnClickListener {
+            binding.buttonSubmit.isEnabled = false
             val password = binding.editTextPassword.text.toString()
             val confirm = binding.editTextConfirmPassword.text.toString()
 
@@ -50,6 +51,7 @@ class SetPasswordFragment : Fragment() {
                     "Password must be at least 8 characters",
                     Toast.LENGTH_SHORT
                 ).show()
+                binding.buttonSubmit.isEnabled = true
                 return@setOnClickListener
             }
             val strength = assessPasswordStrength(password)
@@ -59,12 +61,14 @@ class SetPasswordFragment : Fragment() {
                     "Password is too weak. Please add special symbols @,*,$ etc and numbers",
                     Toast.LENGTH_SHORT
                 ).show()
+                binding.buttonSubmit.isEnabled = true
                 return@setOnClickListener
             }
 
             if (password != confirm) {
                 Toast.makeText(requireContext(), "Passwords do not match", Toast.LENGTH_SHORT)
                     .show()
+                binding.buttonSubmit.isEnabled = true
                 return@setOnClickListener
             }
             lifecycleScope.launch {
@@ -97,13 +101,14 @@ class SetPasswordFragment : Fragment() {
                             e.message ?: "Password update failed"
                     }
                     Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
-
+                    binding.buttonSubmit.isEnabled = true
                 } catch (e: Exception) {
                     Toast.makeText(
                         requireContext(),
                         e.message ?: "Password set failed",
                         Toast.LENGTH_SHORT
                     ).show()
+                    binding.buttonSubmit.isEnabled = true
                 }
             }
             /*

@@ -49,39 +49,77 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
         }
     }
 
-    override fun onApproveClicked(item: PendingApprovalDto) {
+    override fun onApproveClicked(item: PendingApprovalDto, position: Int) {
 
         lifecycleScope.launch {
 
-            when (item.entityType) {
+            try {
 
-                "GROUP" ->
-                    approvalViewModel.approveGroup(item.approvalId, SessionManager.userId)
+                when (item.entityType) {
 
-                "LOAN" ->
-                    approvalViewModel.approveLoan(item.approvalId, SessionManager.userId)
+                    "GROUP" ->
+                        approvalViewModel.approveGroup(item.approvalId, SessionManager.userId)
+
+                    "LOAN" ->
+                        approvalViewModel.approveLoan(item.approvalId, SessionManager.userId)
+                }
+
+                Toast.makeText(requireContext(), "Approved", Toast.LENGTH_SHORT).show()
+                observePendingRequests()
+
+            } catch (e: io.ktor.client.plugins.HttpRequestTimeoutException) {
+
+                Toast.makeText(
+                    requireContext(),
+                    "Request timed out. Please try again.",
+                    Toast.LENGTH_LONG
+                ).show()
+                adapter.notifyItemChanged(position)
+
+            } catch (e: Exception) {
+
+                Toast.makeText(
+                    requireContext(),
+                    "Something went wrong. Please try again.",
+                    Toast.LENGTH_LONG
+                ).show()
+                adapter.notifyItemChanged(position)
             }
-
-            Toast.makeText(requireContext(), "Approved", Toast.LENGTH_SHORT).show()
-            observePendingRequests()
         }
     }
 
-    override fun onRejectClicked(item: PendingApprovalDto) {
+    override fun onRejectClicked(item: PendingApprovalDto, position: Int) {
 
         lifecycleScope.launch {
+            try {
 
-            when (item.entityType) {
+                when (item.entityType) {
 
-                "GROUP" ->
-                    approvalViewModel.rejectGroup(item.approvalId, SessionManager.userId)
+                    "GROUP" ->
+                        approvalViewModel.rejectGroup(item.approvalId, SessionManager.userId)
 
-                "LOAN" ->
-                    approvalViewModel.rejectLoan(item.approvalId, SessionManager.userId)
+                    "LOAN" ->
+                        approvalViewModel.rejectLoan(item.approvalId, SessionManager.userId)
+                }
+
+                Toast.makeText(requireContext(), "Rejected", Toast.LENGTH_SHORT).show()
+                observePendingRequests()
+            } catch (e: io.ktor.client.plugins.HttpRequestTimeoutException) {
+
+                Toast.makeText(
+                    requireContext(),
+                    "Request timed out. Please try again.",
+                    Toast.LENGTH_LONG
+                ).show()
+
+            } catch (e: Exception) {
+
+                Toast.makeText(
+                    requireContext(),
+                    "Something went wrong. Please try again.",
+                    Toast.LENGTH_LONG
+                ).show()
             }
-
-            Toast.makeText(requireContext(), "Rejected", Toast.LENGTH_SHORT).show()
-            observePendingRequests()
         }
     }
 }

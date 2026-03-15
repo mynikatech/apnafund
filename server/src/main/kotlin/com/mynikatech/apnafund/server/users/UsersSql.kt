@@ -132,9 +132,9 @@ interface UsersSql {
     fun getGroupForUser(@Bind("userId") userId: Int): List<GroupsDto>
 
     @SqlQuery("""SELECT * FROM get_groups_for_user(:userId)""")
-    fun getGroupsForUser(@Bind("userId") userId: Int): List<GroupsDto>
+    fun getGroupsForUser(@Bind("userId") userId: Int): List<GroupsDto>?
     @SqlQuery("""SELECT * FROM get_groups_for_moderator(:userId)""")
-    fun getGroupsForModeratorUser(@Bind("userId") userId: Int): List<GroupsDto>
+    fun getGroupsForModeratorUser(@Bind("userId") userId: Int): List<GroupsDto>?
 
     @SqlQuery("""SELECT * FROM get_basic_group_for_user(:userId)""")
     fun getBasicGroupsForUser(@Bind("userId") userId: Int): List<UserGroup>

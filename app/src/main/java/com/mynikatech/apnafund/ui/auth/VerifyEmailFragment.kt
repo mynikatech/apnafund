@@ -47,11 +47,13 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
         binding.textEmail.text = email
 
         binding.buttonVerify.setOnClickListener {
+            binding.buttonVerify.isEnabled = false
             val otp = binding.editTextOtp.text.toString().trim()
 
             if (otp.length != 6) {
                 Toast.makeText(requireContext(), "Enter valid 6-digit code", Toast.LENGTH_SHORT)
                     .show()
+                binding.buttonVerify.isEnabled = true
                 return@setOnClickListener
             }
 
@@ -100,6 +102,7 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
                             getString(R.string.invalid_expired_code_message),
                             Toast.LENGTH_SHORT
                         ).show()
+                        binding.buttonVerify.isEnabled = true
                     } else {
                         // Real server issue
                         Toast.makeText(
@@ -107,6 +110,7 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
                             R.string.server_issue_message,
                             Toast.LENGTH_LONG
                         ).show()
+                        binding.buttonVerify.isEnabled = true
                     }
 
                 } catch (e: Exception) {
@@ -116,6 +120,7 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
                         "Unexpected error. Please try again.",
                         Toast.LENGTH_LONG
                     ).show()
+                    binding.buttonVerify.isEnabled = true
                 }
             }
         }
@@ -165,12 +170,14 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
                             e.message ?: getString(R.string.error_resend_wait),
                             Toast.LENGTH_SHORT
                         ).show()
+                        binding.textResend.isEnabled = true
                     } else {
                         Toast.makeText(
                             requireContext(),
                             "Unable to resend code. Try again later.",
                             Toast.LENGTH_SHORT
                         ).show()
+                        binding.textResend.isEnabled = true
                     }
                 }
             }

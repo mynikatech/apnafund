@@ -11,6 +11,7 @@ import com.mynikatech.apnafund.server.roles.RolesSql
 import com.mynikatech.apnafund.server.security.PasswordHistorySql
 import com.mynikatech.apnafund.server.userroles.UserRolesSql
 import org.slf4j.LoggerFactory
+import java.time.LocalDate
 
 class ModeratorRegistrationService(
     private val usersSql: UsersSql,
@@ -107,6 +108,11 @@ class ModeratorRegistrationService(
             ))
 
         val groupId = group.groupId ?: error("Group id missing")
+
+        val moderatorId = userId
+        val joiningDate = LocalDate.now().toString()
+        // add group member
+        groupsSql.addGroupMember(moderatorId, groupId, joiningDate)
 
         // Create the pending approval requests
         val adminUser =

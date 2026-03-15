@@ -294,6 +294,7 @@ class GroupFragment : Fragment() {
         }
 
         dialogBinding.buttonSaveGrp.setOnClickListener {
+            dialogBinding.buttonSaveGrp.isEnabled = false
             viewLifecycleOwner.lifecycleScope.launch {
                 val groupName = dialogBinding.editTextGroupName.text.toString().trim()
                     .toTitleCase()
@@ -334,6 +335,7 @@ class GroupFragment : Fragment() {
                         "Failed to save group. Please try again.",
                         Toast.LENGTH_LONG
                     ).show()
+                    dialogBinding.buttonSaveGrp.isEnabled = true
                 }
 
                 fetchAllGroups()

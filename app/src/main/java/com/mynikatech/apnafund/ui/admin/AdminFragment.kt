@@ -44,7 +44,7 @@ class AdminFragment : Fragment() {
         val isAdmin = SessionManager.isAdmin()
         val isModerator = SessionManager.isModerator()
 
-        val allTabs = listOf(
+        val allTabs1 = listOf(
             "Users" to UserFragment(),
             "Groups" to GroupFragment(),
             "Approvals" to PendingApprovalFragment(),
@@ -53,12 +53,29 @@ class AdminFragment : Fragment() {
             "Feedback" to AdminFeedbackFragment()
         )
 
-        val moderatorTabs = listOf(
+        val allTabs = listOf(
+            "Users",
+            "Groups",
+            "Approvals",
+            "Deposits",
+            "Loans EMI",
+            "Feedback"
+        )
+
+        val moderatorTabs1 = listOf(
             "Users" to UserFragment(),
             "Groups" to GroupFragment(),
             "Approvals" to PendingApprovalFragment(),
             "Deposits" to DepositEntryFragment(),
             "Loans EMI" to LoanEmiEntryFragment()
+        )
+
+        val moderatorTabs = listOf(
+            "Users",
+            "Groups" ,
+            "Approvals" ,
+            "Deposits",
+            "Loans EMI"
         )
         val tabsToShow = when {
             isAdmin -> allTabs
@@ -67,12 +84,14 @@ class AdminFragment : Fragment() {
         }
         adminPagerAdapter = PagerAdapter(this, tabsToShow)
         binding.adminPager.adapter = adminPagerAdapter
+        binding.adminPager.offscreenPageLimit = 1
         if (tabToGo.equals("Group"))
             binding.adminPager.setCurrentItem(1, false)
         else
             binding.adminPager.setCurrentItem(0, false)
         TabLayoutMediator(binding.adminTabs, binding.adminPager) { tab, position ->
-            val tabText = tabsToShow[position].first
+            val tabText = tabsToShow[position]
+
             tab.customView = TextView(requireContext()).apply {
                 text = tabText
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 9f)
@@ -84,12 +103,24 @@ class AdminFragment : Fragment() {
         }.attach()
     }
 
-    inner class PagerAdapter(fragment: Fragment, private val items: List<Pair<String, Fragment>>) :
-        FragmentStateAdapter(fragment) {
+    inner class PagerAdapter(
+        fragment: Fragment,
+        private val tabs: List<String>
+    ) : FragmentStateAdapter(fragment) {
 
-        override fun getItemCount(): Int = items.size
+        override fun getItemCount(): Int = tabs.size
 
-        override fun createFragment(position: Int): Fragment = items[position].second
+        override fun createFragment(position: Int): Fragment {
+            return when (tabs[position]) {
+                "Users" -> UserFragment()
+                "Groups" -> GroupFragment()
+                "Approvals" -> PendingApprovalFragment()
+                "Deposits" -> DepositEntryFragment()
+                "Loans EMI" -> LoanEmiEntryFragment()
+                "Feedback" -> AdminFeedbackFragment()
+                else -> Fragment()
+            }
+        }
     }
 
 }

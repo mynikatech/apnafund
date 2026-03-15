@@ -42,9 +42,11 @@ class LoginPinFragment : Fragment() {
             binding.textLoggedInUser.text = "${user?.firstName} ${user?.lastName}"
         }
         binding.buttonSubmit.setOnClickListener {
+            binding.buttonSubmit.isEnabled = false
             val pin = getPinFromBoxes(binding.loginPinBoxes)
             if (pin.length != 4) {
                 showToast("Please enter 4-digit PIN")
+                binding.buttonSubmit.isEnabled = true
                 return@setOnClickListener
             }
             // Save PIN securely
@@ -67,6 +69,7 @@ class LoginPinFragment : Fragment() {
                             findNavController().navigate(
                                 LoginPinFragmentDirections.actionLoginPinFragmentToLoginFragment()
                             )
+                            binding.buttonSubmit.isEnabled = true
                             return@launch
                         }
 
@@ -83,12 +86,14 @@ class LoginPinFragment : Fragment() {
                                 )
                             },
                             onFailure = {
+                                binding.buttonSubmit.isEnabled = true
                                 showToast("Chat connection failed. Please retry.")
                             }
                         )
                     }
                 } else {
                     showToast("Incorrect PIN entered")
+                    binding.buttonSubmit.isEnabled = true
                     return@launch
                 }
             }

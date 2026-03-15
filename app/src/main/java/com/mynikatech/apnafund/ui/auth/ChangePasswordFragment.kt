@@ -59,12 +59,14 @@ class ChangePasswordFragment : Fragment() {
 
 
         binding.buttonChangePassword.setOnClickListener {
+            binding.buttonChangePassword.isEnabled = false
             val newPassword = binding.editTextNewPassword.text.toString()
             val confirmPassword = binding.editTextConfirmPassword.text.toString()
 
             if (newPassword != confirmPassword) {
                 Toast.makeText(requireContext(), "Passwords do not match", Toast.LENGTH_SHORT)
                     .show()
+                binding.buttonChangePassword.isEnabled = true
                 return@setOnClickListener
             }
 
@@ -76,6 +78,7 @@ class ChangePasswordFragment : Fragment() {
                         "Password must be at least 8 characters",
                         Toast.LENGTH_SHORT
                     ).show()
+                    binding.buttonChangePassword.isEnabled = true
                     return@launch
                 }
                 val strength = assessPasswordStrength(newPassword)
@@ -87,6 +90,7 @@ class ChangePasswordFragment : Fragment() {
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+                    binding.buttonChangePassword.isEnabled = true
                     return@launch
                 }
 
@@ -121,13 +125,14 @@ class ChangePasswordFragment : Fragment() {
                                 e.message ?: "Password update failed"
                         }
                         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
-
+                        binding.buttonChangePassword.isEnabled = true
                     } catch (e: Exception) {
                         Toast.makeText(
                             requireContext(),
                             e.message ?: "Password update failed",
                             Toast.LENGTH_SHORT
                         ).show()
+                        binding.buttonChangePassword.isEnabled = true
                     }
                 }
             }

@@ -108,7 +108,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical"
-                android:padding="4dp">
+                android:padding="4dp"
+                android:visibility="gone">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -516,6 +517,11 @@
                     android:textColor="@color/black"
                     android:textSize="16sp" />
             </LinearLayout>
+            <ProgressBar
+                android:id="@+id/loadingFunds"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"/>
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

@@ -13,8 +13,8 @@ class PendingApprovalAdapter(
 ) : RecyclerView.Adapter<PendingApprovalAdapter.PendingViewHolder>() {
 
     interface OnActionClickListener {
-        fun onApproveClicked(item: PendingApprovalDto)
-        fun onRejectClicked(item: PendingApprovalDto)
+        fun onApproveClicked(item: PendingApprovalDto, position: Int)
+        fun onRejectClicked(item: PendingApprovalDto, position: Int)
     }
 
     inner class PendingViewHolder(
@@ -33,11 +33,15 @@ class PendingApprovalAdapter(
                 item.description ?: "N/A"
 
             binding.buttonApprove.setOnClickListener {
-                listener.onApproveClicked(item)
+                binding.buttonApprove.isEnabled = false
+                binding.buttonReject.isEnabled = false
+                listener.onApproveClicked(item, bindingAdapterPosition)
             }
 
             binding.buttonReject.setOnClickListener {
-                listener.onRejectClicked(item)
+                binding.buttonApprove.isEnabled = false
+                binding.buttonReject.isEnabled = false
+                listener.onApproveClicked(item, bindingAdapterPosition)
             }
         }
     }

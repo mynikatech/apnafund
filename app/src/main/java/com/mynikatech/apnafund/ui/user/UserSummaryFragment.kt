@@ -189,9 +189,7 @@ class UserSummaryFragment : Fragment() {
             bottomNav.menu.findItem(R.id.adminFragment)?.isVisible =
                 (isAdmin || isModerator) && canAccessGroupTabs
 
-
-
-            findNavController().currentBackStackEntry
+          findNavController().currentBackStackEntry
                 ?.savedStateHandle
                 ?.getLiveData<Boolean>("profile_updated")
                 ?.observe(viewLifecycleOwner) {
@@ -204,8 +202,6 @@ class UserSummaryFragment : Fragment() {
                             )
                     }
                 }
-
-
 
             if (!hasGroup) {
 
@@ -322,6 +318,7 @@ class UserSummaryFragment : Fragment() {
                 //check if the fundSharedModel has the selectedFund
                 binding.noFundsMessageContainer.visibility = View.GONE
                 binding.FundMessageContainer.visibility = View.VISIBLE
+                binding.loadingFunds.visibility = View.GONE
                 val selectedFund = fundSharedViewModel.selectedFund.value
                 val fundId: Int
                 val fundStatus: String
@@ -359,6 +356,7 @@ class UserSummaryFragment : Fragment() {
             } else {
                 binding.FundMessageContainer.visibility = View.GONE
                 binding.noFundsMessageContainer.visibility = View.VISIBLE
+                binding.loadingFunds.visibility = View.GONE
             }
         }
 

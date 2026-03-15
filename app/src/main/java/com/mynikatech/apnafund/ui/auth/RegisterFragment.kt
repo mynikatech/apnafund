@@ -95,6 +95,8 @@ class RegisterFragment : Fragment() {
             }
         }
         binding.buttonRegister.setOnClickListener {
+            binding.buttonRegister.isEnabled = false
+            binding.buttonRegister.text = "Registering..."
             val firstName = binding.editTextFirstName.text.toString().trim().toTitleCase()
             val lastName = binding.editTextLastName.text.toString().trim().toTitleCase()
 
@@ -151,6 +153,7 @@ class RegisterFragment : Fragment() {
                         }
                     }
                         .onFailure {
+                            binding.buttonRegister.isEnabled = true
                             showToast(
                                 "Some issues with server. Please raise a support ticket or contact admin."
                             )
@@ -185,11 +188,13 @@ class RegisterFragment : Fragment() {
                                 }
                             }
                             .onFailure {
+                                binding.buttonRegister.isEnabled = true
                                 showToast(
                                     "Some issues with server. Please raise a support ticket or contact admin."
                                 )
                             }
                     } else {
+                        binding.buttonRegister.isEnabled = true
                         showToast("Please contact moderator to add you before registering")
                     }
                 }

@@ -37,15 +37,18 @@ class ForgotPasswordFragment : Fragment() {
         binding.editTextEmail.setText(userEmail)
 
         binding.buttonSendResetCode.setOnClickListener {
+            binding.buttonSendResetCode.isEnabled = false
             val email = binding.editTextEmail.text.toString().trim()
 
             if (email.isEmpty()) {
                 Toast.makeText(requireContext(), "Please enter email Id", Toast.LENGTH_SHORT).show()
+                binding.buttonSendResetCode.isEnabled = true
                 return@setOnClickListener
             }
             if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 Toast.makeText(requireContext(), "Enter valid email address", Toast.LENGTH_SHORT)
                     .show()
+                binding.buttonSendResetCode.isEnabled = true
                 return@setOnClickListener
             }
             lifecycleScope.launch {
@@ -57,6 +60,7 @@ class ForgotPasswordFragment : Fragment() {
                         "No user found with this email",
                         Toast.LENGTH_SHORT
                     ).show()
+                    binding.buttonSendResetCode.isEnabled = true
                     return@launch
                 }
                 val user = loginResponse.user.toEntity()
@@ -69,6 +73,7 @@ class ForgotPasswordFragment : Fragment() {
                     )
                 } catch (e: ApiException) {
                     showToast(e.message ?: "Server error. Please try again.")
+                    binding.buttonSendResetCode.isEnabled = true
                     return@launch
                 }
                 findNavController().navigate(

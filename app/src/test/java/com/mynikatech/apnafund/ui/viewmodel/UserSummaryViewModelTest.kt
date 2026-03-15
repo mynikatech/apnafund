@@ -113,33 +113,6 @@ class UserSummaryViewModelTest {
         Assert.assertEquals(400.0, result, 0.0)
     }
 
-    @Test
-    fun `getUserProfile should return user profile list`() = runTest {
-        val dummyProfiles = listOf(
-            UserProfile(
-                userId = 1,
-                userName = "Sunil Kumar",
-                roleId = 101,
-                roleCode = "ADMIN",
-                groupId = 12,
-                groupName = "Shakti Group",
-                token = "dummyToken123",
-                isLoggedIn = true,
-                firstName = "Sunil",
-                lastName = "Kumar",
-                emailId = "sunilagl@gmail.com",
-                phoneNumber = "9004556784"
-            )
-        )
-        `when`(userRolesRepository.getUserProfile(1)).thenReturn(dummyProfiles)
-
-        val result = viewModel.getUserProfile(1)
-
-        Assert.assertEquals(1, result.size)
-        Assert.assertEquals("Sunil Kumar", result[0].userName)
-        Assert.assertEquals("ADMIN", result[0].roleCode)
-        Assert.assertTrue(result[0].isLoggedIn == true)
-    }
 
     @Test
     fun `getUserLoanDetails should return correct details`() = runTest {

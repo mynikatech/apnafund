@@ -37,17 +37,20 @@ class SetPinFragment : Fragment() {
         setupAutoMove(binding.entryPinBoxes)
         setupAutoMove(binding.confirmPinBoxes)
 
-        binding.buttonRegister.setOnClickListener {
+        binding.buttonSubmit.setOnClickListener {
+            binding.buttonSubmit.isEnabled = false
             val pin = getPinFromBoxes(binding.entryPinBoxes)
             val confirmPin = getPinFromBoxes(binding.confirmPinBoxes)
 
             if (pin.length != 4 || confirmPin.length != 4) {
                 showToast("Please enter 4-digit PIN")
+                binding.buttonSubmit.isEnabled = true
                 return@setOnClickListener
             }
 
             if (pin != confirmPin) {
                 showToast("PINs do not match")
+                binding.buttonSubmit.isEnabled = true
                 return@setOnClickListener
             }
 
@@ -55,6 +58,7 @@ class SetPinFragment : Fragment() {
             lifecycleScope.launch {
                 if (userViewModel.isPINReused(userId, pin)) {
                     showToast("PIN cannot be same as last three PINs ")
+                    binding.buttonSubmit.isEnabled = true
                     return@launch
                 }
                 userViewModel.changeUserPIN(userId, pin)
