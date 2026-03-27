@@ -81,7 +81,7 @@ class LoginFragment : Fragment() {
                     } catch (e: ApiException) {
                         when (e.code) {
                             404 -> showToast("User not found. Please register first")
-                            400 -> showToast(e.message ?: "Invalid request")
+                            400 -> showToast(e.message)
                             else -> showToast("Server error. Please try again.")
                         }
                         binding.loginButton.isEnabled = true
@@ -93,7 +93,6 @@ class LoginFragment : Fragment() {
                     }
 
                     val localUser = loginResponse.user.toEntity()
-                    val firebaseToken = loginResponse.firebaseToken
                         ?: run {
                             showToast("Login failed. Please try again.")
                             binding.loginButton.isEnabled = true
@@ -220,7 +219,7 @@ class LoginFragment : Fragment() {
             } catch (e: ApiException) {
                 when (e.code) {
                     404 -> showToast("User not found. Please register first")
-                    400 -> showToast(e.message ?: "Invalid request")
+                    400 -> showToast(e.message )
                     else -> showToast("Server error. Please try again.")
                 }
                 binding.loginButton.isEnabled = true
@@ -425,6 +424,9 @@ class LoginFragment : Fragment() {
                     Log.d("OTP_DEBUG", "currentUser=${FirebaseAuth.getInstance().currentUser}")
                 }
             }).build()
+
+        FirebaseAuth.getInstance().firebaseAuthSettings
+            .forceRecaptchaFlowForTesting(true)
 
         PhoneAuthProvider.verifyPhoneNumber(options)
     }

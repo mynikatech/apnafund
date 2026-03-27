@@ -14,7 +14,9 @@ import com.mynikatech.apnafund.server.common.messaging.factories.UserNotificatio
 import com.mynikatech.apnafund.server.funds.FundsSql
 import com.mynikatech.apnafund.server.notifications.NotificationService
 import com.mynikatech.apnafund.server.users.UsersSql
+import com.mynikatech.apnafund.server.users.safeRoute
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.receive
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
@@ -534,8 +536,32 @@ fun Route.loansRoutes(
                         "fundId & userId required"
                     )
                 }
-                val rows = sql.getLoanDetailsWithNamesForFundUser(fundId, userId)
-                call.respondOk(rows)
+                call.safeRoute(
+                    logMessage = "GET get/with-names/fund/{fundId}/user/{userId}: ${fundId}, ${userId}",
+                    clientMessage = "Failed to fetch user"
+                ) {
+                    val rows = sql.getLoanDetailsWithNamesForFundUser(fundId, userId)
+                    rows
+                }
             }
         }
     }
+
+inline suspend fun <reified T> ApplicationCall.safeRoute(
+    logMessage: String,
+    clientMessage: String,
+    block: suspend () -> T
+) {
+    try {
+        respondOk(block())
+    } catch (e: Exception) {
+
+        application.log.error(logMessage, e)
+
+        respondError(
+            HttpStatusCode.InternalServerError,
+            "internal",
+            clientMessage
+        )
+    }
+}

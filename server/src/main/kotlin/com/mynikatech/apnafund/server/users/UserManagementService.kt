@@ -51,7 +51,6 @@ class UserManagementService(
                         )
                     }
                 }
-                val userRoleId = addUserRole(userId, req.roleCode)
                 handleGroup(userId, req.groupId)
                 if (emailVerificationEnabled) {
                     expiresOtpAtMillis = emailVerificationService.sendVerificationEmail(
@@ -79,14 +78,13 @@ class UserManagementService(
                     UserNotificationFactory.userUpdated(
                         userId = userId.toString(),
                         email = user.emailId,
-                        phone = user.phoneNumber ?: "",
+                        phone = "91${user.phoneNumber} ?: ",
                         userName = "${user.firstName} ${user.lastName}"
                     )
                 )
             }
 
             UserSaveSource.ADMIN_CREATE -> {
-                val userRoleId = addUserRole(userId, req.roleCode)
                 handleGroup(userId, req.groupId)
                 val group = groupsSql.getGroup(req.groupId).firstOrNull()
                 if(null != group) {
