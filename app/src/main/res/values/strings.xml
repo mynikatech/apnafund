@@ -81,12 +81,15 @@
     <string name="text_no_loan_message">You have not taken any Loan yet for this fund. Click Apply New Loan if you want a Loan</string>
     <string name="text_apply_new_loan">Apply New Loan</string>
     <string name="text_member_name">%1$s %2$s</string>
-    <string name="contact_number">+91-9004533807</string>
+    <string name="contact_number">+91-9372344640</string>
     <string name="text_contact_information">Contact Information</string>
     <string name="text_contact_us">Contact Us</string>
-    <string name="support_email">sunilagl@gmail.com</string>
+    <string name="support_email">support@mynikatech.in</string>
+    <string name="text_empty_feedback_error">Error loading feedback</string>
     <string name="terms_disclaimer_heading">Terms/Disclaimer</string>
     <string name="Disclaimer_message_1">This app is a community-based financial record-keeping tool. It does not hold funds, enforce transactions, or offer financial advice. All financial arrangements are private agreements among users. The platform is not responsible for disputes or defaults.</string>
     <string name="disclaimer_message_2">Usage fees if any are charged for software features only and are not linked to loan amounts or repayments.</string>
     <string name="asterik_heading">*</string>
+    <string name="user_name_label">User: %1$s</string>
+    <string name="group_name_label">Group: %1$s</string>
 </resources>

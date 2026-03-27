@@ -16,11 +16,12 @@ class FeedbackAdapter : ListAdapter<FeedbackWithUserGroupDto, FeedbackAdapter.Fe
     class FeedbackViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         fun bind(feedback: FeedbackWithUserGroupDto) {
             val groupName = feedback.groupName
-            view.findViewById<TextView>(R.id.textUserName).text = "User: ${feedback.userName}"
+            view.findViewById<TextView>(R.id.textUserName).text = view.context.getString(R.string.user_name_label, feedback.userName)
             if(groupName == null)
                 view.findViewById<TextView>(R.id.textGroupName).text = ApnaBankConstants.MESSAGE_NOT_PART_OF_ANY_GROUP
             else
-                view.findViewById<TextView>(R.id.textGroupName).text = "Group: ${feedback.groupName}"
+                view.findViewById<TextView>(R.id.textGroupName).text =
+                    view.context.getString(R.string.group_name_label, feedback.groupName)
             view.findViewById<TextView>(R.id.textMessage).text = feedback.message
             view.findViewById<TextView>(R.id.textTimestamp).text = feedback.timestamp
         }
