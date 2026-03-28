@@ -5,13 +5,12 @@ import androidx.lifecycle.ViewModel
 import com.mynikatech.apnafund.ApnaFundApplication
 import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.mappers.toDto
-import com.mynikatech.apnafund.data.model.PendingModeratorRequest
-import com.mynikatech.apnafund.data.model.UserRoles
+import com.mynikatech.apnafund.data.mappers.toEntity
+import com.mynikatech.apnafund.data.model.Groups
 import com.mynikatech.apnafund.data.model.UserWithGroup
 import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.net.ApiException
 import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
-import com.mynikatech.apnafund.net.dto.GroupsDto
 import com.mynikatech.apnafund.net.dto.LoginUserResponse
 import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
 import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
@@ -21,14 +20,9 @@ import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
 import com.mynikatech.apnafund.net.dto.UserSaveSource
 import com.mynikatech.apnafund.util.Converters
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 
 class UserViewModel : ViewModel() {
 
@@ -44,10 +38,6 @@ class UserViewModel : ViewModel() {
         userRolesRepository.refreshUsers()
     }
 
-    /** Pull one user from server and cache */
-    suspend fun refreshUserAndCache(id: Int) {
-        userRolesRepository.refreshOne(id)
-    }
 
     fun fetchUsers(): Flow<List<Users>> {
         val users = userRolesRepository.fetchAllUsers()
@@ -82,11 +72,6 @@ class UserViewModel : ViewModel() {
 
     suspend fun isDuplicate(email: String, phone: String, excludeUserId: Int = 0): Boolean {
         return userRolesRepository.isDuplicateUser(email, phone, excludeUserId)
-    }
-
-    suspend fun isPasswordReused(userId: Int, newHash: String): Boolean {
-        val lastHashes = userRolesRepository.getLast3PasswordHashes(userId)
-        return lastHashes.contains(newHash)
     }
 
     suspend fun isPINReused(userId: Int, newHash: String): Boolean {
@@ -130,64 +115,16 @@ class UserViewModel : ViewModel() {
         return userRolesRepository.getUserByPhone(phone)
     }
 
-    suspend fun createUserAndReturnId(user: Users): Int {
-        return userRolesRepository.createUserAndReturnId(user)
-    }
-
-    suspend fun addUserRoles(userRoles: List<UserRoles>) {
-        userRolesRepository.addUserRoles(userRoles)
-    }
-
-    suspend fun getPendingModeratorRequests(): List<PendingModeratorRequest> {
-        return userRolesRepository.getPendingModeratorRequests()
-    }
-
-    suspend fun approveModeratorAndGroup(
-        userId: Int,
-        roleId: Int,
-        groupId: Int,
-        moderatorName: String,
-        moderatorEmail: String,
-        groupName: String
-    ) {
-        return userRolesRepository.approveModeratorAndGroup(
-            userId,
-            roleId,
-            groupId,
-            moderatorName,
-            moderatorEmail,
-            groupName
-        )
-    }
-
-    suspend fun rejectModeratorAndGroup(
-        userId: Int,
-        roleId: Int,
-        groupId: Int,
-        moderatorName: String,
-        moderatorEmail: String,
-        groupName: String
-    ) {
-        return userRolesRepository.rejectModeratorAndGroup(
-            userId,
-            roleId,
-            groupId,
-            moderatorName,
-            moderatorEmail,
-            groupName
-        )
-    }
-
-    suspend fun getUserWithGroup(groupId: Int): Flow<List<UserWithGroup>> {
+    fun getUserWithGroup(groupId: Int): Flow<List<UserWithGroup>> {
         return userRolesRepository.getUserWithGroup(groupId)
     }
 
-    suspend fun getAllUsersWithGroup(): Flow<List<UserWithGroup>> {
+    fun getAllUsersWithGroup(): Flow<List<UserWithGroup>> {
         return userRolesRepository.getAllUsersWithGroup()
     }
 
 
-    suspend fun fetchUsersWithGroup(
+    fun fetchUsersWithGroup(
         isAdmin: Boolean,
         moderatorGroup: Int
     ): Flow<List<UserWithGroup>> {
@@ -202,10 +139,6 @@ class UserViewModel : ViewModel() {
     ): Result<ModeratorRegistrationResponse> {
 
         return userRolesRepository.registerModeratorAndGroup(regModReq)
-    }
-
-    suspend fun registerOrUpdateUser(regUpdateReq: RegisterOrUpdateUserRequest) {
-        userRolesRepository.registerOrUpdateUser(regUpdateReq)
     }
 
     suspend fun verifyEmailOtp(otp: String, userId: Int, purpose: String): Boolean {
@@ -239,10 +172,13 @@ class UserViewModel : ViewModel() {
         return userRolesRepository.getFirebaseTokenForUser(userId)
     }
 
-    suspend fun getGroupsForUser(userId: Int): List<GroupsDto>? {
-        return userRolesRepository.getGroupsForUser(userId)
-    }
-    fun getGroupsForModeratorUser(userId: Int): Flow<List<GroupsDto>> = flow {
-        emit(userRolesRepository.getGroupsForModeratorUser(userId))
-    }
+    fun getGroupsForModeratorUser(userId: Int): Flow<List<Groups>> =
+        flow {
+            emit(userRolesRepository.getGroupsForModeratorUser(userId))
+        }
+            .map { dtos -> dtos.map { it.toEntity() } }
+            .catch { e ->
+                Log.e("UserViewModel", "Error fetching moderator groups", e)
+                emit(emptyList())
+            }
 }

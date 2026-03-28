@@ -4,8 +4,7 @@ import android.app.AlertDialog
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -27,7 +26,6 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
-import com.mynikatech.apnafund.data.mappers.toEntity
 import com.mynikatech.apnafund.data.model.Groups
 import com.mynikatech.apnafund.databinding.DialogAddGroupBinding
 import com.mynikatech.apnafund.databinding.FragmentGroupBinding
@@ -40,7 +38,6 @@ import com.mynikatech.apnafund.util.Converters.toTitleCase
 import com.mynikatech.apnafund.util.GroupInputValidator
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 class GroupFragment : Fragment() {
@@ -58,9 +55,7 @@ class GroupFragment : Fragment() {
     private lateinit var grayBg: Drawable
 
     private val isAdmin = SessionManager.isAdmin()
-    private val moderatorGroupId = SessionManager.groupId ?: 0
 
-    private val userGroups = SessionManager.userGroups ?: emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -91,18 +86,22 @@ class GroupFragment : Fragment() {
     }
 
     private fun fetchAllGroups() {
-
         lifecycleScope.launch {
-            if (isAdmin) {
-                groupViewModel.fetchAllGroups()
-                    .collectLatest { groups ->
-                        populateUserTable(groups ?: emptyList())
-                    }
-            } else {
-                userViewModel.getGroupsForModeratorUser(SessionManager.userId)
-                    .collectLatest { groups ->
-                        populateUserTable(groups.toEntity() ?: emptyList())
-                    }
+            try {
+                if (isAdmin) {
+                    groupViewModel.fetchAllGroups()
+                        .collectLatest { groups ->
+                            populateUserTable(groups)
+                        }
+                } else {
+                    userViewModel.getGroupsForModeratorUser(SessionManager.userId)
+                        .collectLatest { groups ->
+                            populateUserTable(groups)
+                        }
+                }
+            } catch (e: Exception) {
+                Log.e("GroupFragment", "Error fetching groups", e)
+                Toast.makeText(requireContext(), "Failed to load groups", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -110,80 +109,92 @@ class GroupFragment : Fragment() {
     private fun populateUserTable(groups: List<Groups>) {
         cleanTable(tableLayoutGroupDetails)
         lifecycleScope.launch {
-            val userDeferredList = groups.map { group ->
-                async {
-                    userViewModel.fetchUser(group.moderator!!)
-                }
-            }
+            try {
 
-            val userList = userDeferredList.map { it.await() }
-            for (i in groups.indices) {
-                val group = groups[i]
-                val user = userList[i]
-                val serialNum = (1 + i).toString()
-                val tvNo = createTableCell(serialNum, gravity = Gravity.CENTER)
-                val tvGroupName = createTableCell(text = group.groupName)
-                tvGroupName.apply {
-                    setTextColor(
-                        ContextCompat.getColor(
-                            context,
-                            R.color.link_colour
-                        )
-                    ) // Optional: make it look clickable
-                    isClickable = true
-                    setOnClickListener {
-                        val navController = requireActivity()
-                            .supportFragmentManager
-                            .findFragmentById(R.id.nav_host_fragment)  // replace with your actual host ID
-                            ?.findNavController()
-                        navController?.navigate(
-                            GroupFragmentDirections.actionGroupFragmentToGroupDetailsFragment(
-                                group.groupId
-                            )
-                        )
+
+                val userDeferredList = groups.map { group ->
+                    async {
+                        userViewModel.fetchUser(group.moderator!!)
                     }
                 }
-                val userName = "${user?.firstName} ${user?.lastName}"
-                val tvModerator = createTableCell(userName, userName)
-                val tvCreatedDate =
-                    createTableCell(group.createdDate, gravity = Gravity.END)
-                val tvDescription = createTableCell(text = group.description, tooltip = group.description)
-                val btnEdit = createIconButton(R.drawable.icon_edit) {
-                    showAddGroupDialog(requireContext(), 1, groups[i])
-                }
-                // If the user has the add/edit group privilege
-                if (Converters.userHasPrivilege(ApnaBankConstants.ADD_GROUP_PRIV))
-                    btnEdit.visibility = View.VISIBLE
-                else
-                    btnEdit.visibility = View.GONE
-                val status = groups[i].status
-                val drawable = when (status) {
-                    ApnaBankConstants.STATUS_ACTIVE -> R.drawable.ic_block
-                    ApnaBankConstants.STATUS_INACTIVE -> R.drawable.ic_check_circle
-                    ApnaBankConstants.STATUS_PENDING -> R.drawable.ic_pending // or ic_pending
-                    else -> R.drawable.ic_block
-                }
-                val btnToggleActive = createIconButton(drawable, status) {
-                    showConfirmToggleGroupStatus(groups[i])
-                }
-                // Disable button when pending
-                if (status == ApnaBankConstants.STATUS_PENDING) {
-                    btnToggleActive.isEnabled = false
-                    btnToggleActive.alpha = 0.5f
-                }
 
-                val newRow = TableRow(activity).apply {
-                    layoutParams = TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT)
-                    addView(tvNo, 0)
-                    addView(tvGroupName, 1)
-                    addView(tvModerator, 2)
-                    addView(tvCreatedDate, 3)
-                    addView(tvDescription, 4)
-                    addView(btnEdit, 5)
-                    addView(btnToggleActive, 6)
-                    background = if (i % 2 == 0) whiteBg else grayBg
+                val userList = userDeferredList.map { it.await() }
+                for (i in groups.indices) {
+                    try {
+                        val group = groups[i]
+                        val user = userList[i]
+                        val serialNum = (1 + i).toString()
+                        val tvNo = createTableCell(serialNum, gravity = Gravity.CENTER)
+                        val tvGroupName = createTableCell(text = group.groupName)
+                        tvGroupName.apply {
+                            setTextColor(
+                                ContextCompat.getColor(
+                                    context,
+                                    R.color.link_colour
+                                )
+                            ) // Optional: make it look clickable
+                            isClickable = true
+                            setOnClickListener {
+                                val navController = requireActivity()
+                                    .supportFragmentManager
+                                    .findFragmentById(R.id.nav_host_fragment)  // replace with your actual host ID
+                                    ?.findNavController()
+                                navController?.navigate(
+                                    GroupFragmentDirections.actionGroupFragmentToGroupDetailsFragment(
+                                        group.groupId
+                                    )
+                                )
+                            }
+                        }
+                        val userName = "${user?.firstName} ${user?.lastName}"
+                        val tvModerator = createTableCell(userName, userName)
+                        val tvCreatedDate =
+                            createTableCell(group.createdDate, gravity = Gravity.END)
+                        val tvDescription =
+                            createTableCell(text = group.description, tooltip = group.description)
+                        val btnEdit = createIconButton(R.drawable.icon_edit) {
+                            showAddGroupDialog(requireContext(), 1, groups[i])
+                        }
+                        // If the user has the add/edit group privilege
+                        if (Converters.userHasPrivilege(ApnaBankConstants.ADD_GROUP_PRIV))
+                            btnEdit.visibility = View.VISIBLE
+                        else
+                            btnEdit.visibility = View.GONE
+                        val status = groups[i].status
+                        val drawable = when (status) {
+                            ApnaBankConstants.STATUS_ACTIVE -> R.drawable.ic_block
+                            ApnaBankConstants.STATUS_INACTIVE -> R.drawable.ic_check_circle
+                            ApnaBankConstants.STATUS_PENDING -> R.drawable.ic_pending // or ic_pending
+                            else -> R.drawable.ic_block
+                        }
+                        val btnToggleActive = createIconButton(drawable, status) {
+                            showConfirmToggleGroupStatus(groups[i])
+                        }
+                        // Disable button when pending
+                        if (status == ApnaBankConstants.STATUS_PENDING) {
+                            btnToggleActive.isEnabled = false
+                            btnToggleActive.alpha = 0.5f
+                        }
+
+                        val newRow = TableRow(activity).apply {
+                            layoutParams = TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT)
+                            addView(tvNo, 0)
+                            addView(tvGroupName, 1)
+                            addView(tvModerator, 2)
+                            addView(tvCreatedDate, 3)
+                            addView(tvDescription, 4)
+                            addView(btnEdit, 5)
+                            addView(btnToggleActive, 6)
+                            background = if (i % 2 == 0) whiteBg else grayBg
+                        }
+                        tableLayoutGroupDetails.addView(newRow)
+                    } catch (rowException: Exception) {
+                        Log.e("GroupFragment", "Error rendering row $i", rowException)
+                    }
                 }
-                tableLayoutGroupDetails.addView(newRow)
+            } catch (e: Exception) {
+                Log.e("GroupFragment", "Error populating table", e)
+                Toast.makeText(requireContext(), "Error loading data", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -229,96 +240,107 @@ class GroupFragment : Fragment() {
         // however when the user is not admin only the user should be available
 
         lifecycleScope.launch {
-            userViewModel.fetchUsers().collectLatest { users ->
+            try {
+                userViewModel.fetchUsers().collectLatest { users ->
 
-                if (!isAdmin) {
-                    // Moderator → only themselves
-                    val currentUser = users.find { it.userId == SessionManager.userId }
+                    if (!isAdmin) {
+                        // Moderator → only themselves
+                        val currentUser = users.find { it.userId == SessionManager.userId }
 
-                    val fullName = "${currentUser?.firstName} ${currentUser?.lastName}"
-
-                    dialogBinding.editTextAutoModerator.setText(fullName, false)
-                    userId = currentUser?.userId ?: 0
-
-                    dialogBinding.editTextAutoModerator.isEnabled = false
-                    dialogBinding.editTextAutoModerator.isClickable = false
-                    dialogBinding.editTextAutoModerator.isFocusable = false
-
-                    validateInputs()
-
-                } else {
-
-                    // Admin → show all users
-                    val userNames = users.map { "${it.firstName} ${it.lastName}" }
-
-                    val adapter = ArrayAdapter(
-                        requireContext(),
-                        R.layout.dropdown_item_apnabank,
-                        userNames
-                    )
-
-                    dialogBinding.editTextAutoModerator.setAdapter(adapter)
-
-                    // Preselect existing moderator if editing
-                    if (addOrEditFlag == 1 && existingGroup != null) {
-                        val existingModerator = users.find { it.userId == existingGroup.moderator }
-                        val fullName = "${existingModerator?.firstName} ${existingModerator?.lastName}"
+                        val fullName = "${currentUser?.firstName} ${currentUser?.lastName}"
 
                         dialogBinding.editTextAutoModerator.setText(fullName, false)
-                        userId = existingModerator?.userId ?: 0
+                        userId = currentUser?.userId ?: 0
+
+                        dialogBinding.editTextAutoModerator.isEnabled = false
+                        dialogBinding.editTextAutoModerator.isClickable = false
+                        dialogBinding.editTextAutoModerator.isFocusable = false
+
                         validateInputs()
-                    }
 
-                    dialogBinding.editTextAutoModerator.setOnClickListener {
-                        dialogBinding.editTextAutoModerator.showDropDown()
-                    }
+                    } else {
 
-                    dialogBinding.editTextAutoModerator.setOnFocusChangeListener { _, hasFocus ->
-                        if (hasFocus) {
-                            dialogBinding.editTextAutoModerator.post {
-                                dialogBinding.editTextAutoModerator.showDropDown()
+                        // Admin → show all users
+                        val userNames = users.map { "${it.firstName} ${it.lastName}" }
+
+                        val adapter = ArrayAdapter(
+                            requireContext(),
+                            R.layout.dropdown_item_apnabank,
+                            userNames
+                        )
+
+                        dialogBinding.editTextAutoModerator.setAdapter(adapter)
+
+                        // Preselect existing moderator if editing
+                        if (addOrEditFlag == 1 && existingGroup != null) {
+                            val existingModerator =
+                                users.find { it.userId == existingGroup.moderator }
+                            val fullName =
+                                "${existingModerator?.firstName} ${existingModerator?.lastName}"
+
+                            dialogBinding.editTextAutoModerator.setText(fullName, false)
+                            userId = existingModerator?.userId ?: 0
+                            validateInputs()
+                        }
+
+                        dialogBinding.editTextAutoModerator.setOnClickListener {
+                            dialogBinding.editTextAutoModerator.showDropDown()
+                        }
+
+                        dialogBinding.editTextAutoModerator.setOnFocusChangeListener { _, hasFocus ->
+                            if (hasFocus) {
+                                dialogBinding.editTextAutoModerator.post {
+                                    dialogBinding.editTextAutoModerator.showDropDown()
+                                }
                             }
                         }
-                    }
 
-                    dialogBinding.editTextAutoModerator.setOnItemClickListener { parent, _, position, _ ->
-                        val selectedName = parent.getItemAtPosition(position) as String
-                        val selectedUser =
-                            users.find { "${it.firstName} ${it.lastName}" == selectedName }
+                        dialogBinding.editTextAutoModerator.setOnItemClickListener { parent, _, position, _ ->
+                            val selectedName = parent.getItemAtPosition(position) as String
+                            val selectedUser =
+                                users.find { "${it.firstName} ${it.lastName}" == selectedName }
 
-                        userId = selectedUser?.userId ?: 0
-                        validateInputs()
+                            userId = selectedUser?.userId ?: 0
+                            validateInputs()
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                Log.e("GroupFragment", "Error loading users", e)
+                Toast.makeText(context, "Failed to load users", Toast.LENGTH_SHORT).show()
             }
         }
 
         dialogBinding.buttonSaveGrp.setOnClickListener {
             dialogBinding.buttonSaveGrp.isEnabled = false
             viewLifecycleOwner.lifecycleScope.launch {
-                val groupName = dialogBinding.editTextGroupName.text.toString().trim()
-                    .toTitleCase()
-                val status = if (isAdmin) {
-                    ApnaBankConstants.STATUS_ACTIVE
-                } else {
-                    ApnaBankConstants.STATUS_PENDING
-                }
-                val groupToSave = existingGroup?.copy(
-                    groupName = groupName,
-                    moderator = userId,
-                    status = existingGroup.status,
-                    description = dialogBinding.editTextGroupDesc.text.toString().trim()
-                ) ?: Groups(
-                    groupName = dialogBinding.editTextGroupName.text.toString().trim()
-                        .toTitleCase(),
-                    moderator = userId,
-                    status = status,
-                    createdDate = ApnaBankDate.getCurrentDate(),
-                    description = dialogBinding.editTextGroupDesc.text.toString().trim(),
-                    groupCode = Converters.generateGroupCode(groupName)
-                )
-                val savedGroup = groupViewModel.saveOrUpdateGroup(groupToSave)
-                if (savedGroup != null) {
+                try {
+
+
+                    val groupName = dialogBinding.editTextGroupName.text.toString().trim()
+                        .toTitleCase()
+                    val description = dialogBinding.editTextGroupDesc.text
+                        .toString()
+                        .trim()
+                    val status = if (isAdmin) {
+                        ApnaBankConstants.STATUS_ACTIVE
+                    } else {
+                        ApnaBankConstants.STATUS_PENDING
+                    }
+                    val groupToSave = existingGroup?.copy(
+                        groupName = groupName,
+                        moderator = userId,
+                        status = existingGroup.status,
+                        description = description
+                    ) ?: Groups(
+                        groupName = groupName,
+                        moderator = userId,
+                        status = status,
+                        createdDate = ApnaBankDate.getCurrentDate(),
+                        description = description,
+                        groupCode = Converters.generateGroupCode(groupName)
+                    )
+                    groupViewModel.saveOrUpdateGroup(groupToSave)
 
                     val message = if (isAdmin) {
                         "Group created successfully."
@@ -327,19 +349,14 @@ class GroupFragment : Fragment() {
                     }
 
                     Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
-
-                } else {
-
-                    Toast.makeText(
-                        requireContext(),
-                        "Failed to save group. Please try again.",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    fetchAllGroups()
+                    dialog.dismiss()
+                } catch (e: Exception) {
+                    Log.e("GroupFragment", "Error saving group", e)
+                    Toast.makeText(requireContext(), "Failed to save group", Toast.LENGTH_LONG)
+                        .show()
                     dialogBinding.buttonSaveGrp.isEnabled = true
                 }
-
-                fetchAllGroups()
-                dialog.dismiss()
             }
         }
         dialogBinding.buttonCancelGrp.setOnClickListener {

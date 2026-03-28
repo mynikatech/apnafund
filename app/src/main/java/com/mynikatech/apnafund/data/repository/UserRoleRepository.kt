@@ -3,8 +3,9 @@ package com.mynikatech.apnafund.data.repository
 // Removed: androidx.room.withTransaction
 // Removed: AppLocator
 
-import android.util.Log
 import com.mynikatech.apnafund.Exception.InvalidSessionException
+import com.mynikatech.apnafund.data.mappers.toDto
+import com.mynikatech.apnafund.data.mappers.toEntity
 import com.mynikatech.apnafund.data.model.GroupMembers
 import com.mynikatech.apnafund.data.model.PendingModeratorRequest
 import com.mynikatech.apnafund.data.model.Roles
@@ -14,8 +15,6 @@ import com.mynikatech.apnafund.data.model.UserProfile
 import com.mynikatech.apnafund.data.model.UserRoles
 import com.mynikatech.apnafund.data.model.UserWithGroup
 import com.mynikatech.apnafund.data.model.Users
-import com.mynikatech.apnafund.data.mappers.toDto
-import com.mynikatech.apnafund.data.mappers.toEntity
 import com.mynikatech.apnafund.net.AdminApi
 import com.mynikatech.apnafund.net.ApiException
 import com.mynikatech.apnafund.net.GroupsApi
@@ -24,7 +23,6 @@ import com.mynikatech.apnafund.net.PinHistoryApi
 import com.mynikatech.apnafund.net.RolesApi
 import com.mynikatech.apnafund.net.UserRolesApi
 import com.mynikatech.apnafund.net.UsersApi
-import com.mynikatech.apnafund.net.dto.ChangePasswordRequest
 import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
 import com.mynikatech.apnafund.net.dto.GroupsDto
 import com.mynikatech.apnafund.net.dto.LoginUserResponse
@@ -38,8 +36,6 @@ import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
 import com.mynikatech.apnafund.net.dto.UpdateFirebaseUidReq
 import com.mynikatech.apnafund.net.dto.UsersDto
 import com.mynikatech.apnafund.net.dto.VerifyEmailReq
-import com.mynikatech.apnafund.net.unwrap
-import io.ktor.client.request.get
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -95,25 +91,30 @@ class UserRoleRepository(
 
     // --- Roles & memberships (network-only) ---
 
-    suspend fun ensureRoleRemoteAndCache(userId: Int, roleCode: String) = withContext(Dispatchers.IO) {
-        val existingRemote = runCatching { userRolesApi.getAllUserRoles(userId) }.getOrDefault(emptyList())
-        if (existingRemote.any { it.equals(roleCode, ignoreCase = true) }) return@withContext
+    suspend fun ensureRoleRemoteAndCache(userId: Int, roleCode: String) =
+        withContext(Dispatchers.IO) {
+            val existingRemote =
+                runCatching { userRolesApi.getAllUserRoles(userId) }.getOrDefault(emptyList())
+            if (existingRemote.any { it.equals(roleCode, ignoreCase = true) }) return@withContext
 
-        val roleId = rolesApi.getRoleIdByRoleCode(roleCode)
+            val roleId = rolesApi.getRoleIdByRoleCode(roleCode)
             rolesApi.assignRole(userId, roleId)
-    }
-
-    suspend fun ensureGroupMemberRemoteAndCache(member: GroupMembers) = withContext(Dispatchers.IO) {
-        val already =  usersApi.getGroupMember(member.userId, member.groupId)
-        if (already == null) {
-            groupsApi.addGroupMember(member)
         }
-    }
 
-    suspend fun ensureModeratorIfNoneRemoteAndCache(userId: Int, groupId: Int) = withContext(Dispatchers.IO) {
-        val hasModerator = runCatching { usersApi.doesGroupHasModerator(groupId) }.getOrDefault(false)
-        if (!hasModerator) ensureRoleRemoteAndCache(userId, "MODERATOR")
-    }
+    suspend fun ensureGroupMemberRemoteAndCache(member: GroupMembers) =
+        withContext(Dispatchers.IO) {
+            val already = usersApi.getGroupMember(member.userId, member.groupId)
+            if (already == null) {
+                groupsApi.addGroupMember(member)
+            }
+        }
+
+    suspend fun ensureModeratorIfNoneRemoteAndCache(userId: Int, groupId: Int) =
+        withContext(Dispatchers.IO) {
+            val hasModerator =
+                runCatching { usersApi.doesGroupHasModerator(groupId) }.getOrDefault(false)
+            if (!hasModerator) ensureRoleRemoteAndCache(userId, "MODERATOR")
+        }
 
     suspend fun createUser(user: Users) {
         usersApi.addUser(user.toDto())
@@ -163,7 +164,7 @@ class UserRoleRepository(
     suspend fun getRoleCodesByRoleId(): Map<String, Int> {
         val roles: List<RolesDto> = rolesApi.getAllRoles()
         return roles.mapNotNull { dto ->
-            val code = dto.roleCode ?: return@mapNotNull null
+            val code = dto.roleCode
             val id = when (val rid = dto.roleId) {
                 null -> return@mapNotNull null
                 is Int -> rid
@@ -186,7 +187,7 @@ class UserRoleRepository(
         return userRolesApi.getAllUserRoleIds(userId)
     }
 
-    suspend fun getUserProfile(userId: Int):UserProfile =
+    suspend fun getUserProfile(userId: Int): UserProfile =
         withContext(Dispatchers.IO) {
 
             val remote = usersApi.getUserProfile(userId)
@@ -251,12 +252,40 @@ class UserRoleRepository(
         return userRolesApi.getPendingModeratorRequests().toEntity()
     }
 
-    suspend fun approveModeratorAndGroup(userId: Int, roleId: Int, groupId: Int, moderatorName: String,moderatorEmail: String, groupName: String) {
-        adminApi.approveModeratorAndGroup(userId, roleId, groupId, moderatorName,moderatorEmail,groupName)
+    suspend fun approveModeratorAndGroup(
+        userId: Int,
+        roleId: Int,
+        groupId: Int,
+        moderatorName: String,
+        moderatorEmail: String,
+        groupName: String
+    ) {
+        adminApi.approveModeratorAndGroup(
+            userId,
+            roleId,
+            groupId,
+            moderatorName,
+            moderatorEmail,
+            groupName
+        )
     }
 
-    suspend fun rejectModeratorAndGroup(userId: Int, roleId: Int, groupId: Int, moderatorName: String,moderatorEmail: String, groupName: String) {
-        adminApi.rejectModeratorAndGroup(userId, roleId, groupId, moderatorName,moderatorEmail,groupName)
+    suspend fun rejectModeratorAndGroup(
+        userId: Int,
+        roleId: Int,
+        groupId: Int,
+        moderatorName: String,
+        moderatorEmail: String,
+        groupName: String
+    ) {
+        adminApi.rejectModeratorAndGroup(
+            userId,
+            roleId,
+            groupId,
+            moderatorName,
+            moderatorEmail,
+            groupName
+        )
     }
 
     fun getUserWithGroup(groupId: Int): Flow<List<UserWithGroup>> =
@@ -369,6 +398,7 @@ class UserRoleRepository(
     suspend fun getGroupsForUser(userId: Int): List<GroupsDto> {
         return usersApi.getGroupsForUser(userId)
     }
+
     suspend fun getGroupsForModeratorUser(userId: Int): List<GroupsDto> {
         return usersApi.getGroupsForModeratorUser(userId)
     }

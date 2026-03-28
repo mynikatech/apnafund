@@ -12,8 +12,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -23,44 +21,10 @@ class GroupViewModel : ViewModel() {
     private val groupRepository = ApnaFundApplication.groupRepository
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
-    private val _loading = MutableStateFlow(false)
-    val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
     val groups: StateFlow<List<Groups>> =
         groupRepository.fetchAllGroups() // or repo.fetchAllGroups()
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
-    fun groupsForUser(isAdmin: Boolean, moderatorGroupId: Int = 0): Flow<List<Groups>> =
-        if (isAdmin) groups
-        else groups.map { list -> list.filter { it.groupId == moderatorGroupId } }
-
-    fun refresh() {
-        viewModelScope.launch {
-            _loading.value = true
-            _error.value = null
-            try {
-                groupRepository.refreshGroups()
-            } catch (t: Throwable) {
-                _error.value = t.message ?: "Refresh failed"
-            } finally {
-                _loading.value = false
-            }
-        }
-    }
-
-    fun deleteGroupRemote(groupId: Int) {
-        viewModelScope.launch {
-            _loading.value = true
-            _error.value = null
-            try {
-                groupRepository.deleteGroupRemoteAndCache(groupId)
-            } catch (t: Throwable) {
-                _error.value = t.message ?: "Delete failed"
-            } finally {
-                _loading.value = false
-            }
-        }
-    }
 
     fun createGroupMember(memberId: Int, groupId: Int) {
         val groupMember = GroupMembers(
@@ -73,18 +37,9 @@ class GroupViewModel : ViewModel() {
         }
     }
 
-    suspend fun fetchAllGroups(): Flow<List<Groups>> {
+    fun fetchAllGroups(): Flow<List<Groups>> {
         val groups = groupRepository.fetchAllGroups()
         return groups
-    }
-
-    suspend fun fetchAllGroups(isAdmin: Boolean, userId: Int): Flow<List<Groups>> {
-        return if (!isAdmin) {
-            val group = groupRepository.fetchGroup(userId)!!
-            flowOf(listOf(group))
-        } else {
-            groupRepository.fetchAllGroups()
-        }
     }
 
     suspend fun fetchGroup(groupId: Int): Groups {
@@ -106,17 +61,11 @@ class GroupViewModel : ViewModel() {
         return groupRepository.checkIfGroupMemberAlreadyAdded(userId, groupId)
     }
 
-    fun saveOrUpdateGroup(group: Groups) {
-        viewModelScope.launch {
-            try {
-                if (group.groupId == 0) {
-                    groupRepository.createGroup(group)
-                } else {
-                    groupRepository.updateGroup(group)
-                }
-            } catch (t: Throwable) {
-                _error.value = t.message ?: "Local save failed"
-            }
+    suspend fun saveOrUpdateGroup(group: Groups) {
+        if (group.groupId == 0) {
+            groupRepository.createGroup(group)
+        } else {
+            groupRepository.updateGroup(group)
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.mynikatech.apnafund.data.repository
 
+import android.util.Log
 import com.mynikatech.apnafund.data.dao.GroupMembersDao
 import com.mynikatech.apnafund.data.dao.GroupsDao
 import com.mynikatech.apnafund.data.mappers.toDto
@@ -16,7 +17,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 
 class GroupRepository(
-    private val groupsDao: GroupsDao, private val groupMembersDao: GroupMembersDao,
     private val api: GroupsApi
 ) {
 
@@ -40,31 +40,8 @@ class GroupRepository(
         }
     } */
 
-    suspend fun refreshGroups(): Unit = withContext(Dispatchers.IO) {
-        runCatching { api.getAllGroups() }.getOrNull()
-    }
-
-    /** Update remotely, then update Room. */
-    suspend fun updateGroupRemoteAndCache(group: Groups): Boolean = withContext(Dispatchers.IO) {
-        val id = requireNotNull(group.groupId) { "groupId required" }
-        val ok = api.updateGroup(id, group.toDto())
-        // if (ok) groupsDao.updateGroup(group)
-        ok
-    }
-
-    /** Delete remotely, then remove from Room. */
-    suspend fun deleteGroupRemoteAndCache(groupId: Int): Boolean = withContext(Dispatchers.IO) {
-        val ok = api.deleteGroup(groupId)
-        //if (ok) groupsDao.getGroupOrNull(groupId)?.let { groupsDao.deleteGroup(it) }
-        ok
-    }
-
-    suspend fun createGroup(group: Groups) {
+     suspend fun createGroup(group: Groups) {
         api.addGroup(group.toDto())
-    }
-
-    suspend fun deleteGroup(group: Groups) {
-        api.deleteGroup(group.groupId)
     }
 
     suspend fun updateGroup(group: Groups) {
@@ -76,14 +53,14 @@ class GroupRepository(
             val dtos = api.getAllGroups()
             emit(dtos.map { it.toEntity() })
         }
-            .catch { emit(emptyList()) }
+            .catch { e ->
+                Log.e("GroupRepository", "Error fetching groups", e)
+                emit(emptyList())
+            }
             .flowOn(Dispatchers.IO)
 
     suspend fun fetchGroup(groupId: Int): Groups? {
         return api.getGroup(groupId)?.toEntity()
-    }
-    suspend fun fetchGroupByMod(moderator: Int): Groups {
-        return api.getGroupByMod(moderator).toEntity()
     }
 
     suspend fun createGroupMember(groupMembers: GroupMembers) {
@@ -98,24 +75,8 @@ class GroupRepository(
         return api.getAllMembersofGroupWithNames(groupId).toEntity()
     }
 
-    suspend fun getGroupMembersForFund(fundId: Int): Flow<List<GroupMembers>> =
-        flow {
-            val dtos = api.getGroupMembersForFund(fundId)
-            emit(dtos.map { it.toEntity() })
-        }
-            .catch { emit(emptyList()) }
-            .flowOn(Dispatchers.IO)
-
-    suspend fun getGroupMembersWithNamesForFund(fundId: Int): List<GroupMemberWithName> {
-        return api.getGroupMembersWithNamesForFund(fundId).toEntity()
-    }
-
     suspend fun checkIfGroupMemberAlreadyAdded(userId: Int, groupId: Int): Boolean {
         return api.checkIfGroupMemberAlreadyAdded(userId, groupId)
-    }
-
-    suspend fun getTotMemberNumbersForFund(groupId: Int): Int {
-        return api.getTotMemberNumbersForFund(groupId)
     }
 
     suspend fun syncFirebaseUid(
