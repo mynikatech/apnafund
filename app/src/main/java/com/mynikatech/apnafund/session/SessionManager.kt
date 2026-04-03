@@ -2,7 +2,6 @@ package com.mynikatech.apnafund.session
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.mynikatech.apnafund.data.model.Groups
 import com.mynikatech.apnafund.net.dto.UserGroup
 
 object SessionManager {
@@ -33,7 +32,7 @@ object SessionManager {
     }
 
     fun isMultiGroupUser(): Boolean {
-        return userGroups?.size ?: 0 > 1
+        return (userGroups?.size ?: 0) > 1
     }
 
     fun setSelectedGroup(group: UserGroup) {
@@ -64,7 +63,11 @@ object SessionManager {
     }
 
     fun isAdmin() = hasRole("ADMIN")
-    fun isModerator() = hasRole("MODERATOR")
+    fun isModerator() =
+        hasRole("GROUP_MODERATOR") || hasRole("FUND_MODERATOR")
+
+    fun isGroupModerator() = hasRole("GROUP_MODERATOR")
+    fun isFundModerator() = hasRole("FUND_MODERATOR")
 
     fun getFormattedUserName(): String {
         return "${firstName} ${lastName}"

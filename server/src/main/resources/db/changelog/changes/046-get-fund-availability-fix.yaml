@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 047-get-availability-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/047-get-availability-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

@@ -187,10 +187,16 @@ fun Route.loansRoutes(
                         "APPROVED"
                     else
                         "PENDING_APPROVAL"
+                val status =
+                    if (isModeratorApplying)
+                        "ACTIVE"
+                    else
+                        "PENDING"
 
                 val loanId = sql.insertLoanWithDetails(
                     body.loan.copy(
-                        workflowStatus = workflowStatus
+                        workflowStatus = workflowStatus,
+                        status = status
                     ),
                     body.details
                 )

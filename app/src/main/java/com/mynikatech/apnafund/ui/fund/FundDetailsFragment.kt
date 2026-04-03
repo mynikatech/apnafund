@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund.ui.fund
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -8,6 +9,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TableLayout
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -20,6 +22,7 @@ import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.model.FundWithDetails
 import com.mynikatech.apnafund.data.model.LoanDetailsWithMemberNames
 import com.mynikatech.apnafund.databinding.FragmentFundDetailsBinding
+import com.mynikatech.apnafund.net.dto.FundAvailabilityDto
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.loan.AddLoanDialog
 import com.mynikatech.apnafund.ui.user.UserFundDepositsFragmentArgs
@@ -190,16 +193,28 @@ class FundDetailsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             val fund = userSummaryViewModel.getFund(fundId)!!
             val fundRateOfInterest = fund.loanInterestRate
+            var totalAmounts: FundAvailabilityDto? = null
             //Get current available amount in the Fund display to the user and also add a validation
-            val totalAmountAvailable = userSummaryViewModel.getTotalAmountAvailableforFund(fundId)
+            try {
+                totalAmounts = userSummaryViewModel.getAllAmountAvailableforFund(fundId)
+            }catch (e: Exception) {
+                Log.e("LoanDialog", "Error fetching fund amounts", e)
+
+                // Optional: show message
+                Toast.makeText(
+                    requireContext(),
+                    "Unable to fetch fund details",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
 
             val dialog = AddLoanDialog(
                 borrowerName = borrowerName,
-                totalAmountAvailable = totalAmountAvailable ?: 0.0,
                 rateOfInterest = fundRateOfInterest,
                 fundMaturityDate = fund.fundMaturityDate,
                 existingLoan = existingLoan,
                 allowEditLoan = allowEditLoan,
+                totalAmounts = totalAmounts,
                 borrowerUserId = borrowerUserId
 
             ) { loanAmount, issueDate, period, loanMaturityDate, borrowerUserId ->

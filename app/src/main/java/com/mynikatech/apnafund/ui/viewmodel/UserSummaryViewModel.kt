@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import android.util.Log
+import com.mynikatech.apnafund.net.dto.FundAvailabilityDto
 
 class UserSummaryViewModel : ViewModel() {
     private val userSummaryRepository = ApnaFundApplication.userSummaryRepository
@@ -184,6 +185,10 @@ class UserSummaryViewModel : ViewModel() {
 
     suspend fun getTotalAmountAvailableforFund(fundId: Int): Double? {
         return fundRepository.getAvailableFundAmount(fundId)
+    }
+
+    suspend fun getAllAmountAvailableforFund(fundId: Int): FundAvailabilityDto? {
+        return fundRepository.getAvailableFundAmounts(fundId)
     }
 
     suspend fun getTotalLoanAmountforUserforFund(userId: Int, fundId: Int): Double {

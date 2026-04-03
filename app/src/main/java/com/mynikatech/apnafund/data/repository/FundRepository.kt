@@ -12,6 +12,7 @@ import com.mynikatech.apnafund.data.model.Funds
 import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.net.FundsApi
 import com.mynikatech.apnafund.net.dto.CloseFundRequest
+import com.mynikatech.apnafund.net.dto.FundAvailabilityDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -32,49 +33,8 @@ class FundRepository(
             .catch { emit(emptyList()) }
             .flowOn(Dispatchers.IO)
 
-    suspend fun createFundRemoteAndCache(f: Funds): Int = withContext(Dispatchers.IO) {
-        val id = api.addFund(f.toDto())
-        //fundDao.addFund(f.copy(fundId = id))
-        id
-    }
-
-    suspend fun updateFundRemoteAndCache(f: Funds): Boolean = withContext(Dispatchers.IO) {
-        val ok = api.updateFund(f.fundId, f.toDto())
-        //if (ok) fundDao.updateFund(f)
-        ok
-    }
-
-    suspend fun deleteFundRemoteAndCache(id: Int): Boolean = withContext(Dispatchers.IO) {
-        val ok = api.deleteFund(id)
-       // if (ok) fundDao.getFundOrNull(id)?.let { fundDao.deleteFund(it) }
-        ok
-    }
-
-    // Members
-    suspend fun refreshMembers(fundId: Int) = withContext(Dispatchers.IO) {
-        runCatching { api.getAllFundMembers(fundId) }.getOrNull()
-    }
-
-    /** Network-only: fetch details (no local writes). */
-    suspend fun refreshDetails(fundId: Int) = withContext(Dispatchers.IO) {
-        runCatching { api.getFundDetails(fundId) }.getOrNull()
-    }
-
-    suspend fun createFund(fund: Funds) {
-        api.addFund(fund.toDto())
-    }
-
-    suspend fun deleteFund(fund: Funds) {
-        api.deleteFund(fund.fundId)
-    }
-
     suspend fun updateFund(fund: Funds) {
         api.updateFund(fund.fundId, fund.toDto())
-    }
-
-    suspend fun fetchAllFunds(): List<Funds> {
-        return api.getAllFunds().toEntity()
-
     }
 
     suspend fun fetchAllActiveFunds(): List<Funds> {
@@ -127,6 +87,10 @@ class FundRepository(
         return api.getAvailableFundAmount(fundId)
     }
 
+    suspend fun getAvailableFundAmounts(fundId: Int): FundAvailabilityDto? {
+        return api.getTotalAvailableFundAmount(fundId)
+    }
+
     suspend fun fetchAllMembersforFund(fundId: Int): List<FundMembers> {
         return api.getAllFundMembers(fundId).toEntity()
     }
@@ -142,10 +106,6 @@ class FundRepository(
 
     suspend fun getFundMembersWithNamesForFund(fundId: Int): List<FundMemberWithName> {
         return api.getFundMembersWithNamesForFund(fundId).toEntity()
-    }
-
-    suspend fun checkIfFundMemberAlreadyAdded(userId: Int, fundId: Int): Boolean {
-        return api.checkIfFundMemberAlreadyAdded(userId, fundId)
     }
 
     suspend fun insertFundDetails(details: FundDetails) {

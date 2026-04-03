@@ -3,7 +3,7 @@ package com.mynikatech.apnafund.util
 object GroupInputValidator {
 
     fun isGroupNameValidInput(name: String?): Boolean {
-        return !name.isNullOrBlank() && name.trim().length > 3
+        return !name.isNullOrBlank() && name.trim().length >= 3
     }
 
     fun isModeratorSelected(userId: Int): Boolean {

@@ -1,7 +1,9 @@
 package com.mynikatech.apnafund.net
 
+import android.util.Log
 import com.mynikatech.apnafund.net.dto.AddFundWithDetailsRequest
 import com.mynikatech.apnafund.net.dto.CloseFundRequest
+import com.mynikatech.apnafund.net.dto.FundAvailabilityDto
 import com.mynikatech.apnafund.net.dto.FundDetailsDto
 import com.mynikatech.apnafund.net.dto.FundMemberWithNameDto
 import com.mynikatech.apnafund.net.dto.FundsDto
@@ -120,9 +122,25 @@ class FundsApiKtor(
             setBody(dto)
         }.unwrap<Int>()
 
-    override suspend fun getAvailableFundAmount(fundId: Int): Double? =
-        client.get("/funds/available-amount/get/$fundId")
-            .unwrap<Double>()
+    override suspend fun getAvailableFundAmount(fundId: Int): Double? {
+            return try {
+                client.get("/funds/available-amount/get/$fundId")
+                    .unwrap<Double>()
+            } catch (e: Exception) {
+                Log.e("FundsApi", "Error fetching fund availability", e)
+                null
+            }
+        }
+
+    override suspend fun getTotalAvailableFundAmount(fundId: Int): FundAvailabilityDto? {
+        return try {
+            client.get("/funds/available-amounts/get/$fundId")
+                .unwrap<FundAvailabilityDto>()
+        } catch (e: Exception) {
+            Log.e("FundsApi", "Error fetching fund availability", e)
+            null
+        }
+    }
 
     override suspend fun getAvailableFundMembers(groupId: Int, fundId: Int): List<UsersDto> =
         client.get("/funds/available-members/get") {

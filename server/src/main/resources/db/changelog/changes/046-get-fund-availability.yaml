@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 046-get-fund-availability
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/046-get-fund-availability.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

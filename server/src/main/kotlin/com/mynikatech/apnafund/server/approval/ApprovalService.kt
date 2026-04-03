@@ -2,14 +2,12 @@ package com.mynikatech.apnafund.server.approval
 
 import com.mynikatech.apnafund.net.dto.ApprovalInfoDto
 import com.mynikatech.apnafund.server.auth.FirebaseGroupService
-import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
 import com.mynikatech.apnafund.server.db.Db.jdbi
 import com.mynikatech.apnafund.server.funds.FundsSql
 import com.mynikatech.apnafund.server.groups.GroupsSql
 import com.mynikatech.apnafund.server.loans.LoansSql
 import com.mynikatech.apnafund.server.notifications.NotificationService
 import com.mynikatech.apnafund.server.users.UsersSql
-import io.ktor.server.application.log
 
 class ApprovalService(
     private val approvalSql: ApprovalSql,
@@ -17,8 +15,7 @@ class ApprovalService(
     private val groupsSql: GroupsSql,
     private val fundSql: FundsSql,
     private val usersSql: UsersSql,
-    private val notificationService: NotificationService,
-    private val eventDispatchService: EventDispatchService
+    private val notificationService: NotificationService
 ) {
     private val log = org.slf4j.LoggerFactory.getLogger(this::class.java)
 
@@ -158,13 +155,19 @@ class ApprovalService(
 
         }
         val group = groupsSql.getGroup(groupId).firstOrNull() ?: error("Group not found")
-
+        // activate moderator role code.
+        usersSql.upsertUserRoleByCode(
+            group.moderator!!,
+            "GROUP_MODERATOR",
+            "ACTIVE"
+        )
         // create firebase group
 
         try {
             FirebaseGroupService.createGroup(
                 groupId = group.groupId!!,
-                groupName = group.groupName
+                groupName = group.groupName,
+                createdByUserId = group.moderator
             )
         } catch (e: Exception) {
 

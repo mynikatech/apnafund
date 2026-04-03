@@ -46,19 +46,19 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_marginStart="6dp"
-                android:src="@drawable/icon_add"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Add Group"
                 android:clickable="true"
-                android:focusable="true"/>
+                android:contentDescription="Add Group"
+                android:focusable="true"
+                android:src="@drawable/icon_add" />
 
             <TextView
                 android:id="@+id/textViewAddGroupMessageNone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:textStyle="italic"
-                android:text="(Add Group)" />
+                android:text="(Add Group)"
+                android:textStyle="italic" />
         </LinearLayout>
 
         <LinearLayout
@@ -72,35 +72,47 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:orientation="horizontal"
+                android:layout_marginBottom="16dp"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="16dp">
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chip_group_name"
-                style="@style/Widget.Material3.Chip.Assist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:clickable="true"
-                android:text="Group: --"
-                app:chipIcon="@drawable/ic_group" />
-            <ImageView
-                android:id="@+id/button_add_group"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginStart="6dp"
-                android:src="@drawable/icon_add"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Add Group"
-                android:clickable="true"
-                android:focusable="true"/>
+                android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/textViewAddGroupMessage"
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_group_name"
+                    style="@style/Widget.Material3.Chip.Assist"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textStyle="italic"
-                    android:text="(Add Group)" />
+                    android:clickable="true"
+                    android:text="Group: --"
+                    app:chipIcon="@drawable/ic_group" />
+
+                <LinearLayout
+                    android:id="@+id/layout_add_group"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="2dp">
+
+                    <ImageView
+                        android:id="@+id/button_add_group"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginStart="6dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Add Group"
+                        android:focusable="true"
+                        android:src="@drawable/icon_add" />
+                    <TextView
+                        android:id="@+id/textViewAddGroupMessage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="(Add Group)"
+                        android:textStyle="italic" />
+                </LinearLayout>
             </LinearLayout>
 
             <LinearLayout
@@ -465,15 +477,17 @@
                         android:text="@string/text_no_loan_message"
                         android:textColor="@color/purple"
                         android:textSize="14sp"
-                        android:visibility="gone"/>
+                        android:visibility="gone" />
 
                 </LinearLayout>
                 <!-- Apply loan button -->
                 <LinearLayout
+                    android:id="@+id/loan_add_group"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="start"
                     android:layout_marginTop="6dp"
+                    android:clickable="true"
                     android:orientation="horizontal">
 
                     <ImageView
@@ -482,7 +496,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="start"
                         android:layout_margin="4dp"
-                        android:clickable="true"
+
                         android:focusable="true"
                         android:padding="0dp"
                         android:src="@drawable/icon_loan"
@@ -517,11 +531,12 @@
                     android:textColor="@color/black"
                     android:textSize="16sp" />
             </LinearLayout>
+
             <ProgressBar
                 android:id="@+id/loadingFunds"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"/>
+                android:layout_gravity="center" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

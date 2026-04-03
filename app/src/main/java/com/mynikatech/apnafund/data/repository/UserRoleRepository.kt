@@ -113,7 +113,7 @@ class UserRoleRepository(
         withContext(Dispatchers.IO) {
             val hasModerator =
                 runCatching { usersApi.doesGroupHasModerator(groupId) }.getOrDefault(false)
-            if (!hasModerator) ensureRoleRemoteAndCache(userId, "MODERATOR")
+            if (!hasModerator) ensureRoleRemoteAndCache(userId, "GROUP_MODERATOR")
         }
 
     suspend fun createUser(user: Users) {

@@ -116,6 +116,10 @@ interface FundsSql {
     @SqlQuery("""SELECT get_available_fund_amount(:fundId)""")
     fun availableAmount(@Bind("fundId") fundId: Int): Double?
 
+    // ---- Available amount / eligible members ----
+    @SqlQuery("""SELECT * FROM get_fund_availability(:fundId)""")
+    fun getFundAvailability(@Bind("fundId") fundId: Int): FundAvailabilityDto?
+
     @SqlQuery("""SELECT * FROM get_available_fund_members(:groupId, :fundId)""")
     fun availableMembers(@Bind("groupId") groupId: Int, @Bind("fundId") fundId: Int): List<UsersDto>
 

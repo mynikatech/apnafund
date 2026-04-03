@@ -9,6 +9,10 @@ class FundSharedViewModel : ViewModel() {
     private val _selectedFund = MutableLiveData<FundWithDetails?>()
     val selectedFund: LiveData<FundWithDetails?> get() = _selectedFund
 
+    private val _selectedFundId = MutableLiveData<Int?>()
+    val selectedFundId: LiveData<Int?> = _selectedFundId
+
+
     // ✅ Add refresh trigger
     private val _refreshTrigger = MutableLiveData<Boolean>()
     val fundDataRefreshTrigger: LiveData<Boolean> get() = _refreshTrigger
@@ -27,4 +31,13 @@ class FundSharedViewModel : ViewModel() {
     fun clearSelectedFund() {
         _selectedFund.value = null
     }
+
+    fun clearSelectedFundId() {
+        _selectedFundId.value = null
+    }
+
+    fun setSelectedFundId(fundId: Int) {
+        _selectedFundId.value = fundId
+    }
+
 }

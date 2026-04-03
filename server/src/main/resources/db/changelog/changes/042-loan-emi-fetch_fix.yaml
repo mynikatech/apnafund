@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 042-fix-get-loan-details
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/042-fix-get-loan-details.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

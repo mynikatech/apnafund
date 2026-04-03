@@ -12,7 +12,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.core.view.MenuProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.firebase.auth.FirebaseAuth
@@ -21,8 +20,6 @@ import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.databinding.ActivityMainBinding
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.NotificationSharedViewModel
-import com.mynikatech.apnafund.ui.viewmodel.StartupViewModel
-import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 
 class MainActivity : AppCompatActivity() {
@@ -30,8 +27,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private val notificationViewModel by viewModels<NotificationSharedViewModel>()
-
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

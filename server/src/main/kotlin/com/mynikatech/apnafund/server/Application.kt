@@ -8,8 +8,6 @@ import com.mynikatech.apnafund.server.approval.ApprovalSql
 import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
 import com.mynikatech.apnafund.server.common.messaging.publishers.SupportMessagingPublisher
 import com.mynikatech.apnafund.server.common.messaging.publishers.UserMessagingPublisher
-import com.mynikatech.apnafund.server.common.ratelimit.RateLimitConfig
-import com.mynikatech.apnafund.server.common.ratelimit.RateLimiter
 import com.mynikatech.apnafund.server.config.FirebaseAdminProvider
 import com.mynikatech.apnafund.server.db.Db
 import com.mynikatech.apnafund.server.deposits.DepositsSql
@@ -159,22 +157,6 @@ fun Application.module() {
             preload = true
         }
     }
-
-    val registerLimiter = RateLimiter(
-        maxRequests = RateLimitConfig.REGISTER_PER_HOUR,
-        windowMillis = RateLimitConfig.ONE_HOUR_MS
-    )
-
-    val resendOtpLimiter = RateLimiter(
-        maxRequests = RateLimitConfig.RESEND_PER_15_MIN,
-        windowMillis = RateLimitConfig.FIFTEEN_MIN_MS
-    )
-
-    val loginLimiter = RateLimiter(
-        maxRequests = 10,
-        windowMillis = RateLimitConfig.ONE_HOUR_MS
-    )
-
     // ------------------ DAOs ------------------
     val jdbi = Db.jdbi
     val usersDao = jdbi.onDemand(UsersSql::class.java)
@@ -232,7 +214,14 @@ fun Application.module() {
 
 
     val notificationService =
-        NotificationService(notificationsDao, groupsDao, fundDao, usersDao,loansDao, eventDispatchService)
+        NotificationService(
+            notificationsDao,
+            groupsDao,
+            fundDao,
+            usersDao,
+            loansDao,
+            eventDispatchService
+        )
 
     val approvalService = ApprovalService(
         approvalDao,
@@ -240,8 +229,7 @@ fun Application.module() {
         groupsDao,
         fundDao,
         usersDao,
-        notificationService,
-        eventDispatchService
+        notificationService
     )
     // ------------------ Error Handling ------------------
     install(StatusPages) {
@@ -265,13 +253,56 @@ fun Application.module() {
         exception<io.ktor.server.plugins.BadRequestException> { call, cause ->
             call.respondError(HttpStatusCode.BadRequest, "validation", "Bad request", cause.message)
         }
+        // ✅ JDBI DB errors (SMART MAPPING)
         exception<org.jdbi.v3.core.statement.UnableToExecuteStatementException> { call, cause ->
-            call.respondError(
-                HttpStatusCode.Conflict,
-                "db_conflict",
-                "Database conflict",
-                cause.cause?.message?.take(200)
-            )
+
+            val msg = cause.cause?.message ?: ""
+
+            // 🔍 Full logging (VERY IMPORTANT)
+            call.application.environment.log.error("DB ERROR FULL", cause)
+
+            when {
+                // 🔴 Duplicate / unique constraint → 409
+                msg.contains("duplicate", ignoreCase = true) ||
+                        msg.contains("unique", ignoreCase = true) -> {
+                    call.respondError(
+                        HttpStatusCode.Conflict,
+                        "duplicate",
+                        "Resource already exists",
+                        msg.take(200)
+                    )
+                }
+
+                // 🔴 Foreign key → invalid reference → 400
+                msg.contains("foreign key", ignoreCase = true) -> {
+                    call.respondError(
+                        HttpStatusCode.BadRequest,
+                        "invalid_reference",
+                        "Invalid reference data",
+                        msg.take(200)
+                    )
+                }
+
+                // 🔴 Null constraint → validation → 400
+                msg.contains("null value", ignoreCase = true) -> {
+                    call.respondError(
+                        HttpStatusCode.BadRequest,
+                        "validation",
+                        "Missing required field",
+                        msg.take(200)
+                    )
+                }
+
+                // 🔴 Default DB error → 500
+                else -> {
+                    call.respondError(
+                        HttpStatusCode.InternalServerError,
+                        "db_error",
+                        "Database error",
+                        msg.take(200)
+                    )
+                }
+            }
         }
         exception<java.sql.SQLException> { call, cause ->
             call.respondError(

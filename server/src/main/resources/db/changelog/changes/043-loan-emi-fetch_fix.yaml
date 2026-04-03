@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 043-loan-emis-fetch-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/043-loan-emis-fetch-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

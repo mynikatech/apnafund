@@ -3,7 +3,7 @@ package com.mynikatech.apnafund.util
 object UserInputValidator {
 
     fun isFirstNameValid(firstName: String?): Boolean {
-        return !firstName.isNullOrBlank() && firstName.trim().length > 3
+        return !firstName.isNullOrBlank() && firstName.trim().length >= 3
     }
 
     fun isEmailValid(email: String?): Boolean {

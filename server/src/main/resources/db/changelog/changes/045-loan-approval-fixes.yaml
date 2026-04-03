@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 045-approve-loan-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/045-approve-loan-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

@@ -174,7 +174,7 @@ object AppLocator {
     }
 
     val groupRepository: GroupRepository by lazy {
-        GroupRepository(groupsDao, groupMembersDao, groupsApi)
+        GroupRepository(groupsApi)
     }
 
     val depositRepository: DepositRepository by lazy {

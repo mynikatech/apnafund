@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 044-fix-moderator-funds
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/044-fix-moderator-funds.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

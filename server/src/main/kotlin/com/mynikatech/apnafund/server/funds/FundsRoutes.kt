@@ -8,9 +8,12 @@ import com.mynikatech.apnafund.net.dto.FundsDto
 import com.mynikatech.apnafund.net.dto.UsersDto
 import com.mynikatech.apnafund.server.api.respondError
 import com.mynikatech.apnafund.server.api.respondOk
+import com.mynikatech.apnafund.server.db.Db.jdbi
 import com.mynikatech.apnafund.server.notifications.NotificationService
 import com.mynikatech.apnafund.server.users.UsersSql
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.log
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -46,14 +49,28 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
 
     post("add") {
         val dto = call.receive<FundsDto>()
-        if (dto.fundName.isNullOrBlank())
+
+        if (dto.fundName.isNullOrBlank()) {
             return@post call.respondError(
                 HttpStatusCode.BadRequest,
                 "validation",
                 "fundName required"
             )
-        val id = sql.addFund(dto)
-        call.respondOk(id, HttpStatusCode.Created)
+        }
+        val fundId = jdbi.inTransaction<Int, Exception> { handle ->
+
+            val fundId = sql.addFund(dto)
+
+            // 🔥 UPSERT FUND MODERATOR ROLE
+            userSql.upsertUserRoleByCode(
+                dto.moderator,   // make sure this exists in DTO
+                "FUND_MODERATOR",
+                "ACTIVE"
+            )
+            fundId
+        }
+
+        call.respondOk(fundId, HttpStatusCode.Created)
     }
 
     put("update/{id}") {
@@ -288,6 +305,23 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
         call.respondOk(sql.availableAmount(fid))
     }
 
+    get("available-amounts/get/{fundId}") {
+
+        val fid = call.parameters["fundId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "fundId required"
+            )
+
+        call.safeRoute(
+            logMessage = "Error fetching fund availability for fundId=$fid",
+            clientMessage = "Unable to fetch fund availability"
+        ) {
+            sql.getFundAvailability(fid)
+        }
+    }
+
     get("available-members/get") {
         val gid = call.request.queryParameters["groupId"]?.toIntOrNull()
             ?: return@get call.respondError(
@@ -451,4 +485,22 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
     }
 }
 
+inline suspend fun <reified T> ApplicationCall.safeRoute(
+    logMessage: String,
+    clientMessage: String,
+    block: suspend () -> T
+) {
+    try {
+        respondOk(block())
+    } catch (e: Exception) {
+
+        application.log.error(logMessage, e)
+
+        respondError(
+            HttpStatusCode.InternalServerError,
+            "internal",
+            clientMessage
+        )
+    }
+}
 

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 040-update-loan-emi-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/040-update-loan-emi-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

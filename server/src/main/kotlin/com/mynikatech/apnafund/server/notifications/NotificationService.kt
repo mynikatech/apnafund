@@ -58,7 +58,7 @@ class NotificationService(
                     UserNotificationsDto(
                         notificationType = "FUND_CREATED",
                         userId = member.userId,
-                        message = "New fund \\\"$fundName\\\" has been created in your group.",
+                        message = "New fund \"$fundName\" has been created in your group.",
                         publishedFlag = true,
                         readFlag = false,
                         isExpiredFlag = false,
@@ -502,7 +502,7 @@ class NotificationService(
                     ?: error("Group required")
 
             val moderatorId = group.moderator?: error("Moderator required")
-            val moderatorUser = usersSql.getUserById(moderatorId) ?: error("No moderator User")
+            val moderatorUser = usersSql.getUserById(moderatorId)
 
             logger.info("Sending GROUP_APPROVED notification")
 
@@ -561,7 +561,7 @@ class NotificationService(
                     ?: error("Group required")
 
             val moderatorId = group.moderator?: error("Moderator required")
-            val moderatorUser = usersSql.getUserById(moderatorId) ?: error("No moderator User")
+            val moderatorUser = usersSql.getUserById(moderatorId)
 
             logger.info("Sending GROUP_REJECTED notification")
 

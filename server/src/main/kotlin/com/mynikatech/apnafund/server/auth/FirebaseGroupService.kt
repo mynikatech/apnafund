@@ -3,8 +3,11 @@ package com.mynikatech.apnafund.server.auth
 import com.google.cloud.firestore.FieldValue
 import com.google.cloud.firestore.Firestore
 import com.google.firebase.cloud.FirestoreClient
+import org.slf4j.LoggerFactory
 
 object FirebaseGroupService {
+
+    private val logger = LoggerFactory.getLogger("FirebaseGroupService")
 
     private val db: Firestore by lazy {
         FirestoreClient.getFirestore()
@@ -42,15 +45,22 @@ object FirebaseGroupService {
     }
     /* ---------------- ADD MEMBER ---------------- */
 
-    fun addMemberToGroup(
-        groupId: Int,
-        userId: Int
-    ) {
+    fun addMemberToGroup(groupId: Int, userId: Int) {
         val uid = "user_$userId"
 
-        groupRef(groupId).update(
-            "members.$uid", true
-        )
+        try {
+            logger.info("Firebase", "Updating group=$groupId user=$uid")
+
+            groupRef(groupId).update(
+                "members.$uid", true
+            )
+
+            logger.info("Firebase", "Member added successfully")
+
+        } catch (e: Exception) {
+            logger.error("Firebase", "Failed to add member", e)
+            throw e
+        }
     }
 
     /* ---------------- REMOVE MEMBER (optional) ---------------- */

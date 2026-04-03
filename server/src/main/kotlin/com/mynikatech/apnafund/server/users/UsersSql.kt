@@ -226,4 +226,13 @@ interface UsersSql {
     fun getUsersBasicByIds(
         @Bind("userIds") userIds: IntArray
     ): List<UserBasicDto>
+
+    @SqlUpdate("""
+    SELECT upsert_user_role_by_code(:userId, :roleCode, :status)
+""")
+    fun upsertUserRoleByCode(
+        @Bind("userId") userId: Int,
+        @Bind("roleCode") roleCode: String,
+        @Bind("status") status: String = "ACTIVE"
+    )
 }

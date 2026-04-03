@@ -89,7 +89,7 @@ class ModeratorRegistrationService(
          * 4️⃣ ASSIGN MODERATOR ROLE (PENDING)
          * ------------------------------------------------- */
         val moderatorRoleId =
-            rolesSql.getRoleIdByRoleCode("MODERATOR")
+            rolesSql.getRoleIdByRoleCode("GROUP_MODERATOR")
                 ?: error("MODERATOR role not found")
 
         userRolesSql.addUserRole(
@@ -106,7 +106,6 @@ class ModeratorRegistrationService(
                 moderator = userId,      // ✅ SET HERE
                 status = "PENDING"
             ))
-
         val groupId = group.groupId ?: error("Group id missing")
 
         val moderatorId = userId

@@ -2,7 +2,6 @@ package com.mynikatech.apnafund.constants
 
 object ApnaBankConstants {
 
-    const val ACTIVE_STATUS = "Active"
     const val INACTIVE_STATUS = "InActive"
     const val CLOSED_STATUS = "CLOSED"
     const val ADD_GROUP_PRIV = "ADDGROUP"
@@ -21,13 +20,9 @@ object ApnaBankConstants {
     const val DEACTIVATED_TEXT = "Deactivated"
     const val FIRST_NAME_ERROR_MESSAGE = "First name must be at least 3 characters"
     const val GROUP_NAME_ERROR_MESSAGE = "Group name must be at least 3 characters"
-    const val GROUP_REQUIRED_ERROR_MESSAGE = "Group is required"
     const val INVALID_EMAIL_ERROR_MESSAGE = "Invalid email format"
     const val INVALID_PHONE_ERROR_MESSAGE = "Enter 10-digit phone (not starting with 0)"
-    const val WARNING_CONFIRMATION = "Are you sure you want to"
     const val ZERO_AMOUNT = "₹0.0"
-    const val ADMIN_EMAIL = "apnafundaws@gmail.com"
-    const val ROLE_MODERATOR = "MODERATOR"
     const val ROLE_MEMBER = "MEMBER"
     const val STATUS_PENDING = "PENDING"
     const val STATUS_REJECTED = "REJECTED"

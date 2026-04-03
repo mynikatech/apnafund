@@ -56,4 +56,6 @@ interface UserRolesSql {
         @Bind("userId") userId: Int,
         @Bind("roleId") roleId: Int
     ): Boolean
+
+
 }

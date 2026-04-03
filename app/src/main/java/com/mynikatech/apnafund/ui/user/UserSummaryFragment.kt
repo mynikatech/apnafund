@@ -188,7 +188,7 @@ class UserSummaryFragment : Fragment() {
 
             val hasGroup = (SessionManager.groupId ?: 0) > 0
             val isAdmin = roleCodes.contains("ADMIN")
-            val isModerator = roleCodes.contains("MODERATOR")
+            val isModerator = SessionManager.isModerator()
 
             val canAccessGroupTabs = hasGroup || isAdmin
 
@@ -198,7 +198,7 @@ class UserSummaryFragment : Fragment() {
             bottomNav.menu.findItem(R.id.adminFragment)?.isVisible =
                 (isAdmin || isModerator) && canAccessGroupTabs
 
-          findNavController().currentBackStackEntry
+            findNavController().currentBackStackEntry
                 ?.savedStateHandle
                 ?.getLiveData<Boolean>("profile_updated")
                 ?.observe(viewLifecycleOwner) {
@@ -217,9 +217,6 @@ class UserSummaryFragment : Fragment() {
                 binding.noGroupMessageContainer.visibility = View.VISIBLE
                 binding.GroupMessageContainer.visibility = View.GONE
 
-                /*if (!(SessionManager.isModerator() || SessionManager.isAdmin()))
-                    binding.buttonAddGroupNone.visibility = View.GONE*/
-
             } else {
 
                 binding.noGroupMessageContainer.visibility = View.GONE
@@ -227,7 +224,7 @@ class UserSummaryFragment : Fragment() {
 
                 lazyLoadContent()
             }
-            binding.buttonAddGroup.setOnClickListener {
+            binding.layoutAddGroup.setOnClickListener {
                 showAddGroupDialog(requireContext(), 0)
             }
             binding.buttonAddGroupNone.setOnClickListener {
@@ -258,7 +255,11 @@ class UserSummaryFragment : Fragment() {
                             .actionUserSummaryFragmentToLoanEmiFragment(loanId)
                         findNavController().navigate(action)
                     } ?: run {
-                        Toast.makeText(requireContext(), "Loan ID not available", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            requireContext(),
+                            "Loan ID not available",
+                            Toast.LENGTH_SHORT
+                        ).show()
                         Log.w("UserSummary", "Loan EMI click attempted with null loanId")
                     }
                 }
@@ -349,17 +350,21 @@ class UserSummaryFragment : Fragment() {
                 binding.FundMessageContainer.visibility = View.VISIBLE
                 binding.loadingFunds.visibility = View.GONE
                 val selectedFund = fundSharedViewModel.selectedFund.value
+                val selectedFundId = fundSharedViewModel.selectedFundId.value
+                val fundToUse = funds.firstOrNull { it.fundId == selectedFundId } ?: funds.first()
                 val fundId: Int
                 val fundStatus: String
                 val firstFund = funds[0]
                 if (selectedFund == null) {
                     fundId = firstFund.fundId
                     fundStatus = firstFund.fundStatus
+                    fundSharedViewModel.setSelectedFundId(fundToUse.fundId)
                     binding.textViewSelectedFund.text = fundNames[0]
                 } else {
                     fundId = selectedFund.fundId
                     fundStatus = selectedFund.fundStatus
                     binding.textViewSelectedFund.text = selectedFund.fundName
+                    fundSharedViewModel.setSelectedFundId(fundToUse.fundId)
                     updateLoanAddVisibility(selectedFund.fundStatus)
                 }
                 userSummaryViewModel.loadFundDetails(userId, fundId)
@@ -402,6 +407,7 @@ class UserSummaryFragment : Fragment() {
 
             if (fund != null) {
                 fundSharedViewModel.selectFund(fund)
+                fundSharedViewModel.setSelectedFundId(fund.fundId)
                 binding.textViewFundModeratorValue.text =
                     Converters.formatUserName(fund.moderatorFirstName, fund.moderatorLastName)
                 binding.textViewStartDateValue.text = fund.fundStartDate
@@ -463,18 +469,13 @@ class UserSummaryFragment : Fragment() {
 
             )
         }
-        val selectedFundName = binding.textViewSelectedFund.text.toString()
+        binding.loanAddGroup.setOnClickListener {
+            val fundId = fundSharedViewModel.selectedFundId.value
 
-        val fund =
-            userSummaryViewModel.userFunds.value
-                ?.find { it.fundName == selectedFundName }
-
-        binding.loanAddFab.setOnClickListener {
-
-            if (fund != null) {
+            if (fundId != null) {
                 showApplyLoanDialog(
                     userId,
-                    fund.fundId,
+                    fundId,
                     borrowerName = SessionManager.getFormattedUserName()
                 )
             } else {
@@ -490,10 +491,14 @@ class UserSummaryFragment : Fragment() {
         val maturity = totalMaturityAmount ?: 0.0
 
         binding.textViewFundSummaryValue.text =
-            "Total Deposit: ${Converters.formatCurrency(deposit)} |  Maturity: ${Converters.formatCurrency(maturity)}"
+            "Total Deposit: ${Converters.formatCurrency(deposit)} |  Maturity: ${
+                Converters.formatCurrency(
+                    maturity
+                )
+            }"
 
         if (deposit == 0.0 && maturity == 0.0) {
-            binding.textViewFundSummaryValue.text = "No fund activity yet"
+            binding.textViewFundSummaryValue.text = getString(R.string.text_no_fund_activity)
         }
     }
 
@@ -513,15 +518,15 @@ class UserSummaryFragment : Fragment() {
                 return@launch
             }
             //Get current available amount in the Fund display to the user and also add a validation
-            val totalAmountAvailable = userSummaryViewModel.getTotalAmountAvailableforFund(fundId)
+            val totalAmounts = userSummaryViewModel.getAllAmountAvailableforFund(fundId)
 
             val dialog = AddLoanDialog(
                 borrowerName = borrowerName,
-                totalAmountAvailable = totalAmountAvailable ?: 0.0,
                 rateOfInterest = fundRateOfInterest,
                 fundMaturityDate = fund.fundMaturityDate,
                 existingLoan = existingLoan,
                 allowEditLoan = allowEditLoan,
+                totalAmounts = totalAmounts,
                 borrowerUserId = borrowerUserId
             ) { loanAmount, issueDate, period, loanMaturityDate, borrowerUserId ->
                 if (existingLoan != null) {
@@ -636,6 +641,7 @@ class UserSummaryFragment : Fragment() {
         val groupId = SessionManager.groupId ?: return
 
         fundSharedViewModel.clearSelectedFund()
+        fundSharedViewModel.clearSelectedFundId()
 
         userSummaryViewModel.loadUserSummary(
             userId = SessionManager.userId,

@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund.ui.loan
 
 import android.content.Context
+import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -71,12 +72,22 @@ class LoanAdapter(
                 }
                 textViewLoanMaturityDateValue.text = loan.maturityDate
                 val isClosed = loan.status == ApnaBankConstants.CLOSED_STATUS
+                val isPending = loan.status == ApnaBankConstants.STATUS_PENDING
                 if (isClosed) {
                     textViewLoanStatusValue.text = context.getString(R.string.status_closed)
                     textViewLoanStatusValue.setTextColor(
                         ContextCompat.getColor(
                             context,
                             R.color.red
+                        )
+                    )
+                } else if(isPending) {
+                    textViewLoanStatusValue.text = context.getString(R.string.status_pending)
+                    textViewLoanStatusValue.setTypeface(null, Typeface.BOLD)
+                    textViewLoanStatusValue.setTextColor(
+                        ContextCompat.getColor(
+                            context,
+                            R.color.yellow
                         )
                     )
                 } else {

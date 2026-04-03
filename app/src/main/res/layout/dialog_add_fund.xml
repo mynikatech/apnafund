@@ -157,6 +157,10 @@
             android:layout_height="wrap_content"
             android:completionThreshold="1"
             android:importantForAutofill="no"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
             android:inputType="none" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -175,6 +179,10 @@
             android:layout_height="wrap_content"
             android:completionThreshold="1"
             android:importantForAutofill="no"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
             android:inputType="none" />
     </com.google.android.material.textfield.TextInputLayout>
 

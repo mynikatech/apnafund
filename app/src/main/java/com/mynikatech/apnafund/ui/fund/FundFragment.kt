@@ -311,8 +311,14 @@ class FundFragment : Fragment() {
                     dialogBinding.editTextAutoGroup.isEnabled = false
                 }
                 dialogBinding.editTextAutoGroup.threshold = 0
+
                 dialogBinding.editTextAutoGroup.setOnClickListener {
                     dialogBinding.editTextAutoGroup.showDropDown()
+                }
+                dialogBinding.editTextAutoGroup.setOnFocusChangeListener { _, hasFocus ->
+                    if (hasFocus) {
+                        dialogBinding.editTextAutoGroup.post { dialogBinding.editTextAutoGroup.showDropDown() }
+                    }
                 }
                 dialogBinding.editTextAutoGroup.setOnItemClickListener { _, _, position, _ ->
                     groupId = groups[position].groupId
@@ -337,6 +343,7 @@ class FundFragment : Fragment() {
                             validateInputs(dialogBinding, groupId, moderator)
                     }
                 }
+                dialogBinding.editTextFundStartDate.isFocusable = false
                 dialogBinding.editTextFundStartDate.setOnClickListener {
                     showDatePickerDialog(dialogBinding.editTextFundStartDate)
                 }
@@ -549,15 +556,15 @@ class FundFragment : Fragment() {
             val members = fundViewModel.getFundMembersWithNamesForFund(fundId)
             val borrowerList = members.map { it.userId to "${it.firstName} ${it.lastName}" }
             //Get current available amount in the Fund display to the user and also add a validation
-            val totalAmountAvailable = userSummaryViewModel.getTotalAmountAvailableforFund(fundId)
+            val totalAmounts = userSummaryViewModel.getAllAmountAvailableforFund(fundId)
             val dialog = AddLoanDialog(
                 borrowerName = borrowerName,
-                totalAmountAvailable = totalAmountAvailable ?: 0.0,
                 rateOfInterest = fundRateOfInterest,
                 fundMaturityDate = fund.fundMaturityDate,
                 existingLoan = existingLoan,
                 allowEditLoan = allowEditLoan,
                 borrowerUserId = borrowerUserId,
+                totalAmounts = totalAmounts,
                 borrowerList = borrowerList
             ) { loanAmount, issueDate, period, loanMaturityDate, borrowerUserId ->
                 if (existingLoan != null) {
@@ -601,6 +608,14 @@ class FundFragment : Fragment() {
 
         dialogBinding.editTextModerator.setOnClickListener {
             dialogBinding.editTextModerator.showDropDown()
+        }
+
+        dialogBinding.editTextModerator.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                dialogBinding.editTextModerator.post {
+                    dialogBinding.editTextModerator.showDropDown()
+                }
+            }
         }
     }
 

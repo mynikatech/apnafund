@@ -1,5 +1,6 @@
 package com.mynikatech.apnafund.server.groups
 
+import com.mynikatech.apnafund.net.api.ValidationException
 import com.mynikatech.apnafund.net.dto.AddMemberRequest
 import com.mynikatech.apnafund.net.dto.FirebaseSyncRequest
 import com.mynikatech.apnafund.net.dto.GroupCreationRequest
@@ -15,6 +16,7 @@ import com.mynikatech.apnafund.server.common.messaging.factories.UserNotificatio
 import com.mynikatech.apnafund.server.notifications.NotificationService
 import com.mynikatech.apnafund.server.users.UsersSql
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.log
 import io.ktor.server.request.receive
 import io.ktor.server.routing.Route
@@ -29,11 +31,13 @@ import java.time.LocalDate
  * SQL-object style (like UsersSql). If you kept a GroupsRepo façade,
  * you can adapt this easily—just change the parameter type and calls.
  */
-fun Route.groupsRoutes(groups: GroupsSql,
-                       eventDispatchService: EventDispatchService,
-                       usersSql: UsersSql,
-                       notificationService: NotificationService,
-                       approvalSql: ApprovalSql) = route("/groups") {
+fun Route.groupsRoutes(
+    groups: GroupsSql,
+    eventDispatchService: EventDispatchService,
+    usersSql: UsersSql,
+    notificationService: NotificationService,
+    approvalSql: ApprovalSql
+) = route("/groups") {
 
     // 1) GET  /groups/get/all
     get("get/all") {
@@ -238,21 +242,21 @@ fun Route.groupsRoutes(groups: GroupsSql,
 
     // 8) POST /groups/add/member/{groupId}
     post("add/member/{groupId}") {
-        val groupId = call.parameters["groupId"]?.toIntOrNull()
-        if (groupId == null) {
-            call.respondError(
-                HttpStatusCode.BadRequest,
-                "validation",
-                "groupId required"
-            ); return@post
+        call.safeRoute("Error adding group member") {
+
+            val groupId = call.parameters["groupId"]?.toIntOrNull()
+                ?: throw ValidationException("validation", "groupId required")
+
+            val body = call.receive<AddMemberRequest>()
+
+            val newId = groups.addGroupMember(
+                body.userId,
+                groupId,
+                body.joiningDate
+            )
+            FirebaseGroupService.addMemberToGroup(groupId, body.userId)
+            newId
         }
-        val body = call.receive<AddMemberRequest>()
-        val newId = groups.addGroupMember(body.userId, groupId, body.joiningDate)
-        FirebaseGroupService.addMemberToGroup(
-            groupId = groupId,
-            userId = body.userId
-        )
-        call.respondOk(newId)
     }
 
     // 9) GET /groups/has-moderator/{groupId}
@@ -391,4 +395,21 @@ fun Route.groupsRoutes(groups: GroupsSql,
         )
     }
 
+
+}
+
+inline suspend fun <reified T> ApplicationCall.safeRoute(
+    logMessage: String,
+    block: suspend () -> T
+) {
+    try {
+        respondOk(block())
+    } catch (e: Exception) {
+
+        // ✅ Log only
+        application.log.error(logMessage, e)
+
+        // ✅ IMPORTANT: rethrow so StatusPages handles it
+        throw e
+    }
 }

@@ -55,6 +55,10 @@
             android:completionThreshold="1"
             android:importantForAutofill="no"
             android:inputType="text"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
             android:textSize="14sp" />
     </com.google.android.material.textfield.TextInputLayout>
 

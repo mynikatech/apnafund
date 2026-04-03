@@ -227,7 +227,7 @@ class GroupFragment : Fragment() {
             dialogBinding.buttonSaveGrp.isEnabled = isValid
 
             if (!GroupInputValidator.isGroupNameValidInput(name) && name.isNotEmpty()) {
-                dialogBinding.editTextGroupName.error = "Group name must be more than 3 characters"
+                dialogBinding.editTextGroupName.error = ApnaBankConstants.GROUP_NAME_ERROR_MESSAGE
             }
         }
 
