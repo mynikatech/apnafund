@@ -3,7 +3,6 @@ package com.mynikatech.apnafund.util
 
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
-
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
@@ -131,6 +130,7 @@ class ApnaBankDate {
                 else -> SimpleDateFormat("dd MMM yyyy", Locale.US).format(msgDate)
             }
         }
+
         private fun isToday(date: Date): Boolean {
             val today = Calendar.getInstance()
             val cal = Calendar.getInstance().apply { time = date }
@@ -193,6 +193,15 @@ class ApnaBankDate {
             } catch (e: Exception) {
                 ""
             }
+        }
+
+        fun compareDates(date1: String, date2: String, pattern: String): Int {
+            val sdf = SimpleDateFormat(pattern, Locale.getDefault())
+
+            val d1 = sdf.parse(date1)
+            val d2 = sdf.parse(date2)
+
+            return d1.compareTo(d2)
         }
     }
 

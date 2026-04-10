@@ -212,6 +212,7 @@ class FundDetailsFragment : Fragment() {
                 borrowerName = borrowerName,
                 rateOfInterest = fundRateOfInterest,
                 fundMaturityDate = fund.fundMaturityDate,
+                fundStartDate = fund.fundStartDate,
                 existingLoan = existingLoan,
                 allowEditLoan = allowEditLoan,
                 totalAmounts = totalAmounts,

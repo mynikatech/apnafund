@@ -25,6 +25,10 @@
     <string name="text_user">User</string>
     <string name="text_fund">Fund</string>
     <string name="text_save">Save</string>
+    <string name="text_total">Total: %1$s</string>
+    <string name="text_available">Available: %1$s</string>
+    <string name="text_approved">Approved: %1$s</string>
+    <string name="text_pending">Pending: %1$s</string>
     <string name="text_moderator">Moderator</string>
     <string name="text_group_name">Group Name</string>
     <string name="text_select_moderator">Select Moderator</string>

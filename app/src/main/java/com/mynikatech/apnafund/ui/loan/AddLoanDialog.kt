@@ -2,6 +2,7 @@ package com.mynikatech.apnafund.ui.loan
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,6 +26,7 @@ class AddLoanDialog(
     private val borrowerName: String? = null,
     private val rateOfInterest: Double,
     private val fundMaturityDate: String,
+    private val fundStartDate: String,
     private val existingLoan: LoanDetailsWithMemberNames? = null,
     private val allowEditLoan: Boolean = true,
     private val borrowerList: List<Pair<Int, String>>? = null,
@@ -47,10 +49,14 @@ class AddLoanDialog(
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.textTotal.text = "Total: ${formatCurrency(totalAmounts?.totalAmount ?: 0.0)}"
-        binding.textAvailable.text = "Available: ${formatCurrency(totalAmounts?.availableAmount ?: 0.0)}"
-        binding.textApproved.text = "Approved: ${formatCurrency(totalAmounts?.approvedAmount ?: 0.0)}"
-        binding.textPending.text = "Pending: ${formatCurrency(totalAmounts?.pendingAmount ?: 0.0)}"
+        val amount = formatCurrency(totalAmounts?.totalAmount ?: 0.0)
+        val totalAvailable = formatCurrency(totalAmounts?.availableAmount ?: 0.0)
+        val totalApproved = formatCurrency(totalAmounts?.approvedAmount ?: 0.0)
+        val totalPending = formatCurrency(totalAmounts?.pendingAmount ?: 0.0)
+        binding.textTotal.text = getString(R.string.text_total, amount)
+        binding.textAvailable.text = getString(R.string.text_available, totalAvailable)
+        binding.textApproved.text = getString(R.string.text_approved, totalApproved)
+        binding.textPending.text = getString(R.string.text_pending, totalPending)
         val borrowerDropdown = binding.editTextBorrower
         var selectedUserId: Int? = null
 
@@ -98,7 +104,7 @@ class AddLoanDialog(
 
         binding.buttonSaveLoan.setOnClickListener {
             binding.buttonSaveLoan.isEnabled = false
-            binding.buttonSaveLoan.text = "Saving...."
+            binding.buttonSaveLoan.text = getString(R.string.button_saving_progress)
             try {
                 val loanAmountStr = binding.editTextLoanAmount.text.toString()
                 val issueDate = binding.editTextIssueDate.text.toString().trim()
@@ -107,6 +113,8 @@ class AddLoanDialog(
                 if (userId == null) {
                     Snackbar.make(binding.root, "Please select a borrower", Snackbar.LENGTH_LONG)
                         .show()
+                    binding.buttonSaveLoan.isEnabled = true
+                    binding.buttonSaveLoan.text = getString(R.string.text_save)
                     return@setOnClickListener
                 }
                 if (issueDate.isBlank() || loanAmountStr.isBlank() || loanAmountStr.toDouble() <= 0) {
@@ -115,6 +123,20 @@ class AddLoanDialog(
                         "Issue Date and Loan Amount cannot be blank or 0",
                         Snackbar.LENGTH_LONG
                     ).show()
+                    binding.buttonSaveLoan.isEnabled = true
+                    binding.buttonSaveLoan.text = getString(R.string.text_save)
+                    return@setOnClickListener
+                }
+                val isIssueDateBeforeFundStart = ApnaBankDate.compareDates(issueDate, fundStartDate, "dd/mm/yyyy" )
+                if(isIssueDateBeforeFundStart <=0)
+                {
+                    Snackbar.make(
+                        binding.root,
+                        "Issue Date cannot be before Fund Start Date",
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                    binding.buttonSaveLoan.isEnabled = true
+                    binding.buttonSaveLoan.text = getString(R.string.text_save)
                     return@setOnClickListener
                 }
                 val loanAmount = binding.editTextLoanAmount.text.toString().trim().toDouble()
@@ -130,6 +152,8 @@ class AddLoanDialog(
                         "Amount cannot exceed available fund ${formatCurrency(effectiveAvailable)}",
                         Snackbar.LENGTH_LONG
                     ).show()
+                    binding.buttonSaveLoan.isEnabled = true
+                    binding.buttonSaveLoan.text = getString(R.string.text_save)
                     return@setOnClickListener
                 }
                 // If period not provided default it from issuedMonth to the Maturity Date Month
@@ -145,7 +169,7 @@ class AddLoanDialog(
                 onSave(loanAmount, issueDate, period, maturityDateStr, userId)
                 dismiss()
             } catch (e: Exception) {
-
+                Log.e("AddLoanDialog", e.message.toString())
                 binding.buttonSaveLoan.isEnabled = true
                 binding.buttonSaveLoan.text = getString(R.string.text_save)
 

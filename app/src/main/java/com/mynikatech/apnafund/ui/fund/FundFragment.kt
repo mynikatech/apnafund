@@ -5,6 +5,7 @@ import android.app.DatePickerDialog
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -212,7 +213,7 @@ class FundFragment : Fragment() {
                 ).show()
 
             } catch (e: Exception) {
-
+                Log.e("FundFragment", e.message.toString())
                 Toast.makeText(
                     requireContext(),
                     "Unable to close fund",
@@ -462,10 +463,9 @@ class FundFragment : Fragment() {
                         .show()
                     dialog.dismiss()
                 } catch (e: Exception) {
-
+                    Log.e("FundFragment", e.message.toString())
                     dialogBinding.buttonSaveFund.isEnabled = true
                     dialogBinding.buttonSaveFund.text = getString(R.string.text_save_button)
-
                     Toast.makeText(
                         requireContext(),
                         "Something went wrong. Please try again.",
@@ -561,6 +561,7 @@ class FundFragment : Fragment() {
                 borrowerName = borrowerName,
                 rateOfInterest = fundRateOfInterest,
                 fundMaturityDate = fund.fundMaturityDate,
+                fundStartDate = fund.fundStartDate,
                 existingLoan = existingLoan,
                 allowEditLoan = allowEditLoan,
                 borrowerUserId = borrowerUserId,

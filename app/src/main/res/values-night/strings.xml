@@ -32,6 +32,10 @@
     <string name="text_date">Date</string>
     <string name="text_prepay">Prepay</string>
     <string name="text_first_name">Save</string>
+    <string name="text_total">Total: %1$s</string>
+    <string name="text_available">Available: %1$s</string>
+    <string name="text_approved">Approved: %1$s</string>
+    <string name="text_pending">Pending: %1$s</string>
     <string name="text_emi_amount">EMI Amount</string>
     <string name="text_late_fee">Late Fee</string>
     <string name="text_save_deposits">Save Deposits</string>
