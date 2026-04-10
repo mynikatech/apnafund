@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
@@ -27,9 +28,28 @@ class LoanAdapter(
 
     override fun getItemCount(): Int = loans.size
 
-    fun setLoans(loans: List<LoanDetailsWithMemberNames>) {
-        this.loans = loans
-        notifyDataSetChanged()
+    fun setLoans(newLoans: List<LoanDetailsWithMemberNames>) {
+
+        val diffCallback = object : DiffUtil.Callback() {
+
+            override fun getOldListSize() = loans.size
+            override fun getNewListSize() = newLoans.size
+
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return loans[oldItemPosition].loanId ==
+
+                        newLoans[newItemPosition].loanId
+            }
+
+            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return loans[oldItemPosition] == newLoans[newItemPosition]
+            }
+        }
+
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+
+        loans = newLoans
+        diffResult.dispatchUpdatesTo(this)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -63,7 +83,8 @@ class LoanAdapter(
                 textViewLoanIssueDateValue.text = loan.issuedDate
                 textViewLoanCurrEmiValue.text = Converters.formatCurrency(loan.emiInterest)
                 // calculate emi value original from original principal, period and int
-                val origEmi = (loan.loanAmount * loan.rateOfInterest * loan.period / 12) / 100 / loan.period
+                val origEmi =
+                    (loan.loanAmount * loan.rateOfInterest * loan.period / 12) / 100 / loan.period
                 textViewLoanOrigEmiValue.text = Converters.formatCurrency(origEmi)
                 textViewLoanCurrIntpaidValue.text = Converters.formatCurrency(loan.currTotalIntPaid)
                 textViewLoanInterestRateValue.text = buildString {
@@ -78,16 +99,16 @@ class LoanAdapter(
                     textViewLoanStatusValue.setTextColor(
                         ContextCompat.getColor(
                             context,
-                            R.color.red
+                            R.color.status_rejected
                         )
                     )
-                } else if(isPending) {
+                } else if (isPending) {
                     textViewLoanStatusValue.text = context.getString(R.string.status_pending)
                     textViewLoanStatusValue.setTypeface(null, Typeface.BOLD)
                     textViewLoanStatusValue.setTextColor(
                         ContextCompat.getColor(
                             context,
-                            R.color.yellow
+                            R.color.status_pending
                         )
                     )
                 } else {
@@ -95,11 +116,11 @@ class LoanAdapter(
                     textViewLoanStatusValue.setTextColor(
                         ContextCompat.getColor(
                             context,
-                            R.color.green
+                            R.color.status_approved
                         )
                     )
                 }
-                if(isExpanded) {
+                if (isExpanded) {
                     binding.lineLoanDetails.visibility =
                         if (isExpanded) View.VISIBLE else View.GONE
                     binding.loanDetailsSection.visibility =

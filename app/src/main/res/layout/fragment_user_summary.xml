@@ -19,7 +19,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
-            android:text="Welcome, User!"
+            android:text="@string/text_welcome_user"
             android:textColor="@color/text_heading"
             android:textSize="24sp"
             android:textStyle="bold" />
@@ -39,7 +39,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="You are not assigned to any group yet." />
+                android:text="@string/message_no_assigned_group" />
 
             <ImageView
                 android:id="@+id/button_add_group_none"
@@ -48,7 +48,7 @@
                 android:layout_marginStart="6dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
-                android:contentDescription="Add Group"
+                android:contentDescription="@string/text_add_group"
                 android:focusable="true"
                 android:src="@drawable/icon_add" />
 
@@ -57,7 +57,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="(Add Group)"
+                android:text="@string/header_add_group"
                 android:textStyle="italic" />
         </LinearLayout>
 
@@ -82,7 +82,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:clickable="true"
-                    android:text="Group: --"
+                    android:focusable="true"
+                    android:text="@string/header_group"
                     app:chipIcon="@drawable/ic_group" />
 
                 <LinearLayout
@@ -98,11 +99,10 @@
 
                     <ImageView
                         android:id="@+id/button_add_group"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        style="@style/AppIcon"
                         android:layout_marginStart="6dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Add Group"
+                        android:contentDescription="@string/header_add_group"
                         android:focusable="true"
                         android:src="@drawable/icon_add" />
                     <TextView
@@ -110,7 +110,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="(Add Group)"
+                        android:text="@string/header_add_group"
                         android:textStyle="italic" />
                 </LinearLayout>
             </LinearLayout>
@@ -156,7 +156,7 @@
                                 android:id="@+id/textViewSelectedFund"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Select Fund"
+                                android:text="@string/text_select_fund"
                                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
                             <!-- Status Dot -->
@@ -166,7 +166,7 @@
                                 android:layout_height="12dp"
                                 android:layout_gravity="center_vertical"
                                 android:layout_marginStart="6dp"
-                                android:contentDescription="Fund Status"
+                                android:contentDescription="@string/text_fund_status"
                                 android:src="@drawable/status_active_dot" />
 
                             <!-- Dropdown Arrow -->
@@ -175,8 +175,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center_vertical"
+                                style="@style/AppIcon"
                                 android:layout_marginStart="6dp"
-                                android:contentDescription="Dropdown Arrow"
+                                android:contentDescription="@string/text_dropdown_arrow"
                                 android:src="@drawable/ic_arrow_drop_down" />
                         </LinearLayout>
                     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -206,7 +207,7 @@
                         android:layout_height="wrap_content"
                         android:paddingStart="4dp"
                         android:paddingEnd="4dp"
-                        android:text="Moderator:"
+                        android:text="@string/text_moderator"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -234,7 +235,7 @@
                         android:layout_weight="1"
                         android:paddingStart="4dp"
                         android:paddingEnd="2dp"
-                        android:text="View Details -"
+                        android:text="@string/text_view_details"
                         android:textColor="?attr/colorOnSurface"
                         android:textStyle="italic"
                         app:layout_constraintBottom_toBottomOf="parent"
@@ -243,8 +244,7 @@
 
                     <ImageView
                         android:id="@+id/image_fund_Expand_Collapse"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                        style="@style/AppIcon"
                         android:contentDescription="@string/expand_or_collapse"
                         android:src="@drawable/ic_down_arrow"
                         app:layout_constraintBottom_toBottomOf="@+id/text_view_fund_details_header"
@@ -421,6 +421,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:paddingEnd="16dp"
+                            android:paddingStart="2dp"
                             android:text="@string/text_view_fund_deposits"
                             android:textAppearance="?attr/textAppearanceBody2"
                             android:textColor="@color/link_colour" />
@@ -449,7 +450,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
                     android:paddingBottom="4dp"
-                    android:text="@string/text_loans_header"
+                    android:text="@string/text_loan"
                     android:textColor="@color/blue_dark"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -488,6 +489,7 @@
                     android:layout_gravity="start"
                     android:layout_marginTop="6dp"
                     android:clickable="true"
+                    android:focusable="true"
                     android:orientation="horizontal">
 
                     <ImageView
@@ -527,7 +529,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="There is no funds created yet."
+                    android:text="@string/message_text_no_funds"
                     android:textColor="@color/black"
                     android:textSize="16sp" />
             </LinearLayout>

@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         style="@style/ApnaFund.Toolbar"
-        android:title="Fund Loans Summary"
+        android:title="@string/text_fund_loan_summary"
         app:navigationIconTint="@color/black"
         app:navigationIcon="@drawable/ic_back_arrow"
         app:layout_constraintTop_toTopOf="parent"
@@ -26,7 +26,7 @@
         android:id="@+id/text_fund_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Fund Name"
+        android:text="@string/header_view_fund_name"
         android:textSize="18sp"
         android:textStyle="bold"
         android:padding="12dp"
@@ -41,7 +41,7 @@
         android:id="@+id/summary_panel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="#F7F7F7"
+        android:background="?attr/colorSurface"
         android:orientation="horizontal"
         android:padding="8dp"
         android:weightSum="4"
@@ -61,17 +61,18 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Loans"
+                android:text="@string/text_loans_header"
                 android:textSize="13sp"
-                android:textColor="#3949AB"/>
+                android:textColor="?attr/colorPrimary"/>
 
             <TextView
                 android:id="@+id/text_total_loans"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0"
+                android:text="@string/text_zero"
                 android:textSize="18sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"/>
         </LinearLayout>
 
 
@@ -87,17 +88,18 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Outstanding"
+                android:text="@string/text_outstanding"
                 android:textSize="13sp"
-                android:textColor="#3949AB"/>
+                android:textColor="?attr/colorPrimary"/>
 
             <TextView
                 android:id="@+id/text_total_outstanding"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="₹0"
+                android:text="@string/text_zero_amount"
                 android:textSize="18sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"/>
         </LinearLayout>
 
 
@@ -113,17 +115,18 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Interest"
+                android:text="@string/text_interest"
                 android:textSize="13sp"
-                android:textColor="#3949AB"/>
+                android:textColor="?attr/colorPrimary"/>
 
             <TextView
                 android:id="@+id/text_total_interest"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="₹0"
+                android:text="@string/text_zero_amount"
                 android:textSize="18sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"/>
         </LinearLayout>
 
 
@@ -139,18 +142,18 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pending"
+                android:text="@string/text_pending"
                 android:textSize="13sp"
-                android:textColor="#3949AB"/>
+                android:textColor="?attr/colorPrimary"/>
 
             <TextView
                 android:id="@+id/text_pending_loans"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0"
+                android:text="@string/text_zero"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#FF9800"/>
+                android:textColor="?attr/colorOnSurface"/>
         </LinearLayout>
 
     </LinearLayout>
@@ -188,8 +191,9 @@
                     android:layout_height="wrap_content"
                     android:minWidth="140dp"
                     android:background="@drawable/table_cell_shape"
-                    android:textColor="#ffffff"
-                    android:text="Borrower"
+                    android:textColor="?attr/colorOnPrimary"
+                    android:backgroundTint="?attr/colorPrimary"
+                    android:text="@string/text_borrower"
                     android:textStyle="bold"
                     android:padding="8dp"/>
 
@@ -198,8 +202,9 @@
                     android:layout_height="wrap_content"
                     android:minWidth="80dp"
                     android:background="@drawable/table_cell_shape"
-                    android:textColor="#ffffff"
-                    android:text="Loan#"
+                    android:textColor="?attr/colorOnPrimary"
+                    android:backgroundTint="?attr/colorPrimary"
+                    android:text="@string/text_loan_num"
                     android:textStyle="bold"
                     android:padding="8dp"/>
 
@@ -208,8 +213,9 @@
                     android:layout_height="wrap_content"
                     android:minWidth="100dp"
                     android:background="@drawable/table_cell_shape"
-                    android:textColor="#ffffff"
-                    android:text="Amount"
+                    android:textColor="?attr/colorOnPrimary"
+                    android:backgroundTint="?attr/colorPrimary"
+                    android:text="@string/text_amount"
                     android:textStyle="bold"
                     android:gravity="end"
                     android:padding="8dp"/>
@@ -219,8 +225,9 @@
                     android:layout_height="wrap_content"
                     android:minWidth="100dp"
                     android:background="@drawable/table_cell_shape"
-                    android:textColor="#ffffff"
-                    android:text="Issued"
+                    android:textColor="?attr/colorOnPrimary"
+                    android:backgroundTint="?attr/colorPrimary"
+                    android:text="@string/text_issued"
                     android:textStyle="bold"
                     android:padding="8dp"/>
 
@@ -229,8 +236,9 @@
                     android:layout_height="wrap_content"
                     android:minWidth="110dp"
                     android:background="@drawable/table_cell_shape"
-                    android:textColor="#ffffff"
-                    android:text="Principal"
+                    android:textColor="?attr/colorOnPrimary"
+                    android:backgroundTint="?attr/colorPrimary"
+                    android:text="@string/text_principal"
                     android:textStyle="bold"
                     android:gravity="end"
                     android:padding="8dp"/>
@@ -240,8 +248,9 @@
                     android:layout_height="wrap_content"
                     android:minWidth="110dp"
                     android:background="@drawable/table_cell_shape"
-                    android:textColor="#ffffff"
-                    android:text="Interest"
+                    android:textColor="?attr/colorOnPrimary"
+                    android:backgroundTint="?attr/colorPrimary"
+                    android:text="@string/text_interest"
                     android:textStyle="bold"
                     android:gravity="end"
                     android:padding="8dp"/>
@@ -251,8 +260,9 @@
                     android:layout_height="wrap_content"
                     android:minWidth="100dp"
                     android:background="@drawable/table_cell_shape"
-                    android:textColor="#ffffff"
-                    android:text="Status"
+                    android:textColor="?attr/colorOnPrimary"
+                    android:backgroundTint="?attr/colorPrimary"
+                    android:text="@string/text_status"
                     android:textStyle="bold"
                     android:padding="8dp"/>
 
@@ -261,8 +271,9 @@
                     android:layout_height="wrap_content"
                     android:minWidth="110dp"
                     android:background="@drawable/table_cell_shape"
-                    android:textColor="#ffffff"
-                    android:text="Workflow"
+                    android:textColor="?attr/colorOnPrimary"
+                    android:backgroundTint="?attr/colorPrimary"
+                    android:text="@string/text_workflow"
                     android:textStyle="bold"
                     android:padding="8dp"/>
 

@@ -10,14 +10,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TableRow
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.color.MaterialColors
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.databinding.FragmentFundLoanSummaryBinding
 import com.mynikatech.apnafund.net.dto.LoanDetailsWithMemberNamesDto
 import com.mynikatech.apnafund.ui.viewmodel.LoansViewModel
+import com.mynikatech.apnafund.util.Converters
 import kotlinx.coroutines.launch
 
 class FundLoanSummaryFragment : Fragment() {
@@ -47,7 +50,8 @@ class FundLoanSummaryFragment : Fragment() {
         fundId = args.fundId
         binding.toolbar.title = "Fund Loans Summary"
 
-        binding.textFundName.text = "${args.fundName} - Loans"
+        binding.textFundName.text =
+            getString(R.string.fund_loans_title, args.fundName)
 
         // Back button
         binding.toolbar.setNavigationIcon(R.drawable.ic_back_arrow)
@@ -79,8 +83,15 @@ class FundLoanSummaryFragment : Fragment() {
 
     private fun addHeaderRow() {
 
+
+
         val row = TableRow(requireContext())
+        val colorPrimary = MaterialColors.getColor(
+            row,
+            com.google.android.material.R.attr.colorPrimary
+        )
         row.setBackgroundResource(R.drawable.table_cell_shape)
+        row.setBackgroundColor(colorPrimary)
         val headers = listOf(
             "Borrower",
             "Loan#",
@@ -95,10 +106,14 @@ class FundLoanSummaryFragment : Fragment() {
         headers.forEachIndexed { index, title ->
 
             val tv = TextView(requireContext())
+            val colorOnPrimary = MaterialColors.getColor(
+                tv,
+                com.google.android.material.R.attr.colorOnPrimary
+            )
             tv.text = title
             tv.setPadding(16, 10, 16, 10)
             tv.setTypeface(null, Typeface.BOLD)
-            tv.setTextColor(Color.WHITE)
+            tv.setTextColor(colorOnPrimary)
             tv.isSingleLine = true
             tv.maxLines = 1
             if (index == 2 || index == 4 || index == 5)
@@ -114,8 +129,14 @@ class FundLoanSummaryFragment : Fragment() {
 
         val row = TableRow(requireContext())
 
-        if (index % 2 == 0)
-            row.setBackgroundColor(Color.parseColor("#FAFAFA"))
+        val surfaceVariant = MaterialColors.getColor(
+            row,
+            com.google.android.material.R.attr.colorSurfaceVariant
+        )
+
+        if (index % 2 == 0) {
+            row.setBackgroundColor(surfaceVariant)
+        }
 
         val borrower = "${loan.firstName} ${loan.lastName}"
 
@@ -133,6 +154,10 @@ class FundLoanSummaryFragment : Fragment() {
         values.forEachIndexed { i, value ->
 
             val tv = TextView(requireContext())
+            val textColor = MaterialColors.getColor(
+                tv,
+                com.google.android.material.R.attr.colorOnSurface
+            )
             tv.text = value
             tv.setPadding(16, 8, 16, 8)
 
@@ -140,13 +165,15 @@ class FundLoanSummaryFragment : Fragment() {
             tv.isSingleLine = true
             tv.maxLines = 1
             tv.ellipsize = TextUtils.TruncateAt.END
-
             // Right align numbers
             if (i == 2 || i == 4 || i == 5)
                 tv.gravity = Gravity.END
 
-            if (i == 7)
+            if (i == 7) {
                 tv.setTextColor(getWorkflowColor(value))
+            } else {
+                tv.setTextColor(textColor)
+            }
 
             row.addView(tv)
         }
@@ -168,20 +195,21 @@ class FundLoanSummaryFragment : Fragment() {
 
         binding.textTotalLoans.text = totalLoans.toString()
 
-        binding.textTotalOutstanding.text = "₹$outstanding"
+        binding.textTotalOutstanding.text = Converters.formatCurrency(outstanding)
 
-        binding.textTotalInterest.text = "₹$interest"
+        binding.textTotalInterest.text =  Converters.formatCurrency(interest)
 
         binding.textPendingLoans.text = pending.toString()
     }
 
     private fun getWorkflowColor(status: String): Int {
+        val context = requireContext()
 
         return when (status.uppercase()) {
-            "PENDING" -> Color.parseColor("#FF9800")
-            "APPROVED" -> Color.parseColor("#4CAF50")
-            "REJECTED" -> Color.parseColor("#F44336")
-            else -> Color.DKGRAY
+            "PENDING_APPROVAL" -> ContextCompat.getColor(context, R.color.status_pending)
+            "APPROVED" -> ContextCompat.getColor(context, R.color.status_approved)
+            "REJECTED" -> ContextCompat.getColor(context, R.color.status_rejected)
+            else -> MaterialColors.getColor(context, com.google.android.material.R.attr.colorOnSurface, Color.DKGRAY)
         }
     }
 

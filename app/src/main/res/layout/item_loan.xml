@@ -43,8 +43,9 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Edit Fund"
+                    android:contentDescription="@string/text_edit_fund"
                     android:paddingStart="4dp"
+                    android:paddingEnd="2dp"
                     android:src="@drawable/ic_edit"
                     app:layout_constraintBottom_toBottomOf="@id/text_view_loan_number_value"
                     app:layout_constraintStart_toEndOf="@id/text_view_loan_number_value"
@@ -91,7 +92,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="View Details -"
+                    android:text="@string/text_view_details"
                     android:textColor="?attr/colorOnSurface"
                     android:textStyle="bold"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -100,8 +101,7 @@
 
                 <ImageView
                     android:id="@+id/imageExpandCollapseLoan"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    style="@style/AppIcon"
                     android:contentDescription="@string/expand_or_collapse"
                     android:src="@drawable/ic_down_arrow"
                     app:layout_constraintBottom_toBottomOf="@+id/text_view_loan_details_header"
@@ -139,7 +139,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="Issued Date" />
+                        android:text="@string/text_issued_date" />
 
                     <TextView
                         android:id="@+id/text_view_loan_maturity_date_header"
@@ -147,7 +147,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="Maturity Date" />
+                        android:text="@string/text_fund_maturity_date" />
 
                     <TextView
                         android:id="@+id/text_view_loan_issue_date_value"
@@ -172,7 +172,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="Interest Rate" />
+                        android:text="@string/text_interest_rate" />
 
                     <TextView
                         android:id="@+id/text_view_loan_period_header"
@@ -180,7 +180,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="Loan Period" />
+                        android:text="@string/text_loan_period" />
 
                     <TextView
                         android:id="@+id/text_view_loan_interest_rate_value"
@@ -207,7 +207,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="OutStanding Amount:" />
+                        android:text="@string/text_outstanding_amount" />
 
                     <TextView
                         android:id="@+id/text_view_loan_outstanding_amount_value"
@@ -222,7 +222,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="Original EMI:" />
+                        android:text="@string/text_original_emi" />
 
                     <TextView
                         android:id="@+id/text_view_loan_orig_emi_value"
@@ -237,7 +237,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="Current EMI:" />
+                        android:text="@string/text_current_emi" />
 
                     <TextView
                         android:id="@+id/text_view_loan_curr_emi_value"
@@ -252,7 +252,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="Interest Paid::" />
+                        android:text="@string/text_interest_paid" />
 
                     <TextView
                         android:id="@+id/text_view_loan_curr_intpaid_value"
@@ -274,7 +274,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:paddingEnd="16dp"
-                        android:text="View Loan Emis"
+                        android:paddingStart="2dp"
+                        android:text="@string/text_view_loan_emis"
                         android:textAppearance="?attr/textAppearanceBody2"
                         android:textColor="@color/link_colour" />
 
