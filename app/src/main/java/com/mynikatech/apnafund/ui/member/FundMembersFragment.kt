@@ -58,11 +58,11 @@ class FundMembersFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        (requireActivity() as AppCompatActivity).supportActionBar?.apply {
+        /*(requireActivity() as AppCompatActivity).supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             setDisplayShowHomeEnabled(true)
             title = "Fund Member Details"  // Optional
-        }
+        }*/
         arguments?.let {
             groupId = it.getInt("groupId")
         }
@@ -91,8 +91,8 @@ class FundMembersFragment : Fragment() {
             findNavController().navigate(action)
         }
         val toolbar = view.findViewById<MaterialToolbar>(R.id.fund_member_details_toolbar)
-        (activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
-        (activity as? AppCompatActivity)?.supportActionBar?.setDisplayShowTitleEnabled(false)
+        // (activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
+        //(activity as? AppCompatActivity)?.supportActionBar?.setDisplayShowTitleEnabled(false)
 
         // Enable back arrow
         val navController = findNavController()

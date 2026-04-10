@@ -172,7 +172,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="@string/text_fund_start_date" />
+                        android:text="@string/text_fund_start_date"/>
 
                     <TextView
                         android:id="@+id/label_maturity_date"

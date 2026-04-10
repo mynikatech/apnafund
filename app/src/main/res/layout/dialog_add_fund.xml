@@ -1,214 +1,224 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="14dp">
+    android:fillViewport="true">
 
-    <!-- Fund Name -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/input_layout_fund_name"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/text_fund_name"
-        app:layout_constraintTop_toTopOf="parent">
+        android:padding="14dp">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edit_text_fund_name"
+        <!-- Fund Name -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_layout_fund_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="text" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:hint="@string/text_fund_name"
+            app:layout_constraintTop_toTopOf="parent">
 
-    <!-- Start Date -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/input_layout_start_date"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:hint="@string/text_start_date"
-        app:layout_constraintTop_toBottomOf="@id/input_layout_fund_name">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_text_fund_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="no"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edit_text_fund_start_date"
+        <!-- Start Date -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_layout_start_date"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="date" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="6dp"
+            android:hint="@string/text_start_date"
+            app:layout_constraintTop_toBottomOf="@id/input_layout_fund_name">
 
-    <!-- Period -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/input_layout_period"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:hint="@string/text_period"
-        app:layout_constraintTop_toBottomOf="@id/input_layout_start_date">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_text_fund_start_date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="no"
+                android:inputType="date" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edit_text_period"
+        <!-- Period -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_layout_period"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="text" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="6dp"
+            android:hint="@string/text_period"
+            app:layout_constraintTop_toBottomOf="@id/input_layout_start_date">
 
-    <!-- Deposit Frequency -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/input_layout_dep_frequency"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:hint="@string/text_deposit_frequency"
-        app:layout_constraintTop_toBottomOf="@id/input_layout_period">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_text_period"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="no"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edit_text_dep_frequency"
+        <!-- Deposit Frequency -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_layout_dep_frequency"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="text" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="6dp"
+            android:hint="@string/text_deposit_frequency"
+            app:layout_constraintTop_toBottomOf="@id/input_layout_period">
 
-    <!-- Loan Interest Rate-->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/input_layout_loan_int_rate"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:hint="@string/text_loan_interest_rate"
-        app:layout_constraintTop_toBottomOf="@id/input_layout_dep_frequency">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_text_dep_frequency"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="no"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edit_text_loan_int_rate"
+        <!-- Loan Interest Rate-->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_layout_loan_int_rate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="text" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="6dp"
+            android:hint="@string/text_loan_interest_rate"
+            app:layout_constraintTop_toBottomOf="@id/input_layout_dep_frequency">
 
-    <!-- Late Fee Rate-->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/input_layout_late_fee_rate"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:hint="@string/text_late_fee_rate_in_per_day"
-        app:layout_constraintTop_toBottomOf="@id/input_layout_loan_int_rate">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_text_loan_int_rate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="no"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edit_text_late_fee_rate"
+        <!-- Late Fee Rate-->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_layout_late_fee_rate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="text" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="6dp"
+            android:hint="@string/text_late_fee_rate_in_per_day"
+            app:layout_constraintTop_toBottomOf="@id/input_layout_loan_int_rate">
 
-    <!-- Late Fee Rate-->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/input_layout_deposit_last_date"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:hint="@string/text_monthly_deposit_last_date"
-        app:layout_constraintTop_toBottomOf="@id/input_layout_late_fee_rate">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_text_late_fee_rate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="no"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edit_text_deposit_last_date"
+        <!-- Late Fee Rate-->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_layout_deposit_last_date"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="text" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="6dp"
+            android:hint="@string/text_monthly_deposit_last_date"
+            app:layout_constraintTop_toBottomOf="@id/input_layout_late_fee_rate">
 
-    <!-- Deposit Amount -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/text_input_dep_amount"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:hint="Deposit Amount"
-        app:layout_constraintTop_toBottomOf="@id/input_layout_deposit_last_date"
-        app:startIconContentDescription="Rupee symbol"
-        app:startIconDrawable="@drawable/ic_rupee">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_text_deposit_last_date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="no"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edit_text_dep_amount"
+        <!-- Deposit Amount -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/text_input_dep_amount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="numberDecimal" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="6dp"
+            android:hint="@string/text_deposit_amount"
+            app:layout_constraintTop_toBottomOf="@id/input_layout_deposit_last_date"
+            app:startIconContentDescription="Rupee symbol"
+            app:startIconDrawable="@drawable/ic_rupee">
 
-    <!-- Group (AutoComplete) -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/input_layout_group"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:hint="Select Group"
-        app:layout_constraintTop_toBottomOf="@id/text_input_dep_amount">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_text_dep_amount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="no"
+                android:inputType="numberDecimal" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <AutoCompleteTextView
-            android:id="@+id/edit_text_auto_group"
+        <!-- Group (AutoComplete) -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_layout_group"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:completionThreshold="1"
-            android:importantForAutofill="no"
-            android:paddingTop="16dp"
-            android:paddingBottom="16dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:inputType="none" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="8dp"
+            android:hint="@string/text_select_group"
+            app:layout_constraintTop_toBottomOf="@id/text_input_dep_amount">
 
-    <!-- Moderator (AutoComplete) -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/input_layout_moderator"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:hint="Select Moderator"
-        app:layout_constraintTop_toBottomOf="@id/input_layout_group">
+            <AutoCompleteTextView
+                android:id="@+id/edit_text_auto_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:completionThreshold="1"
+                android:importantForAutofill="no"
+                android:inputType="none"
+                android:paddingStart="16dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="16dp"
+                tools:ignore="LabelFor" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <AutoCompleteTextView
-            android:id="@+id/edit_text_moderator"
+        <!-- Moderator (AutoComplete) -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_layout_moderator"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:completionThreshold="1"
-            android:importantForAutofill="no"
-            android:paddingTop="16dp"
-            android:paddingBottom="16dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:inputType="none" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="8dp"
+            android:hint="@string/text_select_moderator"
+            app:layout_constraintTop_toBottomOf="@id/input_layout_group">
 
-    <!-- Save Button -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/input_layout_moderator">
+            <AutoCompleteTextView
+                android:id="@+id/edit_text_moderator"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:completionThreshold="1"
+                android:importantForAutofill="no"
+                android:inputType="none"
+                android:paddingStart="16dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="16dp"
+                tools:ignore="LabelFor" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_save_fund"
-            android:layout_width="0dp"
+        <!-- Save Button -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:layout_weight="1"
-            android:text="@string/text_save_button" />
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@id/input_layout_moderator">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_cancel_fund"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:layout_weight="1"
-            android:text="@string/text_cancel_button" />
-    </LinearLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_save_fund"
+                style="@style/ApnaFundButton.Primary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:layout_weight="1"
+                android:text="@string/text_save_button" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_cancel_fund"
+                style="@style/ApnaFundButton.Secondary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:layout_weight="1"
+                android:text="@string/text_cancel_button" />
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

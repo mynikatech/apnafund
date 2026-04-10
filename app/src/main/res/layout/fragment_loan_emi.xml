@@ -10,8 +10,7 @@
         android:id="@+id/user_loan_emi_toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        app:titleTextColor="@color/white"
+        style="@style/ApnaFund.Toolbar"
         android:title="Loan EMIs"
         app:navigationIconTint="@color/black" />
     <TextView

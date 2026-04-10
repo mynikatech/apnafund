@@ -9,7 +9,7 @@
         android:id="@+id/dropdown_fund"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Select Fund" />
+        android:hint="@string/text_select_fund" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -22,7 +22,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Month" />
+            android:hint="@string/text_month" />
 
         <AutoCompleteTextView
             android:id="@+id/dropdown_year"
@@ -30,14 +30,14 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:hint="Year" />
+            android:hint="@string/text_year" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/text_view_loan_emi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Loan EMI Entries"
+        android:text="@string/text_loan_emi_entries"
         android:textAlignment="center"
         android:textColor="@color/purple"
         android:textSize="14sp"
@@ -52,8 +52,7 @@
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="8dp"
-            android:layout_weight="1">
+            android:layout_marginTop="8dp">
 
             <TableLayout
                 android:id="@+id/table_loan_emi_entries"
@@ -64,27 +63,27 @@
                 <TableRow>
 
                     <TextView
-                        android:text="Member Name"
+                        android:text="@string/text_member_name"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:text="EMI Amount"
+                        android:text="@string/text_emi_amount"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:text="Late Fee"
+                        android:text="@string/text_late_fee"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:text="Prepay"
+                        android:text="@string/text_prepay"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:text="Date"
+                        android:text="@string/text_date"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:text="Edit"
+                        android:text="@string/text_edit"
                         android:textStyle="bold" />
                 </TableRow>
             </TableLayout>
@@ -93,8 +92,9 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/button_save_loan_emi"
+        style="@style/ApnaFundButton.Primary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Save Loan EMI" />
+        android:text="@string/text_save_loan_emi" />
 
 </LinearLayout>

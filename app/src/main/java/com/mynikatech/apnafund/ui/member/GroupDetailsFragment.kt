@@ -28,6 +28,7 @@ import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.model.GroupMembers
 import com.mynikatech.apnafund.databinding.DialogAddGroupMemberBinding
 import com.mynikatech.apnafund.databinding.FragmentGroupDetailsBinding
+import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.GroupSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.GroupViewModel
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
@@ -60,11 +61,11 @@ class GroupDetailsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        (requireActivity() as AppCompatActivity).supportActionBar?.apply {
+       /* (requireActivity() as AppCompatActivity).supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             setDisplayShowHomeEnabled(true)
             title = "Group Details"  // Optional
-        }
+        }*/
         setHasOptionsMenu(true)
         val navArgsGroupId = arguments?.let {
             GroupDetailsFragmentArgs.fromBundle(it).groupId
@@ -93,8 +94,8 @@ class GroupDetailsFragment : Fragment() {
             }
         }
         val toolbar = view.findViewById<MaterialToolbar>(R.id.group_details_toolbar)
-        (activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
-        (activity as? AppCompatActivity)?.supportActionBar?.setDisplayShowTitleEnabled(false)
+       // (activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
+       // (activity as? AppCompatActivity)?.supportActionBar?.setDisplayShowTitleEnabled(false)
 
         // Enable back arrow
         val navController = findNavController()
@@ -184,7 +185,11 @@ class GroupDetailsFragment : Fragment() {
         dialogBinding.buttonSaveGrpMember.isEnabled = false
 
         lifecycleScope.launch {
-            val users = userViewModel.fetchUsers().first()
+
+            val isAdmin = SessionManager.isAdmin() // or however you determine role
+            val currentUserId = SessionManager.userId
+            val users = userViewModel.fetchUsers(isAdmin, currentUserId).first()
+
             val userNames = users.map { "${it.firstName} ${it.lastName}" }
 
             val adapter = ArrayAdapter(

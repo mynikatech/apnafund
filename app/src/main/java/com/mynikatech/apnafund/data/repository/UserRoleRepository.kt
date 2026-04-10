@@ -138,6 +138,12 @@ class UserRoleRepository(
     }.catch { emit(emptyList()) }
         .flowOn(Dispatchers.IO)
 
+    fun getUsersForModerator(userId: Int): Flow<List<Users>> = flow {
+        val dtos: List<UsersDto> = usersApi.getUsersForModerator(userId)
+        emit(dtos.map { it.toEntity() })
+    }.catch { emit(emptyList()) }
+        .flowOn(Dispatchers.IO)
+
     suspend fun isDuplicateUser(email: String, phone: String, excludeUserId: Int = 0): Boolean {
         return usersApi.countMatchingUsers(email, phone, excludeUserId) > 0
     }

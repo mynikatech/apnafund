@@ -57,7 +57,14 @@ class UsersApiKtor(
         } catch (_: ApiException) {
             null
         }
-
+    override suspend fun getUsersForModerator(userId: Int): List<UsersDto> {
+        return try {
+            client.get("/users/get/for-moderator/$userId")
+                .unwrap<List<UsersDto>>()
+        } catch (e: Exception) {
+            emptyList() // fallback
+        }
+    }
     override suspend fun addUser(user: UsersDto): Int =
         client.post("/users/add") {
             contentType(ContentType.Application.Json)

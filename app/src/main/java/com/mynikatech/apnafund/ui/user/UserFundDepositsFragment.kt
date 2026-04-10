@@ -45,11 +45,6 @@ class UserFundDepositsFragment: Fragment() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        (requireActivity() as AppCompatActivity).supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
-            setDisplayShowHomeEnabled(true)
-            title = "Fund Deposits"  // Optional
-        }
         setHasOptionsMenu(true)
         val fundId = args.fundId
         val userId = args.userId
@@ -63,16 +58,14 @@ class UserFundDepositsFragment: Fragment() {
             binding.recyclerFundDeposits.adapter = adapter
         }
         val toolbar = view.findViewById<MaterialToolbar>(R.id.user_fund_deposits_toolbar)
-        (activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
-        (activity as? AppCompatActivity)?.supportActionBar?.setDisplayShowTitleEnabled(false)
-
+        toolbar.title = "Fund Deposits"
         // Enable back arrow
         val navController = findNavController()
         toolbar.setNavigationIcon(R.drawable.ic_back_arrow) // your back icon
         toolbar.setNavigationOnClickListener {
             navController.navigateUp()
         }
-        toolbar.title = "Fund Deposits"
+
     }
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         menu.clear()

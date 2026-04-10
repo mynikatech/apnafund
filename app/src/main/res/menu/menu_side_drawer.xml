@@ -2,26 +2,30 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/menu_PIN"
-        android:title="Change PIN"
+        android:title="@string/menu_item_pin"
         android:icon="@drawable/ic_pin_lock" />
     <item
+        android:id="@+id/menu_password"
+        android:title="@string/menu_item_pwd"
+        android:icon="@drawable/ic_lock_reset" />
+    <item
         android:id="@+id/menu_theme"
-        android:title="Change Theme"
+        android:title="@string/menu_item_theme"
         android:icon="@drawable/ic_themes" />
     <item
         android:id="@+id/menu_profile"
-        android:title="Edit Profile"
+        android:title="@string/menu_item_profile"
         android:icon="@drawable/ic_profile" />
     <item
         android:id="@+id/menu_feedback"
-        android:title="Send Feedback"
+        android:title="@string/menu_item_feedback"
         android:icon="@drawable/ic_feedback" />
     <item
         android:id="@+id/menu_share"
-        android:title="Share App"
+        android:title="@string/menu_item_share"
         android:icon="@drawable/ic_share" />
     <item
         android:id="@+id/menu_logout"
-        android:title="Logout"
+        android:title="@string/menu_item_logout"
         android:icon="@drawable/ic_logout" />
 </menu>

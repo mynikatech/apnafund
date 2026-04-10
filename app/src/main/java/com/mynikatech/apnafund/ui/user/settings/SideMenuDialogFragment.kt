@@ -17,7 +17,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
@@ -67,6 +66,13 @@ class SideMenuDialogFragment : DialogFragment() {
                     // navigate to SET PIN fragment
                     val action = SideMenuDialogFragmentDirections
                         .actionSideMenuDialogFragmentToSetPinFragment(SessionManager.userId)
+                    findNavController().navigate(action)
+                }
+
+                R.id.menu_password -> {
+                    // navigate to reset password fragment
+                    val action = SideMenuDialogFragmentDirections
+                        .actionSideMenuDialogFragmentToResetPasswordFragment(SessionManager.userId)
                     findNavController().navigate(action)
                 }
 
@@ -151,7 +157,7 @@ class SideMenuDialogFragment : DialogFragment() {
                                     // 3) Build updated user (prefer copy from existing to preserve fields)
                                     val base = user ?: Users(
                                         userId = SessionManager.userId,
-                                        firstName = SessionManager.firstName ?: "",
+                                        firstName = SessionManager.firstName,
                                         lastName = SessionManager.lastName,
                                         emailId = SessionManager.emailId,
                                         phoneNumber = SessionManager.phoneNumber,
@@ -285,7 +291,6 @@ class SideMenuDialogFragment : DialogFragment() {
                         .show()
                 }
             }
-            dismiss()
             true
         }
     }

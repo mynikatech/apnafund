@@ -34,6 +34,9 @@ interface UsersSql {
     @SqlQuery("""SELECT * FROM get_users()""")
     fun getUsers(): List<UsersDto>
 
+    @SqlQuery("SELECT * FROM get_users_for_moderator(:userId)")
+    fun getUsersForModerator(@Bind("userId") userId: Int): List<UsersDto>
+
     @SqlQuery("""SELECT * FROM get_user(:id)""")
     fun getUser(@Bind("id") id: Int): List<UsersDto>
 

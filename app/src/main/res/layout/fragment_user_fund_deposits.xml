@@ -1,5 +1,4 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -7,21 +6,20 @@
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/user_fund_deposits_toolbar"
+        style="@style/ApnaFund.Toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        app:titleTextColor="@color/white"
-        android:title="Fund Deposits"
-        app:navigationIconTint="@color/black" />
+        android:title="@string/text_fund_deposits" />
+
     <TextView
         android:id="@+id/text_view_fund_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="12dp"
         android:fontFamily="sans-serif-black"
-        tools:text="My Fund"
+        android:padding="12dp"
+        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
         android:textStyle="italic|bold"
-        android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+        tools:text="My Fund" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -34,7 +32,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text=" Deposited Date"
+            android:text="@string/text_deposited_date"
             android:textColor="@android:color/black"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -43,8 +41,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Amount"
             android:gravity="end"
+            android:text="@string/text_amount"
             android:textColor="@android:color/black"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -53,8 +51,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Late Fee"
             android:gravity="end"
+            android:text="@string/text_late_fee"
             android:textAlignment="textEnd"
             android:textColor="@android:color/black"
             android:textSize="14sp"

@@ -56,6 +56,22 @@ fun Route.usersRoutes(
         }
     }
 
+    get("get/for-moderator/{userId}") {
+        val userId = call.parameters["userId"]?.toIntOrNull()
+        if( null == userId) {
+            call.respond(HttpStatusCode.BadRequest, "userId required");
+            return@get
+        }
+        call.safeRoute(
+            logMessage = "GET /users/get/for-moderator/{userId} failed",
+            clientMessage = "Failed to fetch users for moderator"
+        ) {
+
+
+            users.getUsersForModerator(userId)
+        }
+    }
+
     get("get/{id}") {
         val id = call.parameters["id"]?.toIntOrNull()
         if (id == null) {

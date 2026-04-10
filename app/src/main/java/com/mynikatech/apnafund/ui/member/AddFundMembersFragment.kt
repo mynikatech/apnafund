@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -43,9 +42,6 @@ class AddFundMembersFragment : Fragment() {
         }
 
         val toolbar = view.findViewById<MaterialToolbar>(R.id.fund_add_member_toolbar)
-        (activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
-        (activity as? AppCompatActivity)?.supportActionBar?.setDisplayShowTitleEnabled(false)
-
         // Enable back arrow
         val navController = findNavController()
         toolbar.setNavigationIcon(R.drawable.ic_back_arrow) // your back icon
@@ -56,7 +52,7 @@ class AddFundMembersFragment : Fragment() {
 
         lifecycleScope.launch {
             val users = fundViewModel.getAvailableFundMembers(groupId, fundId)
-            Log.d("Sunil", "The number of available users are: ${users.size}")
+            Log.d("AddFundMembersFragment", "The number of available users are: ${users.size}")
             binding.recyclerFundMembers.layoutManager = LinearLayoutManager(requireContext())
             adapter = FundMemberAdapter(users, selectedUserIds)
             binding.recyclerFundMembers.adapter = adapter
@@ -68,12 +64,14 @@ class AddFundMembersFragment : Fragment() {
                 } else {
                     selectedUserIds.clear()
                 }
-                adapter.notifyDataSetChanged()
+                for (i in users.indices) {
+                    adapter.notifyItemChanged(i)
+                }
             }
 
             binding.buttonSaveFundMember.setOnClickListener {
                 binding.buttonSaveFundMember.isEnabled = true
-                binding.buttonSaveFundMember.text = "Saving..."
+                binding.buttonSaveFundMember.text = getString(R.string.button_saving_progress)
                 lifecycleScope.launch {
                     try {
                         if (selectedUserIds.toList().isEmpty()) {
@@ -84,7 +82,7 @@ class AddFundMembersFragment : Fragment() {
                         Toast.makeText(context, "Members added", Toast.LENGTH_SHORT).show()
                         findNavController().navigateUp()
                     } catch (e: Exception) {
-
+                        Log.e("FundMember", "Error saving fund member", e)
                         binding.buttonSaveFundMember.isEnabled = true
                         binding.buttonSaveFundMember.text = getString(R.string.text_save_button)
 

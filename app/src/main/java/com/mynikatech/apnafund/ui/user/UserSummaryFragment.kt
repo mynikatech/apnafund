@@ -129,8 +129,12 @@ class UserSummaryFragment : Fragment() {
             }
         }
 
-        arguments?.let {
-            userId = it.getInt("userId")
+        val argUserId = arguments?.getInt("userId", -1) ?: -1
+
+        userId = if (argUserId > 0) {
+            argUserId
+        } else {
+            SessionManager.userId
         }
 
         Log.d("ApnaFund", "UserFragment: The user Id is $userId")
@@ -560,7 +564,6 @@ class UserSummaryFragment : Fragment() {
     }
 
     fun saveUserProfilesSession(userProfiles: UserProfile) {
-        if (userProfiles == null) return
         Log.d(
             "FirebaseAuth",
             "Session Manager firebase on profile setting: ${SessionManager.firebaseUid}"
@@ -865,6 +868,4 @@ class UserSummaryFragment : Fragment() {
             dialog.dismiss()
         }
     }
-
-
 }

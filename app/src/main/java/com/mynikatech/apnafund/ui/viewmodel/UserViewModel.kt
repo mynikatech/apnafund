@@ -18,6 +18,7 @@ import com.mynikatech.apnafund.net.dto.RegisterOrUpdateUserRequest
 import com.mynikatech.apnafund.net.dto.SaveOrUpdateUserResponse
 import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
 import com.mynikatech.apnafund.net.dto.UserSaveSource
+import com.mynikatech.apnafund.net.dto.UsersDto
 import com.mynikatech.apnafund.util.Converters
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -42,6 +43,14 @@ class UserViewModel : ViewModel() {
     fun fetchUsers(): Flow<List<Users>> {
         val users = userRolesRepository.fetchAllUsers()
         return users
+    }
+
+    fun fetchUsers(isAdmin: Boolean, userId: Int): Flow<List<Users>> {
+        return if (isAdmin) {
+            userRolesRepository.fetchAllUsers()
+        } else {
+            userRolesRepository.getUsersForModerator(userId)
+        }
     }
 
     suspend fun fetchUser(userId: Int): Users? {

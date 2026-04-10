@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.core.view.MenuProvider
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.mynikatech.apnafund.BuildConfig
@@ -33,34 +34,72 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        setSupportActionBar(binding.toolbar)
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
-        val graph = navController.navInflater.inflate(R.navigation.nav_graph)
-        val startDest = intent.getStringExtra("start_dest")
-        val userId = intent.getIntExtra("user_id", -1)
-        val startArgs = when (startDest) {
-            "enter_pin", "home" -> bundleOf("userId" to userId)
-            else -> null
-        }
-        graph.setStartDestination(
-            when (startDest) {
-                "enter_pin" -> R.id.loginPinFragment
-                "home" -> R.id.userSummaryFragment
-                else -> R.id.loginFragment
+        if (savedInstanceState == null) {
+            val graph = navController.navInflater.inflate(R.navigation.nav_graph)
+            val startDest = intent.getStringExtra("start_dest")
+            val intentUserId = intent.getIntExtra("user_id", -1)
+
+            val userId = if (SessionManager.userId > 0) {
+                SessionManager.userId
+            } else if (intentUserId > 0) {
+                intentUserId
+            } else {
+                -1
             }
-        )
-        if (startArgs != null) {
-            navController.setGraph(graph, startArgs)
-        } else {
-            navController.graph = graph
+
+            if (userId > 0) {
+                SessionManager.userId = userId
+            }
+            val finalStartDest = when {
+                startDest == "enter_pin" -> "enter_pin"
+                userId > 0 -> "home"
+                else -> "login"
+            }
+
+            val startArgs = if (finalStartDest == "enter_pin" && userId > 0) {
+                bundleOf("userId" to userId)
+            } else {
+                null
+            }
+
+            graph.setStartDestination(
+                when (finalStartDest) {
+                    "enter_pin" -> R.id.loginPinFragment
+                    "home" -> R.id.userSummaryFragment
+                    else -> R.id.loginFragment
+                }
+            )
+
+            if (startArgs != null) {
+                navController.setGraph(graph, startArgs)
+            } else {
+                navController.graph = graph
+            }
         }
         binding.bottomNavigationView.setupWithNavController(navController)
-
-        setSupportActionBar(binding.toolbar)
         setupToolbarMenu(navController)
         val toolbarRef = WeakReference(binding.toolbar)
+        binding.toolbar.setNavigationOnClickListener {
+            val currentDest = navController.currentDestination?.id
+
+            val isTopLevel = currentDest in setOf(
+                R.id.userSummaryFragment,
+                R.id.fundFragment,
+                R.id.adminFragment,
+                R.id.supportFragment,
+                R.id.groupChatFragment
+            )
+
+            if (isTopLevel) {
+                navController.navigate(R.id.supportFragment)
+            } else {
+                navController.navigateUp()
+            }
+        }
         val hideToolbarFor = setOf(
             R.id.loginFragment, R.id.registerFragment,
             R.id.changePasswordFragment, R.id.setPasswordFragment,
@@ -88,10 +127,27 @@ class MainActivity : AppCompatActivity() {
                 binding.imageLogo.visibility = View.VISIBLE
                 binding.bottomNavigationView.visibility = View.VISIBLE
             }
+            val isTopLevel = destination.id in setOf(
+                R.id.userSummaryFragment,
+                R.id.fundFragment,
+                R.id.adminFragment,
+                R.id.supportFragment,
+                R.id.groupChatFragment
+            )
 
-        }
-        binding.toolbar.setNavigationOnClickListener {
-            navController.navigate(R.id.supportFragment)
+            if (isTopLevel) {
+                // Show support icon
+                binding.toolbar.title = ""
+                if (binding.toolbar.navigationIcon == null) {
+                    binding.toolbar.setNavigationIcon(R.drawable.ic_contact_phone)
+                }
+
+            } else {
+                // IMPORTANT: Let Navigation handle back arrow
+                binding.toolbar.navigationIcon = null
+                binding.toolbar.title = destination.label
+            }
+
         }
 
         val sideNavigationView = binding.sideNavigationView

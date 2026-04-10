@@ -157,7 +157,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_save_loan"
-            style="@style/Widget.MaterialComponents.Button"
+            style="@style/ApnaFundButton.Primary"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
@@ -166,7 +166,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_cancel_loan"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            style="@style/ApnaFundButton.Secondary"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"

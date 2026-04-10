@@ -49,16 +49,15 @@ object FirebaseGroupService {
         val uid = "user_$userId"
 
         try {
-            logger.info("Firebase", "Updating group=$groupId user=$uid")
+            logger.info("Firebase: Updating group={} user={}", groupId, uid)
 
             groupRef(groupId).update(
                 "members.$uid", true
             )
-
-            logger.info("Firebase", "Member added successfully")
+            logger.info("Firebase: Member ={} added successfully", uid)
 
         } catch (e: Exception) {
-            logger.error("Firebase", "Failed to add member", e)
+            logger.error("Firebase: Failed to add member {}", e.message,e)
             throw e
         }
     }

@@ -11,12 +11,11 @@
         android:id="@+id/auth_toolbar"
         android:layout_width="0dp"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        style="@style/ApnaFund.Toolbar"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:navigationIcon="@drawable/ic_close"
-        app:titleTextColor="@android:color/white"
         app:title="Verify Email" />
 
     <!-- Scrollable Content -->

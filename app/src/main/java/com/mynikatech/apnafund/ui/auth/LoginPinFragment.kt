@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund.ui.auth
 
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -55,7 +56,7 @@ class LoginPinFragment : Fragment() {
                 if (userViewModel.checkUserPIN(userId, pin)) {
 
                     if (userViewModel.isPINRotationDue(userId)) {
-                        showToast("PIN has expired. Please reset")
+                        showLongToast("PIN has expired. Please reset")
                         // forward to change pin fragment/screen
                         val action = LoginPinFragmentDirections
                             .actionLoginPinFragmentToSetPinFragment(userId)
@@ -70,6 +71,7 @@ class LoginPinFragment : Fragment() {
                                 LoginPinFragmentDirections.actionLoginPinFragmentToLoginFragment()
                             )
                             binding.buttonSubmit.isEnabled = true
+                            Log.e("LoginPinFragment", e.message.toString())
                             return@launch
                         }
 
@@ -144,4 +146,9 @@ class LoginPinFragment : Fragment() {
     private fun showToast(msg: String) {
         Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
     }
+    private fun showLongToast(msg: String) {
+        Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
+    }
+
+
 }

@@ -62,19 +62,19 @@ class FundDetailsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         super.onViewCreated(view, savedInstanceState)
-        (requireActivity() as AppCompatActivity).supportActionBar?.apply {
+        /*(requireActivity() as AppCompatActivity).supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             setDisplayShowHomeEnabled(true)
             title = "Fund Detailed Summary"  // Optional
-        }
+        }*/
         val fundId = args.fundId
         lifecycleScope.launch {
             val fundDetails = userSummaryViewModel.getFundDetails(fundId)
             fetchAllFundDetails(fundDetails)
         }
         val toolbar = view.findViewById<MaterialToolbar>(R.id.fund_details_toolbar)
-        (activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
-        (activity as? AppCompatActivity)?.supportActionBar?.setDisplayShowTitleEnabled(false)
+       // (activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
+       // (activity as? AppCompatActivity)?.supportActionBar?.setDisplayShowTitleEnabled(false)
 
         // Enable back arrow
         val navController = findNavController()

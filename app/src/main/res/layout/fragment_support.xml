@@ -11,11 +11,9 @@
         android:id="@+id/toolbar_contact_details"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        style="@style/ApnaFund.Toolbar"
         android:title="@string/text_contact_us"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navigationIconTint="@color/black"
-        app:titleTextColor="@color/white" />
+        app:layout_constraintTop_toTopOf="parent"/>
 
     <TextView
         android:id="@+id/text_view_contact_header"

@@ -2,7 +2,7 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="primary_colour">#04AAF2</color>
+    <color name="primary_colour">#E2E8F0</color>
     <color name="light_gray">#FAF0F0</color>
     <color name="gray">#817A7A</color>
     <color name="blue_light">#B4E8FD</color>
@@ -15,4 +15,27 @@
     <color name="green">#4CAF50</color>
     <color name="table_text">#FFFFFFFF</color>
     <color name="tab_text">#FF000000</color>
+    <color name="background">#F8FAFC</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#E2E8F0</color>
+    <color name="text_heading">#0F172A</color>
+    <color name="on_primary">#FFFFFF</color>
+
+    <color name="text_primary">#0F1012</color>
+    <color name="text_secondary">#475569</color>
+    <color name="success">#16A34A</color>
+    <color name="warning">#F59E0B</color>
+    <color name="error">#DC2626</color>
+
+    <color name="btn_primary_bg">#0284C7</color>
+    <color name="btn_primary_text">#FFFFFF</color>
+
+    <color name="btn_secondary_bg">#E2E8F0</color>
+    <color name="btn_secondary_text">#0F172A</color>
+    <color name="btn_secondary_border">#94A3B8</color>
+    <color name="bottom_nav_active">#0284C7</color>   <!-- strong -->
+    <color name="bottom_nav_inactive">#1E293B</color> <!-- dark grey -->
+    <color name="input_outline">#64748B</color>      <!-- visible border -->
+    <color name="input_hint">#475569</color>         <!-- readable hint -->
+
 </resources>

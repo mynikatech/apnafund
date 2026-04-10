@@ -29,6 +29,7 @@ interface UsersApi {
     suspend fun updateUser(id: Int, user: UsersDto): Boolean
     suspend fun deleteUser(id: Int): Boolean
     suspend fun deleteAll(): Boolean
+    suspend fun getUsersForModerator(userId: Int): List<UsersDto>
 
     // lookups/checks
     suspend fun doesUserExists(emailId: String): Boolean

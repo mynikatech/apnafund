@@ -66,6 +66,7 @@
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
+            style="@style/ApnaFundButton.Primary"
             android:id="@+id/button_submit"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -75,7 +76,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_cancel"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            style="@style/ApnaFundButton.Secondary"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"

@@ -1,17 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="primary_colour">#04AAF2</color>
-    <color name="light_gray">#FAF0F0</color>
-    <color name="gray">#817A7A</color>
-    <color name="blue_light">#B4E8FD</color>
-    <color name="blue_medium">#85C0D9</color>
-    <color name="blue_dark">#117AA7</color>
-    <color name="purple">#8872AE</color>
-    <color name="link_colour">#1E88E5</color>
-    <color name="red">#F44336</color>
-    <color name="green">#4CAF50</color>
-    <color name="tab_text">#FF000000</color>
-    <color name="table_text">#ffffff</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Backgrounds -->
+    <color name="background">#0F172A</color>
+    <color name="surface">#1E293B</color>
+    <color name="surface_variant">#334155</color>
+
+    <!-- Primary palette -->
+    <color name="primary_colour">#38BDF8</color> <!-- softer blue -->
+    <color name="on_primary">#0F172A</color>
+    <color name="blue_dark">#0288D1</color>
+
+    <!-- Text -->
+    <color name="text_primary">#E2E8F0</color>
+    <color name="text_secondary">#94A3B8</color>
+
+    <!-- Status -->
+    <color name="red">#EF5350</color>
+    <color name="green">#66BB6A</color>
+    <color name="yellow">#FFD54F</color>
+
+    <!-- UI -->
+    <color name="tab_text">#FFFFFF</color>
+    <color name="table_text">#FFFFFF</color>
+
+    <color name="success">#22C55E</color>
+    <color name="warning">#FACC15</color>
+    <color name="error">#EF4444</color>
+    <color name="text_heading">#F1F5F9</color>
+
+    <color name="btn_primary_bg">#38BDF8</color>
+    <color name="btn_primary_text">#0F172A</color>
+
+    <color name="btn_secondary_bg">#334155</color>
+    <color name="btn_secondary_text">#E2E8F0</color>
+    <color name="btn_secondary_border">#64748B</color>
+
+    <color name="bottom_nav_active">#38BDF8</color>
+    <color name="bottom_nav_inactive">#94A3B8</color>
+    <color name="input_outline">#94A3B8</color>
+    <color name="input_hint">#94A3B8</color>
 </resources>

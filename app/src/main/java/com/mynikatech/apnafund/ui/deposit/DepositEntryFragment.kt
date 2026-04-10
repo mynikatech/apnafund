@@ -97,7 +97,7 @@ class DepositEntryFragment : BaseEntryFragment() {
         lifecycleScope.launch {
             val fund = fundViewModel.fetchFund(fundId)
             if(null!= fund)
-            validMonthYearList = getValidMonthYearList(fund.fundStartDate, fund.fundMaturityDate)
+                validMonthYearList = getValidMonthYearList(fund.fundStartDate, fund.fundMaturityDate)
 
             val validMonths = validMonthYearList.map { it.first }.distinct()
             val validYears = validMonthYearList.map { it.second }.distinct()

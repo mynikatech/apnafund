@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:padding="20dp">
@@ -10,7 +11,7 @@
         android:id="@+id/input_layout_first_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="First Name"
+        android:hint="@string/text_first_name"
         app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -35,7 +36,6 @@
             android:id="@+id/edit_text_last_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:contentDescription="Enter Last name"
             android:importantForAutofill="no"
             android:inputType="textPersonName"
             android:textSize="16sp" />
@@ -47,14 +47,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:hint="Email Id"
+        android:hint="@string/text_email_id"
         app:layout_constraintTop_toBottomOf="@id/input_layout_last_name">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edit_text_email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:contentDescription="Enter email address"
             android:importantForAutofill="no"
             android:inputType="textEmailAddress"
             android:textSize="16sp" />
@@ -66,14 +65,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:hint="Phone"
+        android:hint="@string/text_phone"
         app:layout_constraintTop_toBottomOf="@id/input_layout_email">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edit_text_phone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:contentDescription="Enter Phone Number"
             android:importantForAutofill="no"
             android:inputType="phone"
             android:maxLength="10"
@@ -85,7 +83,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:hint="Select Group"
+        android:hint="@string/text_select_group"
         app:layout_constraintTop_toBottomOf="@id/input_layout_phone">
 
         <AutoCompleteTextView
@@ -95,7 +93,8 @@
             android:completionThreshold="1"
             android:importantForAutofill="no"
             android:inputType="none"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            tools:ignore="LabelFor" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <LinearLayout
@@ -106,20 +105,21 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_save_user"
+            style="@style/ApnaFundButton.Primary"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
             android:layout_weight="1"
-            android:text="Save" />
+            android:text="@string/text_save" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_cancel_user"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            style="@style/ApnaFundButton.Secondary"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
             android:layout_weight="1"
-            android:text="Cancel" />
+            android:text="@string/text_cancel_button" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

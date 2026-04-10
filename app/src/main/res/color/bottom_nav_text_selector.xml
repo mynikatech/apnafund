@@ -3,5 +3,5 @@
     <!-- Selected text color -->
     <item android:color="@color/primary_colour" android:state_checked="true" />
     <!-- Unselected text color -->
-    <item android:color="@color/gray" />
+    <item android:color="@color/black" />
 </selector>

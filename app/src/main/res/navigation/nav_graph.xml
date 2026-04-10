@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/loginFragment">
 
@@ -23,7 +22,7 @@
             app:destination="@id/setPasswordFragment" />
         <action
             android:id="@+id/actionLoginFragmentToForgotPasswordFragment"
-            app:destination="@id/resetPasswordFragment" />
+            app:destination="@id/forgotPasswordFragment" />
         <action
             android:id="@+id/actionLoginFragment_to_verifyEmailFragment"
             app:destination="@id/verifyEmailFragment" />
@@ -35,7 +34,7 @@
         android:label="Change Password">
         <action
             android:id="@+id/actionSetPasswordFragmentToLoginFragment"
-            app:destination="@id/loginFragment"/>
+            app:destination="@id/loginFragment" />
         <action
             android:id="@+id/actionSetPasswordFragmentToVerifyEmailFragment"
             app:destination="@id/verifyEmailFragment" />
@@ -65,6 +64,23 @@
 
     <fragment
         android:id="@+id/resetPasswordFragment"
+        android:name="com.mynikatech.apnafund.ui.auth.ResetPasswordFragment"
+        android:label="Change Password">
+        <action
+            android:id="@+id/actionResetPasswordFragmentToLoginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/actionResetPasswordFragmentToSettingsFragment"
+            app:destination="@id/settingsFragment" />
+        <argument
+            android:name="userId"
+            android:defaultValue="0"
+            app:argType="integer" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/forgotPasswordFragment"
         android:name="com.mynikatech.apnafund.ui.auth.ForgotPasswordFragment"
         android:label="Change Password">
         <action
@@ -200,6 +216,9 @@
         <action
             android:id="@+id/action_sideMenuDialogFragment_to_logInFragment"
             app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_sideMenuDialogFragment_to_resetPasswordFragment"
+            app:destination="@id/resetPasswordFragment" />
     </fragment>
 
     <fragment
@@ -322,11 +341,11 @@
             app:argType="string" />
         <argument
             android:name="shouldSetPin"
-            app:argType="boolean"
-            android:defaultValue="false" />
+            android:defaultValue="false"
+            app:argType="boolean" />
         <argument
             android:name="emailOtpExpiresAtMillis"
-            app:argType="long"/>
+            app:argType="long" />
         <argument
             android:name="purpose"
             app:argType="string" />
@@ -341,7 +360,7 @@
             android:id="@+id/actionVerifyEmailFragmentToChangePasswordFragment"
             app:destination="@id/changePasswordFragment"
             app:popUpTo="@id/verifyEmailFragment"
-            app:popUpToInclusive="true"/>
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment

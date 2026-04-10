@@ -11,10 +11,9 @@
         android:id="@+id/fund_member_details_toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        style="@style/ApnaFund.Toolbar"
         app:titleTextColor="@color/white"
         android:title="Fund Members"
-        app:navigationIconTint="@color/black"
         app:layout_constraintTop_toTopOf="parent"/>
 
     <TextView
