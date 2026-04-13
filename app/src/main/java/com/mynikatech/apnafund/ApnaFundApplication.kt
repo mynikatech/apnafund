@@ -5,6 +5,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.MemoryCacheSettings
 import com.mynikatech.apnafund.data.database.ApnaFundDatabase
+import com.mynikatech.apnafund.data.repository.AIRepository
 import com.mynikatech.apnafund.data.repository.ApprovalRepository
 import com.mynikatech.apnafund.data.repository.DepositRepository
 import com.mynikatech.apnafund.data.repository.FeedbackRepository
@@ -15,6 +16,7 @@ import com.mynikatech.apnafund.data.repository.TypeRepository
 import com.mynikatech.apnafund.data.repository.UserRoleRepository
 import com.mynikatech.apnafund.data.repository.UserSummaryRepository
 import com.mynikatech.apnafund.di.AppLocator
+import com.mynikatech.apnafund.net.AIApiKtor
 import com.mynikatech.apnafund.net.AdminApiKtor
 import com.mynikatech.apnafund.net.ApprovalApiKtor
 import com.mynikatech.apnafund.net.DepositsApiKtor
@@ -59,6 +61,7 @@ class ApnaFundApplication : Application() {
         val passwordHistoryApi = PasswordHistoryApiKtor()
         val notificationsApi = NotificationsApiKtor()
         val approvalApi = ApprovalApiKtor()
+        val aIApi = AIApiKtor()
         val firestore = FirebaseFirestore.getInstance()
 
         val settings = FirebaseFirestoreSettings.Builder()
@@ -86,6 +89,7 @@ class ApnaFundApplication : Application() {
         loanRepository = LoanRepository(loansDao, loanEmisDao, loansApi)
         feedbackRepository = FeedbackRepository(feedbackDao, feedbackApi)
         approvalRepository = ApprovalRepository(approvalApi)
+        aiRepository = AIRepository(aIApi)
         userSummaryRepository = UserSummaryRepository(
             userApi,
             loansApi,
@@ -116,6 +120,8 @@ class ApnaFundApplication : Application() {
         lateinit var typeMap: Map<String, String>
         lateinit var rolesMap: Map<String, Int>
         lateinit var approvalRepository: ApprovalRepository
+        lateinit var aiRepository: AIRepository
+
 
     }
 }

@@ -46,6 +46,7 @@ import com.mynikatech.apnafund.util.Converters.toTitleCase
 import com.mynikatech.apnafund.util.GroupInputValidator
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import androidx.appcompat.widget.TooltipCompat
 
 class UserSummaryFragment : Fragment() {
 
@@ -136,8 +137,15 @@ class UserSummaryFragment : Fragment() {
         } else {
             SessionManager.userId
         }
-
+        TooltipCompat.setTooltipText(
+            binding.fabAssistant,
+            "Ask Maya"
+        )
         Log.d("ApnaFund", "UserFragment: The user Id is $userId")
+
+        binding.fabAssistant.setOnClickListener {
+            findNavController().navigate(R.id.aiChatFragment)
+        }
 
         userSummaryViewModel.userName.observe(viewLifecycleOwner) { nameFromVm ->
 

@@ -23,4 +23,7 @@ data class LoanDetailsWithMemberNamesDto(
     val currTotalIntPaid: Double,
     val totalInterest: Double,
     val workflowStatus: String
-)
+) {
+    val borrowerName: String
+        get() = "$firstName ${lastName}".trim()
+}

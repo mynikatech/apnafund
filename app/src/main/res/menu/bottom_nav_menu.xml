@@ -2,18 +2,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/userSummaryFragment"
         android:icon="@drawable/ic_home"
-        android:title="Home"/>
+        android:title="@string/text_home"/>
     <item android:id="@+id/fundFragment"
         android:icon="@drawable/ic_fund_filled"
-        android:title="Funds"/>
+        android:title="@string/text_funds"/>
     <item
         android:id="@+id/groupChatFragment"
         android:icon="@drawable/ic_chat"
-        android:title="Chat"/>
+        android:title="@string/text_chat"/>
     <item android:id="@+id/adminFragment"
         android:icon="@drawable/ic_admin"
-        android:title="Admin"/>
+        android:title="@string/text_admin"/>
     <item android:id="@+id/settingsFragment"
         android:icon="@drawable/ic_hamburger"
-        android:title="Settings"/>
+        android:title="@string/text_settings"/>
 </menu>

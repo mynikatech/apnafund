@@ -381,4 +381,9 @@
             app:destination="@id/loanEmiFragment" />
 
     </fragment>
+
+    <fragment
+        android:id="@+id/aiChatFragment"
+        android:name="com.mynikatech.apnafund.ui.assistant.AiChatFragment"
+        android:label="AI Chat"/>
 </navigation>

@@ -13,7 +13,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.core.view.MenuProvider
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.mynikatech.apnafund.BuildConfig
@@ -116,7 +115,8 @@ class MainActivity : AppCompatActivity() {
                 R.id.changePasswordFragment, R.id.setPasswordFragment,
                 R.id.fundMemberDetailsFragment, R.id.fundAddMembersFragment,
                 R.id.verifyEmailFragment, R.id.resetPasswordFragment,
-                R.id.loginPinFragment, R.id.fundLoanSummaryFragment -> View.GONE
+                R.id.loginPinFragment, R.id.fundLoanSummaryFragment,
+                R.id.aiChatFragment -> View.GONE
 
                 else -> View.VISIBLE
             }

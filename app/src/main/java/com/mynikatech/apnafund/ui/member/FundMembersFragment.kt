@@ -39,7 +39,6 @@ import kotlinx.coroutines.withContext
 class FundMembersFragment : Fragment() {
 
     private lateinit var binding: FragmentFundMembersBinding
-    private lateinit var tableLayoutFundMemberDetails: TableLayout
 
     private val groupViewModel: GroupViewModel by viewModels()
     private val fundViewModel: FundViewModel by viewModels()
@@ -58,11 +57,6 @@ class FundMembersFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        /*(requireActivity() as AppCompatActivity).supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
-            setDisplayShowHomeEnabled(true)
-            title = "Fund Member Details"  // Optional
-        }*/
         arguments?.let {
             groupId = it.getInt("groupId")
         }
@@ -91,9 +85,6 @@ class FundMembersFragment : Fragment() {
             findNavController().navigate(action)
         }
         val toolbar = view.findViewById<MaterialToolbar>(R.id.fund_member_details_toolbar)
-        // (activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
-        //(activity as? AppCompatActivity)?.supportActionBar?.setDisplayShowTitleEnabled(false)
-
         // Enable back arrow
         val navController = findNavController()
         toolbar.setNavigationIcon(R.drawable.ic_back_arrow) // your back icon
@@ -133,11 +124,11 @@ class FundMembersFragment : Fragment() {
 
         val fund = fundDeferred.await()
         val groupDeferred = if (fund != null) {
-            async(Dispatchers.IO) { groupViewModel.fetchGroup(fund.groupId ?: 0) } // Groups?
+            async(Dispatchers.IO) { groupViewModel.fetchGroup(fund.groupId) } // Groups?
         } else null
 
         val moderatorDeferred = if (fund?.moderator != null) {
-            async(Dispatchers.IO) { userViewModel.fetchUser(fund.moderator!!) } // Users?
+            async(Dispatchers.IO) { userViewModel.fetchUser(fund.moderator) } // Users?
         } else null
 
         val group = groupDeferred?.await()
@@ -171,7 +162,7 @@ class FundMembersFragment : Fragment() {
                     gravity = Gravity.START
                 }
                 val tvJoiningDate = TextView(activity).apply {
-                    text = member.joiningDate.orEmpty()
+                    text = member.joiningDate
                     gravity = Gravity.START
                 }
 

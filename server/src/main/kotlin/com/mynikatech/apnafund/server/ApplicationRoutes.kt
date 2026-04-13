@@ -2,6 +2,8 @@ package com.mynikatech.apnafund.server
 
 import com.mynikatech.apnafund.server.admin.AdminSql
 import com.mynikatech.apnafund.server.admin.adminRoutes
+import com.mynikatech.apnafund.server.ai.AIService
+import com.mynikatech.apnafund.server.ai.aiRoutes
 import com.mynikatech.apnafund.server.approval.ApprovalService
 import com.mynikatech.apnafund.server.approval.ApprovalSql
 import com.mynikatech.apnafund.server.approval.approvalRoutes
@@ -53,7 +55,8 @@ fun Application.registerRoutes(
     userManagementService: UserManagementService,
     emailVerificationService: EmailVerificationService,
     notificationService: NotificationService,
-    approvalDao: ApprovalSql, approvalService: ApprovalService
+    approvalDao: ApprovalSql, approvalService: ApprovalService,
+    aiService: AIService
 ) {
     routing {
         usersRoutes(usersDao,eventDispatchService, moderatorRegistrationService,userManagementService,emailVerificationService, userRolesDao)
@@ -73,5 +76,6 @@ fun Application.registerRoutes(
         privilegesRoutes(roleDao)
         userDetailsRoute(usersDao,userRolesDao,notificationsDao)
         approvalRoutes(approvalDao, approvalService)
+        aiRoutes(aiService)
     }
 }

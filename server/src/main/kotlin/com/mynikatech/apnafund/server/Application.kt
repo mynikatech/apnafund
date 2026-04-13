@@ -2,6 +2,7 @@ package com.mynikatech.apnafund.server
 
 import com.mynikatech.apnafund.net.api.ValidationException
 import com.mynikatech.apnafund.server.admin.AdminSql
+import com.mynikatech.apnafund.server.ai.AIService
 import com.mynikatech.apnafund.server.api.respondError
 import com.mynikatech.apnafund.server.approval.ApprovalService
 import com.mynikatech.apnafund.server.approval.ApprovalSql
@@ -24,6 +25,7 @@ import com.mynikatech.apnafund.server.types.TypesSql
 import com.mynikatech.apnafund.server.userroles.UserRolesSql
 import com.mynikatech.apnafund.server.users.EmailVerificationService
 import com.mynikatech.apnafund.server.users.ModeratorRegistrationService
+import com.mynikatech.apnafund.server.users.UserFinanceService
 import com.mynikatech.apnafund.server.users.UserManagementService
 import com.mynikatech.apnafund.server.users.UsersSql
 import io.ktor.http.HttpHeaders
@@ -66,7 +68,7 @@ fun main() {
     val keyStorePassword = (System.getenv("KEYSTORE_PASSWORD") ?: "changeit").toCharArray()
     val privateKeyPassword =
         (System.getenv("PRIVATE_KEY_PASSWORD") ?: String(keyStorePassword)).toCharArray()
-    // 🔴 MUST be first — before Firebase Admin / Firestore
+    // MUST be first — before Firebase Admin / Firestore
     System.setProperty(
         "io.grpc.internal.DnsNameResolverProvider.enable_unix_domain_socket",
         "false"
@@ -211,7 +213,8 @@ fun Application.module() {
         emailVerificationEnabled,
         passwordHistoryDao
     )
-
+    val userFinancialService = UserFinanceService(usersDao,fundDao, loansDao)
+    val aiService = AIService(userFinancialService)
 
     val notificationService =
         NotificationService(
@@ -347,7 +350,8 @@ fun Application.module() {
             emailVerificationService,
             notificationService,
             approvalDao,
-            approvalService
+            approvalService,
+            aiService
         )
     }
     println(">>> MODULE COMPLETED <<<")
