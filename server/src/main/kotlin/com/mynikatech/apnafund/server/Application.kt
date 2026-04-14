@@ -1,8 +1,12 @@
 package com.mynikatech.apnafund.server
 
 import com.mynikatech.apnafund.net.api.ValidationException
+import com.mynikatech.apnafund.net.dto.AIProviderType
 import com.mynikatech.apnafund.server.admin.AdminSql
+import com.mynikatech.apnafund.server.ai.AIClient
 import com.mynikatech.apnafund.server.ai.AIService
+import com.mynikatech.apnafund.server.ai.GeminiClient
+import com.mynikatech.apnafund.server.ai.OpenAIClient
 import com.mynikatech.apnafund.server.api.respondError
 import com.mynikatech.apnafund.server.approval.ApprovalService
 import com.mynikatech.apnafund.server.approval.ApprovalSql
@@ -183,6 +187,12 @@ fun Application.module() {
     val supportEventsArn = System.getenv("SUPPORT_EVENTS_TOPIC_ARN")
         ?: error("SUPPORT_EVENTS_TOPIC_ARN env var not set")
 
+    val apiKey = System.getenv("OPENAI_API_KEY")
+        ?: throw IllegalStateException("OPENAI_API_KEY not found in environment")
+
+    val geminiKey = System.getenv("GEMINI_API_KEY")
+        ?: throw IllegalStateException("GEMINI_API_KEY not found in environment")
+
     val eventDispatchService = EventDispatchService(
         UserMessagingPublisher(userEventsArn),
         SupportMessagingPublisher(supportEventsArn)
@@ -203,7 +213,7 @@ fun Application.module() {
         passwordHistoryDao,
         approvalDao
     )
-    val userManagemnentService = UserManagementService(
+    val userManagementService = UserManagementService(
         usersDao,
         userRolesDao,
         roleDao,
@@ -213,8 +223,15 @@ fun Application.module() {
         emailVerificationEnabled,
         passwordHistoryDao
     )
+    val openAIClient = OpenAIClient(apiKey)
+    val aiClient = AIClient(
+        openAIClient = null,                 // disable OpenAI
+        geminiClient = GeminiClient(geminiKey),
+        provider = AIProviderType.GEMINI,
+        enableFallback = false               // no fallback needed
+    )
     val userFinancialService = UserFinanceService(usersDao,fundDao, loansDao)
-    val aiService = AIService(userFinancialService)
+    val aiService = AIService(userFinancialService,aiClient )
 
     val notificationService =
         NotificationService(
@@ -256,7 +273,7 @@ fun Application.module() {
         exception<io.ktor.server.plugins.BadRequestException> { call, cause ->
             call.respondError(HttpStatusCode.BadRequest, "validation", "Bad request", cause.message)
         }
-        // ✅ JDBI DB errors (SMART MAPPING)
+        // JDBI DB errors (SMART MAPPING)
         exception<org.jdbi.v3.core.statement.UnableToExecuteStatementException> { call, cause ->
 
             val msg = cause.cause?.message ?: ""
@@ -265,7 +282,7 @@ fun Application.module() {
             call.application.environment.log.error("DB ERROR FULL", cause)
 
             when {
-                // 🔴 Duplicate / unique constraint → 409
+                // Duplicate / unique constraint → 409
                 msg.contains("duplicate", ignoreCase = true) ||
                         msg.contains("unique", ignoreCase = true) -> {
                     call.respondError(
@@ -276,7 +293,7 @@ fun Application.module() {
                     )
                 }
 
-                // 🔴 Foreign key → invalid reference → 400
+                // Foreign key → invalid reference → 400
                 msg.contains("foreign key", ignoreCase = true) -> {
                     call.respondError(
                         HttpStatusCode.BadRequest,
@@ -286,7 +303,7 @@ fun Application.module() {
                     )
                 }
 
-                // 🔴 Null constraint → validation → 400
+                // Null constraint → validation → 400
                 msg.contains("null value", ignoreCase = true) -> {
                     call.respondError(
                         HttpStatusCode.BadRequest,
@@ -296,7 +313,7 @@ fun Application.module() {
                     )
                 }
 
-                // 🔴 Default DB error → 500
+                // Default DB error → 500
                 else -> {
                     call.respondError(
                         HttpStatusCode.InternalServerError,
@@ -346,7 +363,7 @@ fun Application.module() {
             passwordHistoryDao,
             eventDispatchService,
             moderatorRegistrationService,
-            userManagemnentService,
+            userManagementService,
             emailVerificationService,
             notificationService,
             approvalDao,

@@ -3,6 +3,9 @@ package com.mynikatech.apnafund.server.ai
 import com.mynikatech.apnafund.net.dto.AIEntity
 import com.mynikatech.apnafund.net.dto.AIIntent
 import com.mynikatech.apnafund.net.dto.AIIntentResult
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 
 class AIIntentParser {
 
@@ -14,7 +17,7 @@ class AIIntentParser {
             msg.contains("loan") -> AIIntentResult(
                 intent = AIIntent.FETCH_DATA,
                 entity = AIEntity.LOAN,
-                filters = extractLoanFilters(msg)
+                filters = extractLoanFilters(msg).toJsonObject()
             )
 
             msg.contains("fund") -> AIIntentResult(
@@ -46,6 +49,13 @@ class AIIntentParser {
         if (msg.contains("kapil")) filters["borrower"] = "Kapil"
 
         return filters
+    }
+    fun Map<String, String>.toJsonObject(): JsonObject {
+        return buildJsonObject {
+            this@toJsonObject.forEach { (key, value) ->
+                put(key, JsonPrimitive(value))
+            }
+        }
     }
 
 }

@@ -81,3 +81,15 @@ variable "meta_wa_token" {
 variable "meta_phone_number_id" {
   type = string
 }
+
+variable "openai_api_key" {
+  description = "OpenAI API Key"
+  type        = string
+  sensitive   = true
+}
+
+variable "gemini_api_key" {
+  description = "Gemini API Key"
+  type        = string
+  sensitive   = true
+}

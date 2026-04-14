@@ -1,5 +1,6 @@
 package com.mynikatech.apnafund.server.ai
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.mynikatech.apnafund.net.dto.AIAction
 import com.mynikatech.apnafund.net.dto.AIEntity
 import com.mynikatech.apnafund.net.dto.AIIntent
@@ -10,38 +11,50 @@ import com.mynikatech.apnafund.net.dto.AIResponseType
 import com.mynikatech.apnafund.net.dto.LoanDetailsWithMemberNamesDto
 import com.mynikatech.apnafund.server.users.UserFinanceService
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import java.util.concurrent.TimeUnit
 
 class AIService(
-    private val userFinanceService: UserFinanceService
+    private val userFinanceService: UserFinanceService,
+    private val aiClient: AIClient
 ) {
     private val parser = AIIntentParser()
     private val log = org.slf4j.LoggerFactory.getLogger(this::class.java)
+
+    private val aiCache = Caffeine.newBuilder()
+        .maximumSize(1000)
+        .expireAfterWrite(10, TimeUnit.MINUTES)
+        .build<String, AIIntentResult>()
 
     suspend fun processQuery(request: AIRequest): AIResponse {
 
         val message = request.message.lowercase()
         val userId = request.context.userId
-        val intent = parser.parse(message)
+        val intent = getIntent(message)
 
         return handleIntent(intent, userId)
     }
 
-    private suspend fun handleLoanQuery(userId: Int, filters: Map<String, String>): AIResponse {
+    private fun handleLoanQuery(userId: Int, filters: JsonObject): AIResponse {
 
         val loans = userFinanceService.getLoansForUser(userId)
+        val statusFilter = filters["status"]?.jsonPrimitive?.contentOrNull
+        val borrowerFilter = filters["borrower"]?.jsonPrimitive?.contentOrNull
         val filteredLoans = loans.filter { loan ->
-            val statusMatch = filters["status"]?.let { statusInput ->
+            val statusMatch = statusFilter?.let { statusInput ->
                 val allowedStatuses = mapStatus(statusInput)
                 allowedStatuses.any { mapped ->
                     loan.status.equals(mapped, ignoreCase = true)
                 }
             } ?: true
 
-            val borrowerMatch = filters["borrower"]?.let {
+            val borrowerMatch = borrowerFilter?.let {
                 loan.borrowerName.contains(it, ignoreCase = true)
             } ?: true
 
@@ -52,8 +65,8 @@ class AIService(
 
             val message = buildString {
                 append("You have no ")
-                val statusFilter  = filters["status"]
-                val borrowerFilter = filters["borrower"]
+                val statusFilter  = filters["status"]?.jsonPrimitive?.contentOrNull
+                val borrowerFilter = filters["borrower"]?.jsonPrimitive?.contentOrNull
                 if (statusFilter != null) {
                     append(statusFilter.lowercase())
                     append(" ")
@@ -76,9 +89,24 @@ class AIService(
                 )
             )
         }
+        val header = buildString {
+            append("Here are your ")
 
+            statusFilter?.let {
+                append(it.lowercase())
+                append(" ")
+            }
+
+            append("loans")
+
+            borrowerFilter?.let {
+                append(" for $it")
+            }
+
+            append(":")
+        }
         return AIResponse(
-            reply = "Here are your loans:",
+            reply = header,
             type = AIResponseType.TABLE,
             data = buildLoanTable(filteredLoans),
             actions = listOf(
@@ -87,7 +115,7 @@ class AIService(
         )
     }
 
-    private suspend fun handleFundQuery(userId: Int): AIResponse {
+    private fun handleFundQuery(userId: Int): AIResponse {
 
         val funds = userFinanceService.getFundsForUser(userId)
         val totalFundsSize = funds.sumOf { it.totalExpectedDeposit }
@@ -109,7 +137,7 @@ class AIService(
         )
     }
 
-    private suspend fun handleSummary(userId: Int): AIResponse {
+    private fun handleSummary(userId: Int): AIResponse {
 
         val funds = userFinanceService.getFundsForUser(userId)
         val totalFundsSize = funds.sumOf { it.totalExpectedDeposit }
@@ -173,7 +201,7 @@ class AIService(
             })
         }
     }
-    private suspend fun handleIntent(
+    private fun handleIntent(
         intent: AIIntentResult,
         userId: Int
     ): AIResponse {
@@ -209,5 +237,30 @@ class AIService(
 
             else -> listOf(input.uppercase()) // fallback
         }
+    }
+
+    suspend fun getIntent(message: String): AIIntentResult {
+
+        val cacheKey = message
+            .lowercase()
+            .replace("\\s+".toRegex(), " ")
+            .trim()
+
+        aiCache.getIfPresent(cacheKey)?.let {
+            log.info("Cache hit for: $message")
+            return it
+        }
+
+        val result = try {
+            aiClient.getIntentFromAI(message)
+        } catch (e: Exception) {
+            log.error("AI failed, using parser: ${e.message}")
+            parser.parse(message)
+        }
+
+        // Store result
+        aiCache.put(cacheKey, result)
+
+        return result
     }
 }
