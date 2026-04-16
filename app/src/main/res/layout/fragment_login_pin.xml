@@ -28,7 +28,7 @@
         android:id="@+id/text_enter_pin"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Enter 4-digit PIN"
+        android:text="@string/message_enter_4_digit_pin"
         android:textSize="20sp"
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="24dp" />
@@ -72,7 +72,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:text="Submit" />
+            android:text="@string/button_submit" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_cancel"
@@ -80,14 +80,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Cancel" />
+            android:text="@string/text_cancel_button" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/text_forgot_pin"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Forgot PIN? Login with Email"
+        android:text="@string/message_forgot_pin_login_with_email"
         android:layout_gravity="center_horizontal"
         android:clickable="true"
         android:focusable="true"

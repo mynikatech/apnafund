@@ -51,7 +51,8 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
             val otp = binding.editTextOtp.text.toString().trim()
 
             if (otp.length != 6) {
-                Toast.makeText(requireContext(), "Enter valid 6-digit code", Toast.LENGTH_SHORT)
+                Toast.makeText(requireContext(),
+                    getString(R.string.error_enter_valid_6_digit_code), Toast.LENGTH_SHORT)
                     .show()
                 binding.buttonVerify.isEnabled = true
                 return@setOnClickListener
@@ -117,7 +118,7 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
                     // Network / unexpected crash
                     Toast.makeText(
                         requireContext(),
-                        "Unexpected error. Please try again.",
+                        getString(R.string.message_unexpected_error),
                         Toast.LENGTH_LONG
                     ).show()
                     binding.buttonVerify.isEnabled = true
@@ -158,7 +159,7 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
 
                     Toast.makeText(
                         requireContext(),
-                        "Verification code resent",
+                        getString(R.string.message_verification_code_resent),
                         Toast.LENGTH_SHORT
                     ).show()
                 } catch (e: ApiException) {
@@ -279,8 +280,7 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(getString(R.string.cancel_email_verify_message))
             .setMessage(
-                "If you leave this screen, you will be redirected to the Auth Screen. " +
-                        " the Code will become invalid and You’ll need to resend the code again to continue."
+                getString(R.string.message_cancel_email_verify)
             )
             .setPositiveButton(R.string.text_leave) { _, _ ->
                 findNavController().navigate(
@@ -295,8 +295,7 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(getString(R.string.cancel_email_verify_message))
             .setMessage(
-                "If you leave this screen, you will be redirected to the Login Screen. " +
-                        "The code will become invalid and you will have to restart."
+                getString(R.string.message_cancel_email_verify_login)
             )
             .setPositiveButton(R.string.text_leave) { _, _ ->
 

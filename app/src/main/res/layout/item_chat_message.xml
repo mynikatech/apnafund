@@ -73,7 +73,7 @@
                 android:id="@+id/textTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="10sp"
+                android:textSize="11sp"
                 android:textColor="@color/gray"
                 android:layout_gravity="end"
                 tools:text="10:45 AM"/>

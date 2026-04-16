@@ -41,7 +41,7 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Edit Fund"
+                    android:contentDescription="@string/text_edit_fund"
                     android:paddingStart="14dp"
                     android:paddingEnd="16dp"
                     android:src="@drawable/ic_edit"
@@ -57,7 +57,7 @@
                     android:background="@drawable/status_background"
                     android:paddingHorizontal="4dp"
                     android:paddingVertical="4dp"
-                    android:text="Active"
+                    android:text="@string/text_active"
                     android:textColor="@color/white"
                     android:textSize="12sp"
                     app:layout_constraintBottom_toBottomOf="@id/text_view_fund_name_value"
@@ -68,7 +68,7 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Close Fund"
+                    android:contentDescription="@string/text_close_fund"
                     android:paddingStart="6dp"
                     android:paddingEnd="6dp"
                     android:src="@drawable/ic_close_fund"
@@ -81,8 +81,9 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Apply Loan"
+                    android:contentDescription="@string/text_apply_loan"
                     android:paddingStart="4dp"
+                    android:paddingEnd="1dp"
                     android:src="@drawable/icon_loan"
                     app:layout_constraintBottom_toBottomOf="@id/text_view_fund_name_value"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -102,7 +103,7 @@
                     android:layout_height="wrap_content"
                     android:paddingStart="4dp"
                     android:paddingEnd="4dp"
-                    android:text="Moderator:"
+                    android:text="@string/text_moderator"
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
@@ -126,9 +127,9 @@
                     android:paddingStart="8dp"
                     android:paddingEnd="4dp"
                     android:textColor="@color/link_colour"
-                    android:textSize="10sp"
+                    android:textSize="11sp"
                     android:textStyle="italic"
-                    android:text="View Fund Members" />
+                    android:text="@string/text_view_fund_members" />
 
                 <TextView
                     android:id="@+id/text_view_fund_loans_summary"
@@ -140,9 +141,9 @@
                     android:paddingStart="12dp"
                     android:paddingEnd="4dp"
                     android:textColor="@color/link_colour"
-                    android:textSize="10sp"
+                    android:textSize="11sp"
                     android:textStyle="italic"
-                    android:text="View Loans" />
+                    android:text="@string/text_view_loans" />
             </LinearLayout>
 
             <View
@@ -204,7 +205,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="Monthly Contribution" />
+                        android:text="@string/text_monthly_contribution" />
 
                     <TextView
                         android:id="@+id/label_period"
@@ -212,7 +213,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="Period" />
+                        android:text="@string/text_period" />
 
                     <TextView
                         android:id="@+id/text_view_fund_dep_amount_value"
@@ -263,7 +264,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="Frequency" />
+                        android:text="@string/text_frequency" />
 
                     <TextView
                         android:id="@+id/text_view_fund_dep_frequency_value"
@@ -278,7 +279,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="Total Expected Deposit:" />
+                        android:text="@string/text_total_expected_deposit" />
 
                     <TextView
                         android:id="@+id/text_view_fund_tot_exp_dep_amount_value"
@@ -293,7 +294,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="Total Current Deposit:" />
+                        android:text="@string/text_total_current_deposit" />
 
                     <TextView
                         android:id="@+id/text_view_fund_tot_curr_dep_amount_value"
@@ -308,7 +309,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="Total Expected Maturity:" />
+                        android:text="@string/text_total_expected_maturity" />
 
                     <TextView
                         android:id="@+id/text_view_fund_tot_exp_mat_amount_value"
@@ -323,7 +324,7 @@
                         android:layout_width="0dp"
                         android:layout_columnWeight="1"
                         android:layout_gravity="fill"
-                        android:text="Group" />
+                        android:text="@string/header_single_group" />
 
                     <TextView
                         android:id="@+id/text_view_fund_group_value"

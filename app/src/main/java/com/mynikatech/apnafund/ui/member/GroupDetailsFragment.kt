@@ -61,11 +61,6 @@ class GroupDetailsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-       /* (requireActivity() as AppCompatActivity).supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
-            setDisplayShowHomeEnabled(true)
-            title = "Group Details"  // Optional
-        }*/
         setHasOptionsMenu(true)
         val navArgsGroupId = arguments?.let {
             GroupDetailsFragmentArgs.fromBundle(it).groupId
@@ -94,16 +89,13 @@ class GroupDetailsFragment : Fragment() {
             }
         }
         val toolbar = view.findViewById<MaterialToolbar>(R.id.group_details_toolbar)
-       // (activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
-       // (activity as? AppCompatActivity)?.supportActionBar?.setDisplayShowTitleEnabled(false)
-
         // Enable back arrow
         val navController = findNavController()
         toolbar.setNavigationIcon(R.drawable.ic_back_arrow) // your back icon
         toolbar.setNavigationOnClickListener {
             navController.navigateUp()
         }
-        toolbar.title = "Group Details"
+        toolbar.title = getString(R.string.text_group_details)
     }
 
     private fun fetchAllMembers(groupId: Int) {

@@ -143,12 +143,12 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
     private fun observeData() {
         val selectedFundName = binding.dropdownFund.text.toString()
         if (selectedFundName.isBlank()) {
-            Toast.makeText(requireContext(), "Please select a fund", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.warning_select_fund), Toast.LENGTH_SHORT).show()
             return
         }
         val fundId = fundMap[selectedFundName] ?: 0
         if (fundId == 0) {
-            Toast.makeText(requireContext(), "Invalid fund selected", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.error_invalid_fund_selected), Toast.LENGTH_SHORT).show()
             return
         }
         val month = binding.dropdownMonth.text.toString()
@@ -156,7 +156,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
         if (!validMonthYearList.contains(Pair(month, year))) {
             Toast.makeText(
                 requireContext(),
-                "Invalid month/year for selected loan",
+                getString(R.string.error_invalid_month_year_selected_loan),
                 Toast.LENGTH_SHORT
             ).show()
             // disable UI and Save button
@@ -311,7 +311,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                         input > loamEmi.toInt() -> {
                             Toast.makeText(
                                 requireContext(),
-                                "Amount cannot exceed $loamEmi",
+                                getString(R.string.error_amount_exceeds_limit),
                                 Toast.LENGTH_SHORT
                             ).show()
                             ""
@@ -320,7 +320,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                         input < 0 -> {
                             Toast.makeText(
                                 requireContext(),
-                                "Amount cannot be negative",
+                                getString(R.string.error_amount_negative),
                                 Toast.LENGTH_SHORT
                             ).show()
                             ""
@@ -379,7 +379,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                     val input = inputStr.toDoubleOrNull()
 
                     if (input != null && input < 0) {
-                        showToast("Amount cannot be negative")
+                        showToast(getString(R.string.error_amount_negative))
                     }
                     hasChanges = true
                     binding.buttonSaveLoanEmi.isEnabled = true
@@ -479,11 +479,11 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
 
             if (fundId == 0) {
                 originalLoanEmis
-                Toast.makeText(requireContext(), "Invalid fund selected", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.error_invalid_fund_selected), Toast.LENGTH_SHORT).show()
                 return@launch
             }
             if (!hasChanges) {
-                Toast.makeText(requireContext(), "No Changes to Save", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.message_no_changes_to_save), Toast.LENGTH_SHORT).show()
                 return@launch
             } else {
                 val selectedMonthName = binding.dropdownMonth.text.toString()
@@ -524,7 +524,10 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                         refreshLoanEmiTableWithData(updatedLoanEmiList)
                         Snackbar.make(
                             requireView(),
-                            "Saved ${editedLoanEmis.size} updated Loan Emis entries.",
+                            getString(
+                                R.string.message_saved_updated_loan_emis,
+                                editedLoanEmis.size
+                            ),
                             Snackbar.LENGTH_SHORT
                         )
                             .show()
@@ -555,7 +558,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                         refreshLoanEmiTableWithData(updatedLoanEmisList)
                         Snackbar.make(
                             requireView(),
-                            "Loan Emis saved successfully",
+                            getString(R.string.message_loan_emis_saved_success),
                             Snackbar.LENGTH_SHORT
                         )
                             .show()
@@ -565,7 +568,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                 } else {
                     Snackbar.make(
                         requireView(),
-                        "No changes to save",
+                        getString(R.string.message_no_changes_to_save),
                         Snackbar.LENGTH_SHORT
                     )
                         .show()

@@ -227,13 +227,13 @@ abstract class BaseEntryFragment : Fragment() {
     // tableType = 0 for Deposits Table and 1 for loan Emis
     protected fun createHeaderRow(tableType: Int): TableRow {
         val header = TableRow(requireContext())
-        header.addView(createTextView("Member Name", bold = true, header = true))
-        header.addView(createTextView("Amount", bold = true, header = true))
-        header.addView(createTextView("Late Fee", bold = true, header = true))
+        header.addView(createTextView(getString(R.string.header_member_name), bold = true, header = true))
+        header.addView(createTextView(getString(R.string.text_amount), bold = true, header = true))
+        header.addView(createTextView(getString(R.string.text_late_fee), bold = true, header = true))
         if (tableType == 1)
-            header.addView(createTextView("Prepay", bold = true, header = true))
-        header.addView(createTextView("Date", bold = true, header = true))
-        header.addView(createTextView("Edit", bold = true, header = true))
+            header.addView(createTextView(getString(R.string.text_prepay), bold = true, header = true))
+        header.addView(createTextView(getString(R.string.text_date), bold = true, header = true))
+        header.addView(createTextView(getString(R.string.text_edit), bold = true, header = true))
         return header
     }
 

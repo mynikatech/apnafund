@@ -35,18 +35,8 @@ class SupportFragment : Fragment() {
 
         super.onViewCreated(view, savedInstanceState)
         val toolbar = view.findViewById<MaterialToolbar>(R.id.toolbar_contact_details)
-
-        /*val activity = requireActivity() as AppCompatActivity
-        activity.setSupportActionBar(toolbar)
-
-        activity.supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
-            setDisplayShowHomeEnabled(true)
-            setDisplayShowTitleEnabled(false)
-            title = "Contact Us" // Optional
-        }*/
         setHasOptionsMenu(true)
-        toolbar.title = "Contact Us"
+        toolbar.title = getString(R.string.text_contact_us)
         // Enable back arrow
         val navController = findNavController()
         toolbar.setNavigationIcon(R.drawable.ic_back_arrow) // your back icon

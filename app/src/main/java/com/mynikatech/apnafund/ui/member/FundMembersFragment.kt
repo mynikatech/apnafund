@@ -91,7 +91,7 @@ class FundMembersFragment : Fragment() {
         toolbar.setNavigationOnClickListener {
             navController.navigateUp()
         }
-        toolbar.title = "Fund Member Details"
+        toolbar.title = getString(R.string.header_fund_member_details)
     }
 
     private fun fetchAllMembers(fundId: Int) {

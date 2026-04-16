@@ -36,7 +36,7 @@ class AiChatFragment : Fragment() {
 
         toolbar.setNavigationIcon(R.drawable.ic_back_arrow)
         toolbar.setNavigationOnClickListener { navController.navigateUp() }
-        toolbar.title = "Ask Maya"
+        toolbar.title = getString(R.string.title_ask_Maya)
 
         binding.recyclerChat.apply {
             layoutManager = LinearLayoutManager(requireContext())

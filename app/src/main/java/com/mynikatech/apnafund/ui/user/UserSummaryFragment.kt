@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.appcompat.widget.TooltipCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -46,7 +47,6 @@ import com.mynikatech.apnafund.util.Converters.toTitleCase
 import com.mynikatech.apnafund.util.GroupInputValidator
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import androidx.appcompat.widget.TooltipCompat
 
 class UserSummaryFragment : Fragment() {
 
@@ -292,8 +292,10 @@ class UserSummaryFragment : Fragment() {
             ).show()
         }
         userSummaryViewModel.groupName.observe(viewLifecycleOwner) {
-            binding.chipGroupName.text =
-                "Group: ${SessionManager.groupName ?: "--"}"
+            binding.chipGroupName.text = getString(
+                R.string.header_group,
+                SessionManager.groupName ?: "--"
+            )
 
             binding.chipGroupName.isClickable =
                 SessionManager.isMultiGroupUser()
@@ -312,7 +314,7 @@ class UserSummaryFragment : Fragment() {
             }
 
             AlertDialog.Builder(requireContext())
-                .setTitle("Select Group")
+                .setTitle(getString(R.string.text_select_group))
                 .setItems(groups.map { it.groupName }.toTypedArray()) { _, which ->
 
                     val selected = groups[which]
@@ -338,7 +340,7 @@ class UserSummaryFragment : Fragment() {
                     ?: return@setOnClickListener
 
                 AlertDialog.Builder(requireContext())
-                    .setTitle("Select Fund")
+                    .setTitle(getString(R.string.text_select_fund))
                     .setItems(fundNamesMap.toTypedArray()) { _, which ->
                         val funds = userSummaryViewModel.userFunds.value ?: return@setItems
                         val selectedFund = funds.getOrNull(which) ?: return@setItems
@@ -503,11 +505,11 @@ class UserSummaryFragment : Fragment() {
         val maturity = totalMaturityAmount ?: 0.0
 
         binding.textViewFundSummaryValue.text =
-            "Total Deposit: ${Converters.formatCurrency(deposit)} |  Maturity: ${
-                Converters.formatCurrency(
-                    maturity
-                )
-            }"
+            getString(
+                R.string.text_total_deposit_maturity,
+                Converters.formatCurrency(deposit),
+                Converters.formatCurrency(maturity)
+            )
 
         if (deposit == 0.0 && maturity == 0.0) {
             binding.textViewFundSummaryValue.text = getString(R.string.text_no_fund_activity)
@@ -526,7 +528,8 @@ class UserSummaryFragment : Fragment() {
             val fund = userSummaryViewModel.getFund(fundId)
 
             if (fund == null) {
-                Toast.makeText(requireContext(), "Fund not found", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(),
+                    getString(R.string.warn_fund_not_found), Toast.LENGTH_SHORT).show()
                 return@launch
             }
             //Get current available amount in the Fund display to the user and also add a validation
@@ -663,8 +666,10 @@ class UserSummaryFragment : Fragment() {
     }
 
     private fun refreshGroupChip() {
-        binding.chipGroupName.text =
-            "Group: ${SessionManager.groupName ?: "--"}"
+        binding.chipGroupName.text = getString(
+            R.string.header_group,
+            SessionManager.groupName ?: "--"
+        )
     }
 
     override fun onStart() {
@@ -821,7 +826,7 @@ class UserSummaryFragment : Fragment() {
 
                 Toast.makeText(
                     requireContext(),
-                    "Failed to load users",
+                    getString(R.string.error_failed_to_load_users),
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -855,9 +860,9 @@ class UserSummaryFragment : Fragment() {
                 if (savedGroup != null) {
 
                     val message = if (isAdmin) {
-                        "Group created successfully."
+                        getString(R.string.message_group_created_success)
                     } else {
-                        "Group request submitted for approval. You will receive a notification once it is approved."
+                        getString(R.string.message_group_request_submitted_for_approval)
                     }
 
                     Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
@@ -866,7 +871,7 @@ class UserSummaryFragment : Fragment() {
 
                     Toast.makeText(
                         requireContext(),
-                        "Failed to save group. Please try again.",
+                        getString(R.string.error_failed_to_save_group),
                         Toast.LENGTH_LONG
                     ).show()
                 }

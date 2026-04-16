@@ -37,7 +37,7 @@
                 android:id="@+id/textTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Verify your email"
+                android:text="@string/text_verify_email"
                 android:textSize="22sp"
                 android:textStyle="bold" />
 
@@ -46,7 +46,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="We sent a 6-digit verification code to:"
+                android:text="@string/message_6_digit_verification_code"
                 android:textSize="14sp" />
 
             <TextView
@@ -61,7 +61,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:hint="Enter 6-digit code"
+                android:hint="@string/text_enter_6_digit_code"
                 android:inputType="number"
                 android:maxLength="6"
                 android:textSize="18sp"
@@ -81,14 +81,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="Verify Email" />
+                android:text="@string/header_verify_email" />
 
             <TextView
                 android:id="@+id/textDidntReceive"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Didn’t receive it?"
+                android:text="@string/message_not_receive"
                 android:textSize="14sp"
                 android:textColor="@android:color/darker_gray" />
 
@@ -106,7 +106,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="Resend code"
+                android:text="@string/message_resend_code"
                 android:textSize="16sp"
                 android:textColor="@color/primary_colour"
                 android:enabled="false"
@@ -118,7 +118,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"
-                android:text="Back to login"
+                android:text="@string/message_back_to_login"
                 android:textSize="14sp"
                 android:textColor="@color/primary_colour" />
 

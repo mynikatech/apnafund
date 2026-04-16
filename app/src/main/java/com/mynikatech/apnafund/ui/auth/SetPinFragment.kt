@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.databinding.FragmentSetPinBinding
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
@@ -43,13 +44,13 @@ class SetPinFragment : Fragment() {
             val confirmPin = getPinFromBoxes(binding.confirmPinBoxes)
 
             if (pin.length != 4 || confirmPin.length != 4) {
-                showToast("Please enter 4-digit PIN")
+                showToast(getString(R.string.message_enter_4_digit_pin))
                 binding.buttonSubmit.isEnabled = true
                 return@setOnClickListener
             }
 
             if (pin != confirmPin) {
-                showToast("PINs do not match")
+                showToast(getString(R.string.error_pin_not_match))
                 binding.buttonSubmit.isEnabled = true
                 return@setOnClickListener
             }
@@ -57,12 +58,12 @@ class SetPinFragment : Fragment() {
             // Save PIN securely
             lifecycleScope.launch {
                 if (userViewModel.isPINReused(userId, pin)) {
-                    showToast("PIN cannot be same as last three PINs ")
+                    showToast(getString(R.string.error_pin_not_same_last_3))
                     binding.buttonSubmit.isEnabled = true
                     return@launch
                 }
                 userViewModel.changeUserPIN(userId, pin)
-                showToast("PIN set successfully")
+                showToast(getString(R.string.message_pin_set_success))
                 findNavController().navigateUp() // Or navigate to home
             }
         }

@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginBottom="24dp"
-        android:text="Enter 4-digit PIN"
+        android:text="@string/message_enter_4_digit_pin"
         android:textSize="20sp" />
 
     <LinearLayout
@@ -55,7 +55,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginBottom="24dp"
-        android:text="Confirm PIN"
+        android:text="@string/text_confirm_pin"
         android:textSize="20sp" />
 
     <LinearLayout
@@ -97,7 +97,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:text="Submit" />
+            android:text="@string/button_submit" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_cancel"
@@ -105,6 +105,6 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Cancel" />
+            android:text="@string/text_cancel_button" />
     </LinearLayout>
 </LinearLayout>

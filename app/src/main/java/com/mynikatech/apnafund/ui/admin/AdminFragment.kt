@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.tabs.TabLayoutMediator
+import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.databinding.FragmentAdminBinding
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.admin.feedback.AdminFeedbackFragment
@@ -43,40 +44,23 @@ class AdminFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val isAdmin = SessionManager.isAdmin()
         val isModerator = SessionManager.isModerator()
-
-        val allTabs1 = listOf(
-            "Users" to UserFragment(),
-            "Groups" to GroupFragment(),
-            "Approvals" to PendingApprovalFragment(),
-            "Deposits" to DepositEntryFragment(),
-            "Loans EMI" to LoanEmiEntryFragment(),
-            "Feedback" to AdminFeedbackFragment()
-        )
-
         val allTabs = listOf(
-            "Users",
-            "Groups",
-            "Approvals",
-            "Deposits",
-            "Loans EMI",
-            "Feedback"
-        )
-
-        val moderatorTabs1 = listOf(
-            "Users" to UserFragment(),
-            "Groups" to GroupFragment(),
-            "Approvals" to PendingApprovalFragment(),
-            "Deposits" to DepositEntryFragment(),
-            "Loans EMI" to LoanEmiEntryFragment()
+            getString(R.string.text_user),
+            getString(R.string.text_group),
+            getString(R.string.text_pending_approval),
+            getString(R.string.text_deposits),
+            getString(R.string.text_loan_emi),
+            getString(R.string.text_loan_emi)
         )
 
         val moderatorTabs = listOf(
-            "Users",
-            "Groups" ,
-            "Approvals" ,
-            "Deposits",
-            "Loans EMI"
+            getString(R.string.text_user),
+            getString(R.string.text_group),
+            getString(R.string.text_pending_approval),
+            getString(R.string.text_deposits),
+            getString(R.string.text_loan_emi)
         )
+
         val tabsToShow = when {
             isAdmin -> allTabs
             isModerator -> moderatorTabs
@@ -112,12 +96,12 @@ class AdminFragment : Fragment() {
 
         override fun createFragment(position: Int): Fragment {
             return when (tabs[position]) {
-                "Users" -> UserFragment()
-                "Groups" -> GroupFragment()
-                "Approvals" -> PendingApprovalFragment()
-                "Deposits" -> DepositEntryFragment()
-                "Loans EMI" -> LoanEmiEntryFragment()
-                "Feedback" -> AdminFeedbackFragment()
+                getString(R.string.text_user) -> UserFragment()
+                getString(R.string.text_group) -> GroupFragment()
+                getString(R.string.text_pending_approval) -> PendingApprovalFragment()
+                getString(R.string.text_deposits) -> DepositEntryFragment()
+                getString(R.string.text_loan_emi) -> LoanEmiEntryFragment()
+                getString(R.string.text_loan_emi) -> AdminFeedbackFragment()
                 else -> Fragment()
             }
         }

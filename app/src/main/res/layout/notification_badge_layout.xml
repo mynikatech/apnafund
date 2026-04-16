@@ -8,7 +8,7 @@
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:src="@drawable/ic_notifications"
-        android:contentDescription="Notifications" />
+        android:contentDescription="@string/text_notifications" />
 
     <TextView
         android:id="@+id/notification_badge"
@@ -17,8 +17,8 @@
         android:layout_gravity="start|top"
         android:background="@drawable/status_inactive_dot"
         android:padding="2dp"
-        android:text="5"
+        android:text="@string/text_5"
         android:textColor="@android:color/white"
-        android:textSize="10sp"
+        android:textSize="11sp"
         android:visibility="gone" />
 </FrameLayout>

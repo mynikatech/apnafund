@@ -29,8 +29,8 @@ import com.mynikatech.apnafund.ui.admin.BaseEntryFragment
 import com.mynikatech.apnafund.ui.viewmodel.DepositViewModel
 import com.mynikatech.apnafund.ui.viewmodel.FundSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.FundViewModel
-import com.mynikatech.apnafund.ui.viewmodel.GroupViewModel
 import com.mynikatech.apnafund.util.ApnaBankDate
+import com.mynikatech.apnafund.util.Converters
 import kotlinx.coroutines.launch
 import java.time.LocalDate.now
 import java.util.Calendar
@@ -42,7 +42,6 @@ class DepositEntryFragment : BaseEntryFragment() {
     private lateinit var binding: FragmentDepositEntryBinding
     private val viewModel: DepositViewModel by viewModels()
     private val fundViewModel: FundViewModel by viewModels()
-    private val groupViewModel: GroupViewModel by viewModels()
     private val fundSharedViewModel: FundSharedViewModel by activityViewModels()
     private var validMonthYearList = emptyList<Pair<String, String>>()
     private var hasChanges = false
@@ -96,8 +95,9 @@ class DepositEntryFragment : BaseEntryFragment() {
         val fundId = fundMap[selectedFundName] ?: return
         lifecycleScope.launch {
             val fund = fundViewModel.fetchFund(fundId)
-            if(null!= fund)
-                validMonthYearList = getValidMonthYearList(fund.fundStartDate, fund.fundMaturityDate)
+            if (null != fund)
+                validMonthYearList =
+                    getValidMonthYearList(fund.fundStartDate, fund.fundMaturityDate)
 
             val validMonths = validMonthYearList.map { it.first }.distinct()
             val validYears = validMonthYearList.map { it.second }.distinct()
@@ -140,13 +140,19 @@ class DepositEntryFragment : BaseEntryFragment() {
         val selectedFundName = binding.dropdownFund.text.toString()
 
         if (selectedFundName.isBlank()) {
-            Toast.makeText(requireContext(), "Please select a fund", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.warning_select_fund), Toast.LENGTH_SHORT
+            ).show()
             return
         }
 
         val fundId = fundMap[selectedFundName] ?: 0
         if (fundId == 0) {
-            Toast.makeText(requireContext(), "Invalid fund selected", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.error_invalid_fund_selected), Toast.LENGTH_SHORT
+            ).show()
             return
         }
 
@@ -156,7 +162,7 @@ class DepositEntryFragment : BaseEntryFragment() {
         if (!validMonthYearList.contains(Pair(month, year))) {
             Toast.makeText(
                 requireContext(),
-                "Invalid month/year for selected fund",
+                getString(R.string.error_invalid_month_year_for_selected_fund),
                 Toast.LENGTH_SHORT
             ).show()
             // disable UI and Save button
@@ -205,7 +211,7 @@ class DepositEntryFragment : BaseEntryFragment() {
             )
             originalDeposits = sortedDepWithMemberNames
             for (deposits in sortedDepWithMemberNames) {
-                addDepositsMemberRow( month, year, deposits)
+                addDepositsMemberRow(month, year, deposits)
             }
             // check if any deposit has isEdit = true then enable to saveAll button else disable
             updateSaveAllButtonState(sortedDepWithMemberNames)
@@ -270,7 +276,10 @@ class DepositEntryFragment : BaseEntryFragment() {
                         input > recurringDepAmt.toInt() -> {
                             Toast.makeText(
                                 requireContext(),
-                                "Amount cannot exceed $recurringDepAmt",
+                                getString(
+                                    R.string.error_amount_exceeds_limit,
+                                    Converters.formatCurrency(recurringDepAmt)
+                                ),
                                 Toast.LENGTH_SHORT
                             ).show()
                             ""
@@ -279,7 +288,7 @@ class DepositEntryFragment : BaseEntryFragment() {
                         input < 0 -> {
                             Toast.makeText(
                                 requireContext(),
-                                "Amount cannot be negative",
+                                context.getString(R.string.error_amount_negative),
                                 Toast.LENGTH_SHORT
                             ).show()
                             ""
@@ -400,11 +409,18 @@ class DepositEntryFragment : BaseEntryFragment() {
             val fundId = fundMap[selectedFundName] ?: 0
 
             if (fundId == 0) {
-                Toast.makeText(requireContext(), "Invalid fund selected", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.error_invalid_fund_selected),
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@launch
             }
             if (!hasChanges) {
-                Toast.makeText(requireContext(), "No Changes to Save", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.message_no_changes_to_save), Toast.LENGTH_SHORT
+                ).show()
                 return@launch
             } else {
                 val selectedMonthName = binding.dropdownMonth.text.toString()
@@ -430,7 +446,10 @@ class DepositEntryFragment : BaseEntryFragment() {
                         refreshDepositsTableWithData(updatedDepositList)
                         Snackbar.make(
                             requireView(),
-                            "Saved ${editedDeposits.size} updated entries.",
+                            getString(
+                                R.string.message_saved_updated_entries,
+                                editedDeposits.size
+                            ),
                             Snackbar.LENGTH_SHORT
                         )
                             .show()
@@ -449,7 +468,7 @@ class DepositEntryFragment : BaseEntryFragment() {
                         refreshDepositsTableWithData(updatedDepositList)
                         Snackbar.make(
                             requireView(),
-                            "Deposits saved successfully",
+                            getString(R.string.message_deposits_saved_success),
                             Snackbar.LENGTH_SHORT
                         )
                             .show()
@@ -458,7 +477,7 @@ class DepositEntryFragment : BaseEntryFragment() {
                 } else {
                     Snackbar.make(
                         requireView(),
-                        "No changes to save",
+                        getString(R.string.message_no_changes_to_save),
                         Snackbar.LENGTH_SHORT
                     )
                         .show()

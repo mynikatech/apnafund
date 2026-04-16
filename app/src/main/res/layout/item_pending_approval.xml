@@ -53,7 +53,7 @@
                 android:id="@+id/button_reject"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Reject"
+                android:text="@string/button_reject"
                 android:textColor="@android:color/white"
                 android:backgroundTint="@android:color/holo_red_light"
                 android:layout_marginEnd="8dp" />
@@ -62,7 +62,7 @@
                 android:id="@+id/button_approve"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Approve"
+                android:text="@string/button_approve"
                 android:textColor="@android:color/white"
                 android:backgroundTint="@android:color/holo_green_dark" />
         </LinearLayout>

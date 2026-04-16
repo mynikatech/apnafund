@@ -36,9 +36,9 @@
                         android:background="@drawable/table_cell_shape"
                         android:gravity="center_vertical"
                         android:padding="3dp"
-                        android:text="# No:"
+                        android:text="@string/text_serial_no"
                         android:textColor="#ffffff"
-                        android:textSize="15dp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -47,9 +47,9 @@
                         android:background="@drawable/table_cell_shape"
                         android:gravity="center_vertical"
                         android:padding="3dp"
-                        android:text="Group Name"
+                        android:text="@string/text_group_name"
                         android:textColor="#ffffff"
-                        android:textSize="15dp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -58,9 +58,9 @@
                         android:background="@drawable/table_cell_shape"
                         android:gravity="center_vertical"
                         android:padding="3dp"
-                        android:text="Moderator"
+                        android:text="@string/text_moderator"
                         android:textColor="#ffffff"
-                        android:textSize="15dp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -69,9 +69,9 @@
                         android:background="@drawable/table_cell_shape"
                         android:gravity="center_vertical"
                         android:padding="3dp"
-                        android:text="Created Date"
+                        android:text="@string/text_created_date"
                         android:textColor="#ffffff"
-                        android:textSize="15dp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -80,9 +80,9 @@
                         android:background="@drawable/table_cell_shape"
                         android:gravity="center_vertical"
                         android:padding="3dp"
-                        android:text="Description"
+                        android:text="@string/text_description"
                         android:textColor="#ffffff"
-                        android:textSize="15dp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -91,9 +91,9 @@
                         android:background="@drawable/table_cell_shape"
                         android:gravity="center_vertical"
                         android:padding="3dp"
-                        android:text="Edit"
+                        android:text="@string/text_edit"
                         android:textColor="#ffffff"
-                        android:textSize="15dp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
                     <TextView
                         android:layout_width="wrap_content"
@@ -101,9 +101,9 @@
                         android:background="@drawable/table_cell_shape"
                         android:gravity="center_vertical"
                         android:padding="3dp"
-                        android:text="Status"
+                        android:text="@string/text_status"
                         android:textColor="#ffffff"
-                        android:textSize="15dp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
                 </TableRow>
             </TableLayout>
@@ -112,6 +112,7 @@
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:contentDescription="@string/text_add_group"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_margin="16dp"

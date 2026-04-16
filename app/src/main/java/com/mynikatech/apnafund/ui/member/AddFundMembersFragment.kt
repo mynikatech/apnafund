@@ -48,7 +48,7 @@ class AddFundMembersFragment : Fragment() {
         toolbar.setNavigationOnClickListener {
             navController.navigateUp()
         }
-        toolbar.title = "Add Fund Member"
+        toolbar.title = getString(R.string.text_add_fund_members)
 
         lifecycleScope.launch {
             val users = fundViewModel.getAvailableFundMembers(groupId, fundId)
@@ -75,11 +75,11 @@ class AddFundMembersFragment : Fragment() {
                 lifecycleScope.launch {
                     try {
                         if (selectedUserIds.toList().isEmpty()) {
-                            Toast.makeText(context, "No Members to add", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, getString(R.string.message_no_member_add), Toast.LENGTH_SHORT).show()
                             return@launch
                         }
                         fundViewModel.addFundMembers(fundId, selectedUserIds.toList())
-                        Toast.makeText(context, "Members added", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, getString(R.string.message_member_added), Toast.LENGTH_SHORT).show()
                         findNavController().navigateUp()
                     } catch (e: Exception) {
                         Log.e("FundMember", "Error saving fund member", e)
@@ -88,7 +88,7 @@ class AddFundMembersFragment : Fragment() {
 
                         Toast.makeText(
                             requireContext(),
-                            "Something went wrong. Please try again.",
+                            getString(R.string.message_unexpected_error),
                             Toast.LENGTH_SHORT
                         ).show()
                     }
