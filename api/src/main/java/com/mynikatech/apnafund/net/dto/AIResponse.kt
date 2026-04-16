@@ -8,5 +8,5 @@ data class AIResponse(
     val reply: String,
     val type: AIResponseType,
     val data: JsonElement? = null,
-    val actions: List<AIAction> = emptyList()
+    val actions: List<AIActionItem> = emptyList()
 )

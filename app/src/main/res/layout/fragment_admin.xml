@@ -36,7 +36,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:tabTextColor="@color/tab_text"
-                android:text="Pending Approval"/>
+                android:text="@string/text_pending_approval"/>
             <com.google.android.material.tabs.TabItem
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

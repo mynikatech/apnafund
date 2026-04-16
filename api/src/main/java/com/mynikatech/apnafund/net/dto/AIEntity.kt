@@ -5,5 +5,6 @@ enum class AIEntity {
     FUND,
     GROUP,
     DEPOSIT,
-    USER
+    USER,
+    LOAN_EMI
 }

@@ -7,6 +7,8 @@ enum class AIResponseType {
     TEXT,
     TABLE,
     NAVIGATION,
+    CREATE,
     SUMMARY,
-    ERROR
+    ERROR,
+    EMPTY
 }

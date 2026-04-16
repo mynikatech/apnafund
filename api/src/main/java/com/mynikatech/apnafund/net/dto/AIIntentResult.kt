@@ -7,5 +7,6 @@ import kotlinx.serialization.json.JsonObject
 data class AIIntentResult(
     val intent: AIIntent,
     val entity: AIEntity? = null,
+    val action: AIAction,
     val filters: JsonObject = JsonObject(emptyMap())
 )

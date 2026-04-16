@@ -1,5 +1,6 @@
 package com.mynikatech.apnafund.server.ai
 
+import com.mynikatech.apnafund.net.dto.AIAction
 import com.mynikatech.apnafund.net.dto.AIEntity
 import com.mynikatech.apnafund.net.dto.AIIntent
 import com.mynikatech.apnafund.net.dto.AIIntentResult
@@ -63,14 +64,18 @@ class AIClient(
                 val entity = obj["entity"]?.jsonPrimitive?.content?.let {
                     runCatching { AIEntity.valueOf(it) }.getOrNull()
                 }
-
+                val action = obj["action"]?.jsonPrimitive?.content?.let {
+                    runCatching { AIAction.valueOf(it) }.getOrNull()
+                }
+                val finalAction = action ?: inferAction(intent, entity)
                 val filters = obj["filters"]?.jsonObject ?: JsonObject(emptyMap())
 
                 // SUCCESS → return immediately
                 return AIIntentResult(
                     intent = intent,
                     entity = entity,
-                    filters = filters
+                    filters = filters,
+                    action = finalAction
                 )
 
             } catch (e: Exception) {
@@ -83,6 +88,20 @@ class AIClient(
 
         // All prompts failed → let service fallback handle it
         throw Exception("AI failed for all prompt levels")
+    }
+    private fun inferAction(
+        intent: AIIntent,
+        entity: AIEntity?
+    ): AIAction {
+
+        return when (intent) {
+
+            AIIntent.FETCH_DATA -> AIAction.LIST
+
+            AIIntent.SUMMARY -> AIAction.SUMMARY
+
+            else -> AIAction.LIST // safe fallback
+        }
     }
 
     private suspend fun callProvider(prompt: String, message: String): String {
@@ -142,7 +161,7 @@ class AIClient(
     }
 
 
-    private suspend fun retry(times: Int = 2, block: suspend () -> String): String {
+    private suspend fun retry(times: Int = 1, block: suspend () -> String): String {
         repeat(times) { attempt ->
             try {
                 return block()

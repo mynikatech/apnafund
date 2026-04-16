@@ -1,5 +1,6 @@
 package com.mynikatech.apnafund.ui.assistant
 
+import android.graphics.Color
 import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +14,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.net.dto.AIChatMessage
 import com.mynikatech.apnafund.net.dto.AIResponseType
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -60,42 +64,75 @@ class AIChatAdapter :
 
                         AIResponseType.TABLE -> {
                             container.visibility = View.VISIBLE
+                            container.removeAllViews()
 
-
+                            val context = holder.itemView.context
                             val data = jsonData.jsonObject
-                            val columns = data.get("columns")?.jsonArray
-                            val rows = data.get("rows")?.jsonArray
+                            val columns = data["columns"]?.jsonArray
+                            val rows = data["rows"]?.jsonArray
+
+                            // 🔹 Function to create cell
+                            fun createCell(text: String, isHeader: Boolean = false): TextView {
+                                return TextView(context).apply {
+                                    this.text = text
+                                    setPadding(16, 12, 16, 12)
+
+                                    layoutParams = LinearLayout.LayoutParams(
+                                        0,
+                                        LinearLayout.LayoutParams.MATCH_PARENT,
+                                        1f // 🔥 Equal width
+                                    )
+
+                                    if (isHeader) {
+                                        setTypeface(null, Typeface.BOLD)
+                                        setBackgroundColor(Color.LTGRAY)
+                                    } else {
+                                        setBackgroundColor(Color.WHITE)
+                                    }
+
+                                    setTextColor(Color.BLACK)
+                                }
+                            }
 
                             // 🔹 Header Row
-                            val headerRow = LinearLayout(holder.itemView.context).apply {
+                            val headerRow = LinearLayout(context).apply {
                                 orientation = LinearLayout.HORIZONTAL
                             }
 
                             columns?.forEach {
-                                val tv = TextView(holder.itemView.context)
-                                tv.text = it.jsonPrimitive.content
-                                tv.setPadding(12, 8, 12, 8)
-                                tv.setTypeface(null, Typeface.BOLD)
-                                headerRow.addView(tv)
+                                headerRow.addView(createCell(it.jsonPrimitive.content, true))
                             }
 
                             container.addView(headerRow)
 
+                            // 🔹 Divider
+                            fun addDivider() {
+                                val divider = View(context).apply {
+                                    layoutParams = LinearLayout.LayoutParams(
+                                        LinearLayout.LayoutParams.MATCH_PARENT,
+                                        2
+                                    ).apply {
+                                        setMargins(0, 0, 0, 0)
+                                    }
+                                    setBackgroundColor(Color.parseColor("#BDBDBD")) // softer gray
+                                }
+                                container.addView(divider)
+                            }
+
+                            addDivider()
+
                             // 🔹 Data Rows
                             rows?.forEach { row ->
-                                val rowLayout = LinearLayout(holder.itemView.context).apply {
+                                val rowLayout = LinearLayout(context).apply {
                                     orientation = LinearLayout.HORIZONTAL
                                 }
 
                                 row.jsonArray.forEach { cell ->
-                                    val tv = TextView(holder.itemView.context)
-                                    tv.text = cell.jsonPrimitive.content
-                                    tv.setPadding(12, 8, 12, 8)
-
-                                    rowLayout.addView(tv)
+                                    rowLayout.addView(createCell(cell.jsonPrimitive.content))
                                 }
 
                                 container.addView(rowLayout)
+                                addDivider()
                             }
                         }
 
@@ -104,29 +141,33 @@ class AIChatAdapter :
                             container.visibility = View.VISIBLE
                             container.removeAllViews()
 
+                            val context = holder.itemView.context
                             val dataObj = jsonData.jsonObject
 
-                            dataObj.forEach { (key, value) ->
+                            // 🔹 Format key (camelCase → Title Case)
+                            fun formatKey(key: String): String {
+                                return key
+                                    .replace(Regex("([a-z])([A-Z])"), "$1 $2")
+                                    .replaceFirstChar { it.uppercase() }
+                            }
 
-                                val row = LinearLayout(holder.itemView.context).apply {
+                            // 🔹 Row builder
+                            fun addRow(key: String, value: String) {
+                                val row = LinearLayout(context).apply {
                                     orientation = LinearLayout.HORIZONTAL
+                                    setPadding(0, 4, 0, 4)
                                 }
 
-                                val keyView = TextView(holder.itemView.context).apply {
-                                    text = key
-                                        .replace(Regex("([a-z])([A-Z])"), "$1 $2")
-                                        .replaceFirstChar { it.uppercase() }
-
+                                val keyView = TextView(context).apply {
+                                    text = formatKey(key)
                                     setTypeface(null, Typeface.BOLD)
-                                    setPadding(8, 6, 8, 6)
-
+                                    setPadding(8, 8, 8, 8)
                                     layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
                                 }
 
-                                val valueView = TextView(holder.itemView.context).apply {
-                                    text = value.jsonPrimitive.content
-                                    setPadding(8, 6, 8, 6)
-
+                                val valueView = TextView(context).apply {
+                                    text = value
+                                    setPadding(8, 8, 8, 8)
                                     layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
                                 }
 
@@ -134,6 +175,123 @@ class AIChatAdapter :
                                 row.addView(valueView)
 
                                 container.addView(row)
+                            }
+
+                            // 🔹 Section title
+                            fun addSectionTitle(titleText: String) {
+                                val title = TextView(context).apply {
+                                    text = formatKey(titleText)
+                                    setTypeface(null, Typeface.BOLD)
+                                    textSize = 16f
+                                    setPadding(8, 16, 8, 8)
+                                }
+                                container.addView(title)
+                            }
+
+                            // 🔹 Divider
+                            fun addDivider() {
+                                val divider = View(context).apply {
+                                    layoutParams = LinearLayout.LayoutParams(
+                                        LinearLayout.LayoutParams.MATCH_PARENT,
+                                        2
+                                    )
+                                    setBackgroundColor(Color.parseColor("#E0E0E0"))
+                                }
+                                container.addView(divider)
+                            }
+
+                            // 🔥 MAIN LOOP
+                            dataObj.forEach { (key, value) ->
+
+                                when (value) {
+
+                                    // ✅ Primitive
+                                    is JsonPrimitive -> {
+                                        addRow(key, value.content)
+                                    }
+
+                                    // ✅ Object (e.g., "overall")
+                                    is JsonObject -> {
+                                        addSectionTitle(key)
+
+                                        value.forEach { (subKey, subValue) ->
+                                            if (subValue is JsonPrimitive) {
+                                                addRow(subKey, subValue.content)
+                                            }
+                                        }
+
+                                        addDivider()
+                                    }
+
+                                    // ✅ Array (e.g., "groups")
+                                    is JsonArray -> {
+                                        addSectionTitle(key)
+
+                                        value.forEach { item ->
+
+                                            if (item is JsonObject) {
+
+                                                val card = LinearLayout(context).apply {
+                                                    orientation = LinearLayout.VERTICAL
+                                                    setPadding(12, 12, 12, 12)
+
+                                                    layoutParams = LinearLayout.LayoutParams(
+                                                        LinearLayout.LayoutParams.MATCH_PARENT,
+                                                        LinearLayout.LayoutParams.WRAP_CONTENT
+                                                    ).apply {
+                                                        setMargins(0, 8, 0, 8)
+                                                    }
+
+                                                    setBackgroundColor(Color.parseColor("#F9F9F9"))
+                                                }
+
+                                                item.forEach { (subKey, subValue) ->
+                                                    if (subValue is JsonPrimitive) {
+
+                                                        val row = LinearLayout(context).apply {
+                                                            orientation = LinearLayout.HORIZONTAL
+                                                        }
+
+                                                        val keyView = TextView(context).apply {
+                                                            text = formatKey(subKey)
+                                                            setTypeface(null, Typeface.BOLD)
+                                                            layoutParams =
+                                                                LinearLayout.LayoutParams(
+                                                                    0,
+                                                                    WRAP_CONTENT,
+                                                                    1f
+                                                                )
+                                                        }
+
+                                                        val valueView = TextView(context).apply {
+                                                            text = subValue.content
+                                                            layoutParams =
+                                                                LinearLayout.LayoutParams(
+                                                                    0,
+                                                                    WRAP_CONTENT,
+                                                                    1f
+                                                                )
+                                                        }
+
+                                                        row.addView(keyView)
+                                                        row.addView(valueView)
+
+                                                        card.addView(row)
+                                                    }
+                                                }
+
+                                                container.addView(card)
+                                            }
+                                        }
+
+                                        addDivider()
+                                    }
+
+                                    // Safety fallback
+                                    else -> {
+                                        // Unknown type → ignore or log
+                                    }
+                                }
                             }
                         }
 
@@ -149,6 +307,19 @@ class AIChatAdapter :
             } else {
                 container.visibility = View.GONE
             }
+            /*message.actions?.forEach { action ->
+
+                val btn = TextView(holder.itemView.context).apply {
+                    text = action.label
+                    setPadding(16, 8, 16, 8)
+                    setBackgroundResource(R.drawable.bg_button)
+                    setOnClickListener {
+                        // TODO: trigger UIActionType
+                    }
+                }
+
+                actionsContainer.addView(btn)*/
+
         }
     }
 

@@ -9,5 +9,5 @@ data class AIChatMessage(
     val isUser: Boolean,
     val type: AIResponseType = AIResponseType.TEXT,
     val data: JsonElement? = null,
-    val actions: List<AIAction> = emptyList()
+    val actions: List<AIActionItem> = emptyList()
 )

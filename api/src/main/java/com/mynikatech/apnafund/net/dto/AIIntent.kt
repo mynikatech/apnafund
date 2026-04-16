@@ -4,5 +4,6 @@ enum class AIIntent {
     FETCH_DATA,
     SUMMARY,
     ACTION,
+    HELP,
     UNKNOWN
 }

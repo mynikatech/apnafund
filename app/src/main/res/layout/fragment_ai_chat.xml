@@ -55,6 +55,7 @@
             android:id="@+id/button_send"
             android:layout_width="40dp"
             android:layout_height="40dp"
+            android:contentDescription="@string/text_send_button"
             android:padding="8dp"
             android:src="@drawable/ic_send"
             app:tint="?attr/colorPrimary"

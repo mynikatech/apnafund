@@ -4,9 +4,15 @@ import com.mynikatech.apnafund.net.api.ValidationException
 import com.mynikatech.apnafund.net.dto.AIProviderType
 import com.mynikatech.apnafund.server.admin.AdminSql
 import com.mynikatech.apnafund.server.ai.AIClient
+import com.mynikatech.apnafund.server.ai.AIResponseBuilder
 import com.mynikatech.apnafund.server.ai.AIService
+import com.mynikatech.apnafund.server.ai.DepositHandler
+import com.mynikatech.apnafund.server.ai.FundHandler
 import com.mynikatech.apnafund.server.ai.GeminiClient
-import com.mynikatech.apnafund.server.ai.OpenAIClient
+import com.mynikatech.apnafund.server.ai.GroupHandler
+import com.mynikatech.apnafund.server.ai.HelpHandler
+import com.mynikatech.apnafund.server.ai.LoanEMIHandler
+import com.mynikatech.apnafund.server.ai.LoanHandler
 import com.mynikatech.apnafund.server.api.respondError
 import com.mynikatech.apnafund.server.approval.ApprovalService
 import com.mynikatech.apnafund.server.approval.ApprovalSql
@@ -223,15 +229,26 @@ fun Application.module() {
         emailVerificationEnabled,
         passwordHistoryDao
     )
-    val openAIClient = OpenAIClient(apiKey)
+
     val aiClient = AIClient(
         openAIClient = null,                 // disable OpenAI
         geminiClient = GeminiClient(geminiKey),
         provider = AIProviderType.GEMINI,
         enableFallback = false               // no fallback needed
     )
-    val userFinancialService = UserFinanceService(usersDao,fundDao, loansDao)
-    val aiService = AIService(userFinancialService,aiClient )
+    val userFinancialService =
+        UserFinanceService(usersDao, fundDao, loansDao, groupsDao, deposistsDao)
+    val responseBuilder = AIResponseBuilder()
+    val loanHandler = LoanHandler(userFinancialService, responseBuilder)
+    val groupHandler = GroupHandler(userFinancialService, responseBuilder)
+    val fundHandler = FundHandler(userFinancialService, responseBuilder)
+    val depositHandler = DepositHandler(userFinancialService, responseBuilder)
+    val loanEMIHandler = LoanEMIHandler(userFinancialService, responseBuilder)
+    val helpHandler = HelpHandler()
+    val aiService = AIService(
+        userFinancialService, aiClient, loanHandler, fundHandler, helpHandler,
+        groupHandler, depositHandler, loanEMIHandler
+    )
 
     val notificationService =
         NotificationService(

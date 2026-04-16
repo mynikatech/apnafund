@@ -15,4 +15,8 @@ data class DepositsWithMemberNamesDto(
     val firstName: String,
     val lastName: String,
     val userId: Int
-)
+) {
+    val fullName: String
+        get() = listOfNotNull(lastName, firstName)
+            .joinToString(", ")
+}

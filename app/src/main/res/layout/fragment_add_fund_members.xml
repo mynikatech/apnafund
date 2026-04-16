@@ -13,14 +13,14 @@
         android:layout_height="?attr/actionBarSize"
         style="@style/ApnaFund.Toolbar"
         app:titleTextColor="@color/white"
-        android:title="Add Fund Members"
+        android:title="@string/text_add_fund_members"
         app:layout_constraintTop_toTopOf="parent"/>
 
     <CheckBox
         android:id="@+id/checkbox_select_all"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Select All"/>
+        android:text="@string/text_select_all"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_fund_members"
@@ -40,7 +40,7 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
-            android:text="Save" />
+            android:text="@string/text_save" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_cancel_fund_member"
@@ -49,6 +49,6 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
-            android:text="Cancel" />
+            android:text="@string/text_cancel_button" />
     </LinearLayout>
 </LinearLayout>
