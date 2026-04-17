@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.databinding.FragmentLoginPinBinding
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
@@ -46,7 +47,7 @@ class LoginPinFragment : Fragment() {
             binding.buttonSubmit.isEnabled = false
             val pin = getPinFromBoxes(binding.loginPinBoxes)
             if (pin.length != 4) {
-                showToast("Please enter 4-digit PIN")
+                showToast(getString(R.string.message_enter_4_digit_pin))
                 binding.buttonSubmit.isEnabled = true
                 return@setOnClickListener
             }
@@ -56,7 +57,7 @@ class LoginPinFragment : Fragment() {
                 if (userViewModel.checkUserPIN(userId, pin)) {
 
                     if (userViewModel.isPINRotationDue(userId)) {
-                        showLongToast("PIN has expired. Please reset")
+                        showLongToast(getString(R.string.message_pin_expiry))
                         // forward to change pin fragment/screen
                         val action = LoginPinFragmentDirections
                             .actionLoginPinFragmentToSetPinFragment(userId)
@@ -66,7 +67,7 @@ class LoginPinFragment : Fragment() {
                         val firebaseRespToken = try {
                             userViewModel.getFirebaseTokenForUser(userId)
                         } catch (e: Exception) {
-                            showToast("Authentication failed. Please login again.")
+                            showToast(getString(R.string.message_auth_failure))
                             findNavController().navigate(
                                 LoginPinFragmentDirections.actionLoginPinFragmentToLoginFragment()
                             )
@@ -89,12 +90,12 @@ class LoginPinFragment : Fragment() {
                             },
                             onFailure = {
                                 binding.buttonSubmit.isEnabled = true
-                                showToast("Chat connection failed. Please retry.")
+                                showToast(getString(R.string.message_chat_connection_failed))
                             }
                         )
                     }
                 } else {
-                    showToast("Incorrect PIN entered")
+                    showToast(getString(R.string.message_incorrect_pin_entered))
                     binding.buttonSubmit.isEnabled = true
                     return@launch
                 }

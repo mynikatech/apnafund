@@ -72,7 +72,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Code expires in 00:00"
+                android:text="@string/text_code_expires"
                 android:textSize="14sp"
                 android:textColor="@color/primary_colour" />
 
@@ -97,7 +97,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:text="Resend available in 00:30"
+                android:text="@string/text_resend_available"
                 android:textSize="14sp"
                 android:textColor="@android:color/darker_gray" />
 

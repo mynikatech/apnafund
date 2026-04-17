@@ -124,7 +124,7 @@ class RegisterFragment : Fragment() {
                         "1", firstName, lastName,
                         email, phone, groupName, groupDesc, password
                     ).onSuccess { resp ->
-                        showToast("Submitted for approval. You will receive an email once approved")
+                        showToast(getString(R.string.message_submit_approval))
                         if (!resp.emailVerified) {
 
                             val action =
@@ -155,7 +155,7 @@ class RegisterFragment : Fragment() {
                         .onFailure {
                             binding.buttonRegister.isEnabled = true
                             showToast(
-                                "Some issues with server. Please raise a support ticket or contact admin."
+                                getString(R.string.error_server)
                             )
                         }
                 } else {
@@ -190,12 +190,12 @@ class RegisterFragment : Fragment() {
                             .onFailure {
                                 binding.buttonRegister.isEnabled = true
                                 showToast(
-                                    "Some issues with server. Please raise a support ticket or contact admin."
+                                    getString(R.string.error_server)
                                 )
                             }
                     } else {
                         binding.buttonRegister.isEnabled = true
-                        showToast("Please contact moderator to add you before registering")
+                        showToast(getString(R.string.message_contact_moderator_add_before_registering))
                     }
                 }
             }
@@ -323,19 +323,19 @@ class RegisterFragment : Fragment() {
 
         // Basic length check
         if (password.isNotEmpty() && password.length < 8) {
-            binding.editTextPassword.error = "Password must be at least 8 characters"
+            binding.editTextPassword.error = getString(R.string.error_pwd_length)
             return false
         }
         // Password strength
         val strength = assessPasswordStrength(password)
         if (password.isNotEmpty() && strength.name == "WEAK") {
             binding.editTextPassword.error =
-                "Password is too weak. Use letters, numbers, and special characters"
+                getString(R.string.error_password_weak)
             return false
         }
         // Confirm password match
         if (password.isNotEmpty() && confirmPassword.isNotEmpty() && password != confirmPassword) {
-            binding.editTextConfirmPassword.error = "Passwords do not match"
+            binding.editTextConfirmPassword.error = getString(R.string.error_pwd_not_match)
             return false
         }
         // Clear errors if valid

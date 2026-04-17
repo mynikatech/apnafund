@@ -20,7 +20,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="No funds created yet created. Moderator can create fund"
+            android:text="@string/message_no_fund_created"
             android:textColor="@color/black"
             android:textSize="16sp" />
     </LinearLayout>

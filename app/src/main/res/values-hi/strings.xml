@@ -38,7 +38,7 @@
 
     <string name="text_total">कुल: %1$s</string>
     <string name="text_available">उपलब्ध: %1$s</string>
-    <string name="text_approved">स्वीकृत: %1$s</string>
+    <string name="text_approved_amt">स्वीकृत: %1$s</string>
     <string name="text_pending">पेंडिंग: %1$s</string>
 
     <string name="text_moderator">मॉडरेटर:</string>
@@ -354,4 +354,195 @@
     <string name="error_pin_not_same_last_3">पिन पिछले तीन पिन जैसा नहीं होना चाहिए</string>
 
     <string name="message_pin_set_success">पिन सफलतापूर्वक सेट हो गया</string>
+    <string name="title_cancel_pwd_reset">पासवर्ड रीसेट रद्द करें?</string>
+
+    <string name="message_cancel_pwd_reset">यदि आप इस स्क्रीन से बाहर जाते हैं, तो आपको लॉगिन स्क्रीन पर भेज दिया जाएगा। आगे बढ़ने के लिए आपको अपना ईमेल फिर से सत्यापित करना होगा।</string>
+
+    <string name="error_pwd_not_match">पासवर्ड मेल नहीं खाते</string>
+    <string name="error_pwd_length">पासवर्ड कम से कम 8 अक्षरों का होना चाहिए</string>
+    <string name="error_pwd_reuse">आप अपने पिछले 3 पासवर्ड दोबारा उपयोग नहीं कर सकते</string>
+
+    <string name="error_internet_connection">कृपया अपना इंटरनेट कनेक्शन जांचें</string>
+    <string name="error_server">सर्वर त्रुटि। कृपया बाद में पुनः प्रयास करें</string>
+
+    <string name="error_pwd_update">पासवर्ड अपडेट नहीं हो सका</string>
+    <string name="message_pwd_update_success">पासवर्ड सफलतापूर्वक बदल दिया गया</string>
+
+    <string name="error_password_weak">पासवर्ड बहुत कमजोर है। कृपया @,*,\$ जैसे विशेष चिन्ह और नंबर जोड़ें</string>
+
+    <string name="text_new_password">नया पासवर्ड</string>
+    <string name="text_confirm_password">पासवर्ड कन्फर्म करें</string>
+
+    <string name="text_code_expires">कोड 00:00 में समाप्त होगा</string>
+    <string name="text_resend_available">पुनः भेजना 00:30 में उपलब्ध होगा</string>
+
+    <string name="text_password">पासवर्ड</string>
+    <string name="text_current_password">वर्तमान पासवर्ड</string>
+
+    <string name="button_register">रजिस्टर</string>
+
+    <string name="text_set_a_4_digit_pin_now">क्या अभी 4 अंकों का पिन सेट करें?</string>
+    <string name="text_group_description_optional">ग्रुप विवरण (वैकल्पिक)</string>
+    <string name="text_pin_later_set">(आप इसे बाद में भी सेट कर सकते हैं)</string>
+
+    <string name="text_notification">नोटिफिकेशन</string>
+    <string name="text_no_notifications_available">कोई नोटिफिकेशन उपलब्ध नहीं है</string>
+
+    <string name="text_use_phone_otp">फोन ओटीपी का उपयोग करें</string>
+    <string name="text_enter_otp">ओटीपी दर्ज करें</string>
+    <string name="text_verify_otp">ओटीपी सत्यापित करें</string>
+
+    <string name="button_login">लॉगिन</string>
+
+    <string name="message_new_user_register">नए यूज़र हैं? यहाँ रजिस्टर करें</string>
+    <string name="message_forgot_password">पासवर्ड भूल गए?</string>
+
+    <string name="text_group_members">ग्रुप मेंबर्स</string>
+    <string name="text_moderator_tilda">मॉडरेटर ~</string>
+    <string name="text_joining_date">जॉइनिंग डेट</string>
+
+    <string name="text_add_group_member">ग्रुप मेंबर जोड़ें</string>
+
+    <string name="text_search_chat">चैट खोजें</string>
+    <string name="message_no_group_chat_available">कोई ग्रुप चैट उपलब्ध नहीं है</string>
+
+    <string name="text_someone_is_typing">कोई टाइप कर रहा है…</string>
+    <string name="text_cancel_reply">रिप्लाई रद्द करें</string>
+
+    <string name="text_new_messages">⬇ नए संदेश</string>
+
+    <string name="text_type_a_message">संदेश लिखें</string>
+    <string name="text_send">भेजें</string>
+
+    <string name="text_search_messages">संदेश खोजें</string>
+
+    <string name="title_fund_members">फंड मेंबर्स</string>
+
+    <string name="message_no_fund_created">अभी तक कोई फंड नहीं बनाया गया है। मॉडरेटर फंड बना सकता है।</string>
+
+    <string name="text_send_reset_code">रीसेट कोड भेजें</string>
+    <string name="message_unable_to_send_code">कोड पुनः भेजने में असमर्थ। कृपया बाद में प्रयास करें।</string>
+
+    <string name="message_pwd_set_failure">पासवर्ड सेट नहीं हो सका</string>
+    <string name="message_password_set_successfully">पासवर्ड सफलतापूर्वक सेट हो गया। कृपया लॉगिन करें</string>
+    <string name="message_reset_password_again_later">यदि आप बाद में फिर से पासवर्ड रीसेट करते हैं</string>
+
+    <string name="error_incorrect_current_password">वर्तमान पासवर्ड गलत है</string>
+    <string name="error_user_not_found">यूज़र नहीं मिला</string>
+
+    <string name="message_submit_approval">स्वीकृति के लिए भेज दिया गया है। स्वीकृत होने पर आपको ईमेल प्राप्त होगा</string>
+    <string name="message_contact_moderator_add_before_registering">रजिस्टर करने से पहले कृपया मॉडरेटर से संपर्क करें ताकि वे आपको जोड़ सकें</string>
+
+    <string name="message_chat_connection_failed">चैट कनेक्शन विफल। कृपया पुनः प्रयास करें</string>
+    <string name="message_incorrect_pin_entered">गलत पिन दर्ज किया गया</string>
+
+    <string name="message_auth_failure">ऑथेंटिकेशन विफल। कृपया फिर से लॉगिन करें</string>
+    <string name="message_pin_expiry">पिन समाप्त हो गया है। कृपया रीसेट करें</string>
+
+    <string name="title_fund_loans_summary">फंड लोन सारांश</string>
+
+    <string name="error_phone_number_required">फोन नंबर आवश्यक है</string>
+    <string name="error_user_not_found_register_first">यूज़र नहीं मिला। कृपया पहले रजिस्टर करें</string>
+
+    <string name="error_login_failed">लॉगिन विफल। कृपया फिर से प्रयास करें</string>
+    <string name="error_email_and_pwd_required">ईमेल और पासवर्ड आवश्यक हैं</string>
+
+    <string name="user_not_found_register_norml_user">
+    यूज़र नहीं मिला। कृपया पहले मॉडरेटर के रूप में रजिस्टर करें या मॉडरेटर से आमंत्रण प्राप्त करें
+</string>
+
+    <string name="error_password_not_set">पासवर्ड सेट नहीं है। कृपया पासवर्ड सेट करें</string>
+    <string name="error_incorrect_password">गलत पासवर्ड</string>
+
+    <string name="error_authentication_failed">ऑथेंटिकेशन विफल। कृपया पुनः प्रयास करें</string>
+
+    <string name="error_verification_failed">सत्यापन विफल: %1$s</string>
+
+    <string name="message_otp_sent">ओटीपी भेजा गया</string>
+    <string name="error_otp_verification_failed">ओटीपी सत्यापन विफल</string>
+
+    <string name="error_phone_verification_failed">फोन सत्यापन विफल। कृपया पुनः प्रयास करें</string>
+
+    <string name="error_login_failed_contact_support">लॉगिन विफल। कृपया सपोर्ट से संपर्क करें</string>
+
+    <string name="message_enter_email_id">कृपया ईमेल आईडी दर्ज करें</string>
+    <string name="warn_enter_valid_email">मान्य ईमेल पता दर्ज करें</string>
+
+    <string name="error_no_user_found_email">इस ईमेल से कोई यूज़र नहीं मिला</string>
+
+    <string name="error_valid_group_selection">मान्य ग्रुप चयन आवश्यक है</string>
+
+    <string name="text_update_user">यूज़र अपडेट करें</string>
+    <string name="error_failed_load_groups">ग्रुप्स लोड करने में विफल</string>
+
+    <string name="text_update_group">ग्रुप अपडेट करें</string>
+    <string name="error_failed_load_users">यूज़र्स लोड करने में विफल</string>
+
+    <string name="text_yes">हाँ</string>
+    <string name="text_no">नहीं</string>
+
+    <string name="status_activated">सक्रिय किया गया</string>
+    <string name="status_deactivated">निष्क्रिय किया गया</string>
+
+    <string name="message_group_status">ग्रुप %1$s %2$s</string>
+    <string name="message_group_action">%1$s ग्रुप</string>
+
+    <string name="action_activate">सक्रिय करना</string>
+    <string name="action_deactivate">निष्क्रिय करना</string>
+
+    <string name="error_failed_save_group">ग्रुप सेव नहीं हो सका</string>
+
+    <string name="message_group_action_confirmation">क्या आप वाकई %2$s को %1$s चाहते हैं?</string>
+
+    <string name="error_request_timed_out">रिक्वेस्ट टाइमआउट हो गई। कृपया पुनः प्रयास करें</string>
+
+    <string name="text_rejected">रिजेक्टेड</string>
+    <string name="text_approved">अप्रूव्ड</string>
+
+    <string name="error_enter_email_reset_password">पासवर्ड रीसेट करने के लिए कृपया अपना ईमेल दर्ज करें</string>
+
+    <string name="text_use_email_password">ईमेल/पासवर्ड से लॉगिन करें</string>
+
+    <string name="title_fund_detailed_summary">फंड विस्तृत सारांश</string>
+
+    <string name="error_unable_fetch_fund_details">फंड विवरण प्राप्त करने में असमर्थ</string>
+
+    <string name="title_fund_deposits">फंड डिपॉजिट्स</string>
+    <string name="title_loan_emis">लोन ईएमआई</string>
+
+    <string name="error_failed_add_member">मेंबर जोड़ने में विफल: %1$s</string>
+    <string name="error_member_already_added">मेंबर पहले से जोड़ा गया है</string>
+
+    <string name="message_select_valid_member">कृपया एक मान्य मेंबर चुनें</string>
+
+    <string name="message_no_further_deposits_loans_allowed">अब आगे कोई डिपॉजिट या लोन की अनुमति नहीं होगी</string>
+
+    <string name="message_fund_closed_success">फंड सफलतापूर्वक बंद कर दिया गया</string>
+    <string name="error_unable_close_fund">फंड बंद करने में असमर्थ</string>
+
+    <string name="title_fund_update_created_success">फंड सफलतापूर्वक अपडेट/बनाया गया</string>
+
+    <string name="message_want_add_update_members_now">क्या आप अभी मेंबर्स जोड़ना/अपडेट करना चाहते हैं?</string>
+
+    <string name="message_theme_updated">थीम अपडेट हो गई</string>
+
+    <string name="title_edit_profile">प्रोफाइल एडिट करें</string>
+
+    <string name="error_email_phone_in_use">ईमेल या फोन पहले से उपयोग में है</string>
+
+    <string name="message_profile_updated_success">प्रोफाइल सफलतापूर्वक अपडेट हो गई</string>
+
+    <string name="message_share_app">ऐप शेयर करें</string>
+
+    <string name="title_confirm_logout">लॉगआउट की पुष्टि करें</string>
+    <string name="message_confirm_logout">क्या आप वाकई लॉगआउट करना चाहते हैं?</string>
+
+    <string name="message_successful_log_out">सफलतापूर्वक लॉगआउट हो गया</string>
+
+    <string name="message_enter_feedback">कृपया कुछ फीडबैक दर्ज करें</string>
+    <string name="message_thank_feedback">आपके फीडबैक के लिए धन्यवाद!</string>
+
+    <string name="title_submit_feedback">फीडबैक सबमिट करें</string>
+
+    <string name="hint_enter_feedback">अपना फीडबैक दर्ज करें...</string>
 </resources>

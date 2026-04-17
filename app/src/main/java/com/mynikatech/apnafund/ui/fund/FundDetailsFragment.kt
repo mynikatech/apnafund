@@ -82,7 +82,7 @@ class FundDetailsFragment : Fragment() {
         toolbar.setNavigationOnClickListener {
             navController.navigateUp()
         }
-        toolbar.title = "Fund Detailed Summary"
+        toolbar.title = getString(R.string.title_fund_detailed_summary)
     }
 
 
@@ -203,7 +203,7 @@ class FundDetailsFragment : Fragment() {
                 // Optional: show message
                 Toast.makeText(
                     requireContext(),
-                    "Unable to fetch fund details",
+                    getString(R.string.error_unable_fetch_fund_details),
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -245,7 +245,7 @@ class FundDetailsFragment : Fragment() {
                 }
             }
 
-            dialog.show(parentFragmentManager, "AddLoanDialog")
+            dialog.show(parentFragmentManager, ApnaBankConstants.TEXT_ADD_LOAN_DIALOG)
         }
     }
 

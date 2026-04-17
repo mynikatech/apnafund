@@ -55,7 +55,7 @@ class AddLoanDialog(
         val totalPending = formatCurrency(totalAmounts?.pendingAmount ?: 0.0)
         binding.textTotal.text = getString(R.string.text_total, amount)
         binding.textAvailable.text = getString(R.string.text_available, totalAvailable)
-        binding.textApproved.text = getString(R.string.text_approved, totalApproved)
+        binding.textApproved.text = getString(R.string.text_approved_amt, totalApproved)
         binding.textPending.text = getString(R.string.text_pending, totalPending)
         val borrowerDropdown = binding.editTextBorrower
         var selectedUserId: Int? = null

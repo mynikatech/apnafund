@@ -32,7 +32,7 @@
                 android:id="@+id/input_layout_first_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="First Name"
+                android:hint="@string/text_first_name"
                 app:layout_constraintTop_toBottomOf="@id/scrollview_header">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -48,7 +48,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="Last Name (Optional)"
+                android:hint="@string/text_last_name_optional"
                 app:layout_constraintTop_toBottomOf="@id/input_layout_first_name">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -63,7 +63,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="Email"
+                android:hint="@string/text_email"
                 app:layout_constraintTop_toBottomOf="@id/input_layout_last_name">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -79,7 +79,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="Phone Number"
+                android:hint="@string/text_phone_number"
                 app:layout_constraintTop_toBottomOf="@id/input_layout_email">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -96,7 +96,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="Password"
+                android:hint="@string/text_password"
                 app:layout_constraintTop_toBottomOf="@id/input_layout_phone"
                 app:passwordToggleEnabled="true">
 
@@ -112,7 +112,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="Confirm Password"
+                android:hint="@string/text_confirm_password"
                 app:layout_constraintTop_toBottomOf="@id/input_layout_password"
                 app:passwordToggleEnabled="true">
 
@@ -138,14 +138,14 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:checked="true"
-                    android:text="Member" />
+                    android:text="@string/text_member" />
 
                 <RadioButton
                     android:id="@+id/radio_moderator"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Moderator" />
+                    android:text="@string/text_moderator" />
             </RadioGroup>
 
             <!-- Moderator Fields -->
@@ -162,7 +162,7 @@
                     android:id="@+id/input_layout_group_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Group Name">
+                    android:hint="@string/text_group_name">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_text_group_name"
@@ -176,7 +176,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:hint="Group Description (Optional)">
+                    android:hint="@string/text_group_description_optional">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_text_group_desc"
@@ -198,13 +198,13 @@
                     android:id="@+id/setPinFlag"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Set a 4-digit PIN now?"
+                    android:text="@string/text_set_a_4_digit_pin_now"
                     app:layout_constraintTop_toBottomOf="@id/moderatorFieldsContainer" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=" (you can set it up later also)"
+                    android:text="@string/text_pin_later_set"
                     android:textStyle="italic" />
             </LinearLayout>
             <!-- Buttons -->
@@ -222,7 +222,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    android:text="Register" />
+                    android:text="@string/button_register" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/button_cancel"
@@ -230,7 +230,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Cancel" />
+                    android:text="@string/text_cancel_button" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

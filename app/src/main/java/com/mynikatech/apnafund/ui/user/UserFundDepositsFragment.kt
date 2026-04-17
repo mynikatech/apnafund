@@ -58,7 +58,7 @@ class UserFundDepositsFragment: Fragment() {
             binding.recyclerFundDeposits.adapter = adapter
         }
         val toolbar = view.findViewById<MaterialToolbar>(R.id.user_fund_deposits_toolbar)
-        toolbar.title = "Fund Deposits"
+        toolbar.title = getString(R.string.title_fund_deposits)
         // Enable back arrow
         val navController = findNavController()
         toolbar.setNavigationIcon(R.drawable.ic_back_arrow) // your back icon

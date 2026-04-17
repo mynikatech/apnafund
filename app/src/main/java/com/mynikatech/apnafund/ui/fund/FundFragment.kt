@@ -173,11 +173,11 @@ class FundFragment : Fragment() {
         }
 
         AlertDialog.Builder(requireContext())
-            .setTitle("Close Fund")
-            .setMessage("No further deposits or loans will be allowed.")
+            .setTitle(getString(R.string.text_close_fund))
+            .setMessage(getString(R.string.message_no_further_deposits_loans_allowed))
             .setView(input)
-            .setNegativeButton("Cancel", null)
-            .setPositiveButton("Close Fund") { _, _ ->
+            .setNegativeButton(getString(R.string.text_cancel_button), null)
+            .setPositiveButton(getString(R.string.text_close_fund)) { _, _ ->
 
                 val reason =
                     input.text.toString().ifBlank {
@@ -208,7 +208,7 @@ class FundFragment : Fragment() {
 
                 Toast.makeText(
                     requireContext(),
-                    "Fund closed successfully",
+                    getString(R.string.message_fund_closed_success),
                     Toast.LENGTH_LONG
                 ).show()
 
@@ -216,7 +216,7 @@ class FundFragment : Fragment() {
                 Log.e("FundFragment", e.message.toString())
                 Toast.makeText(
                     requireContext(),
-                    "Unable to close fund",
+                    getString(R.string.error_unable_close_fund),
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -386,7 +386,7 @@ class FundFragment : Fragment() {
 
         dialogBinding.buttonSaveFund.setOnClickListener {
             dialogBinding.buttonSaveFund.isEnabled = false
-            dialogBinding.buttonSaveFund.text = "Saving..."
+            dialogBinding.buttonSaveFund.text = getString(R.string.button_saving_progress)
             lifecycleScope.launch {
                 try {
                     // add Save Fund code
@@ -452,14 +452,14 @@ class FundFragment : Fragment() {
 
                     binding.noFundMessageContainer.visibility = View.GONE
                     AlertDialog.Builder(requireContext())
-                        .setTitle("Fund update/created Successfully")
-                        .setMessage("Do you want to add/update members now?")
-                        .setPositiveButton("Yes") { _, _ ->
+                        .setTitle(getString(R.string.title_fund_update_created_success))
+                        .setMessage(getString(R.string.message_want_add_update_members_now))
+                        .setPositiveButton(getString(R.string.text_yes)) { _, _ ->
                             val action = FundFragmentDirections
                                 .actionFundFragmentToFundMemberDetailsFragment(fundId = newFundId)
                             findNavController().navigate(action)
                         }
-                        .setNegativeButton("Cancel", null)
+                        .setNegativeButton(getString(R.string.text_cancel_button), null)
                         .show()
                     dialog.dismiss()
                 } catch (e: Exception) {
@@ -468,7 +468,7 @@ class FundFragment : Fragment() {
                     dialogBinding.buttonSaveFund.text = getString(R.string.text_save_button)
                     Toast.makeText(
                         requireContext(),
-                        "Something went wrong. Please try again.",
+                        getString(R.string.error_server),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -593,7 +593,7 @@ class FundFragment : Fragment() {
                     )
                 }
             }
-            dialog.show(parentFragmentManager, "AddLoanDialog")
+            dialog.show(parentFragmentManager, ApnaBankConstants.TEXT_ADD_LOAN_DIALOG)
         }
     }
 

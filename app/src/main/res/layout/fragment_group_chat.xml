@@ -24,7 +24,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Search messages"
+            android:hint="@string/text_search_messages"
             android:imeOptions="actionDone"/>
 
         <ImageButton
@@ -63,7 +63,7 @@
             android:layout_height="40dp"
             android:src="@drawable/ic_search"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Search chat"/>
+            android:contentDescription="@string/text_search_chat"/>
     </LinearLayout>
 
     <!-- Empty / No Group -->
@@ -83,7 +83,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No group chat available"
+            android:text="@string/message_no_group_chat_available"
             android:textSize="16sp" />
     </LinearLayout>
 
@@ -106,7 +106,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
         android:layout_marginBottom="4dp"
-        android:text="Someone is typing…"
+        android:text="@string/text_someone_is_typing"
         android:textSize="12sp"
         android:textColor="@color/gray"
         android:visibility="gone"
@@ -155,14 +155,14 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_close"
-            android:contentDescription="Cancel reply"/>
+            android:contentDescription="@string/text_cancel_reply"/>
     </LinearLayout>
 
     <TextView
         android:id="@+id/textNewMessages"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="⬇ New messages"
+        android:text="@string/text_new_messages"
         android:textSize="12sp"
         android:textColor="@color/white"
         android:paddingStart="12dp"
@@ -194,7 +194,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Type a message"
+            android:hint="@string/text_type_a_message"
             android:maxLines="4"
             android:imeOptions="actionSend"
             android:background="@drawable/bg_chat_input"
@@ -206,7 +206,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_send"
-            android:contentDescription="Send"/>
+            android:contentDescription="@string/text_send"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

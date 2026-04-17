@@ -224,7 +224,11 @@ class UserFragment : Fragment() {
                 ).show()
                 observeUsers()
             } else {
-                Toast.makeText(requireContext(), "User not found", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.error_user_not_found),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -242,7 +246,7 @@ class UserFragment : Fragment() {
         if (isAdmin) {
             lifecycleScope.launch {
                 groupViewModel.fetchAllGroups().collectLatest { groupList ->
-                    val groupNames = mutableListOf("Select Group")
+                    val groupNames = mutableListOf(getString(R.string.text_select_group))
                     groupNames.addAll(groupList.map { it.groupName })
                     groupMap.clear()
                     groupMap.putAll(groupList.associate { it.groupName to it.groupId })
@@ -288,7 +292,7 @@ class UserFragment : Fragment() {
         dialogBinding.editTextGroup.keyListener = null
         // Set button text
         dialogBinding.buttonSaveUser.text =
-            if (addOrEditFlag == 1) "Update User" else "Add User"
+            if (addOrEditFlag == 1) getString(R.string.text_update_user) else getString(R.string.text_add_user)
 
         // Pre-fill fields if editing
         existingUser?.let {
@@ -373,7 +377,7 @@ class UserFragment : Fragment() {
                 if (!isAdmin && selectedGroupId == null) {
                     Toast.makeText(
                         context,
-                        "Valid group selection is required", Toast.LENGTH_LONG
+                        getString(R.string.error_valid_group_selection), Toast.LENGTH_LONG
                     ).show()
                     return@launch
                 }

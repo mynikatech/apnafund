@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
-        android:title="Notification"
+        android:title="@string/text_notification"
         app:layout_constraintTop_toTopOf="parent"
         app:navigationIconTint="@color/black"
         app:titleTextColor="@color/white" />
@@ -26,7 +26,7 @@
         android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
         android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@id/toolbar_noification"
-        android:text="Notifications" />
+        android:text="@string/text_notification" />
 
     <View
         android:id="@+id/divider_notifications"
@@ -56,7 +56,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="No Notifications Available "
+            android:text="@string/text_no_notifications_available"
             android:textColor="@color/black"
             android:textSize="14sp"
             android:visibility="gone"/>

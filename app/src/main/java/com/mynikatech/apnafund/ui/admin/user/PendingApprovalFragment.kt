@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund.ui.admin.user
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,6 +10,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.mynikatech.apnafund.R
+import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.databinding.FragmentPendingApprovalBinding
 import com.mynikatech.apnafund.net.dto.PendingApprovalDto
 import com.mynikatech.apnafund.session.SessionManager
@@ -57,30 +60,34 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
 
                 when (item.entityType) {
 
-                    "GROUP" ->
+                    ApnaBankConstants.TEXT_GROUP ->
                         approvalViewModel.approveGroup(item.approvalId, SessionManager.userId)
 
-                    "LOAN" ->
+                    ApnaBankConstants.TEXT_LOAN ->
                         approvalViewModel.approveLoan(item.approvalId, SessionManager.userId)
                 }
 
-                Toast.makeText(requireContext(), "Approved", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.text_approved), Toast.LENGTH_SHORT
+                ).show()
                 observePendingRequests()
 
             } catch (e: io.ktor.client.plugins.HttpRequestTimeoutException) {
-
+                Log.e("PendingApprovalFragment", e.message.toString())
                 Toast.makeText(
                     requireContext(),
-                    "Request timed out. Please try again.",
+                    getString(R.string.error_request_timed_out),
                     Toast.LENGTH_LONG
                 ).show()
                 adapter.notifyItemChanged(position)
 
-            } catch (e: Exception) {
+            } catch (ex: Exception) {
 
+                Log.e("PendingApprovalFragment", ex.message.toString())
                 Toast.makeText(
                     requireContext(),
-                    "Something went wrong. Please try again.",
+                    getString(R.string.error_server),
                     Toast.LENGTH_LONG
                 ).show()
                 adapter.notifyItemChanged(position)
@@ -95,28 +102,31 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
 
                 when (item.entityType) {
 
-                    "GROUP" ->
+                    ApnaBankConstants.TEXT_GROUP ->
                         approvalViewModel.rejectGroup(item.approvalId, SessionManager.userId)
 
-                    "LOAN" ->
+                    ApnaBankConstants.TEXT_LOAN ->
                         approvalViewModel.rejectLoan(item.approvalId, SessionManager.userId)
                 }
 
-                Toast.makeText(requireContext(), "Rejected", Toast.LENGTH_SHORT).show()
-                observePendingRequests()
-            } catch (e: io.ktor.client.plugins.HttpRequestTimeoutException) {
-
                 Toast.makeText(
                     requireContext(),
-                    "Request timed out. Please try again.",
+                    getString(R.string.text_rejected), Toast.LENGTH_SHORT
+                ).show()
+                observePendingRequests()
+            } catch (e: io.ktor.client.plugins.HttpRequestTimeoutException) {
+                Log.e("PendingApprovalFragment", e.message.toString())
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.error_request_timed_out),
                     Toast.LENGTH_LONG
                 ).show()
 
             } catch (e: Exception) {
-
+                Log.e("PendingApprovalFragment", e.message.toString())
                 Toast.makeText(
                     requireContext(),
-                    "Something went wrong. Please try again.",
+                    getString(R.string.error_server),
                     Toast.LENGTH_LONG
                 ).show()
             }

@@ -79,11 +79,12 @@ class SideMenuDialogFragment : DialogFragment() {
                 R.id.menu_theme -> {
                     // to toggle theme from day to night and vice versa
                     ThemeManager.toggleTheme(requireContext())
-                    Snackbar.make(view, "Theme updated", Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(view,
+                        getString(R.string.message_theme_updated), Snackbar.LENGTH_SHORT).show()
                 }
 
                 R.id.menu_profile -> {
-                    val dialogView = LayoutInflater.from(requireContext())
+                    val dialogView = layoutInflater
                         .inflate(R.layout.dialog_edit_profile, null)
 
                     lifecycleScope.launch {
@@ -103,10 +104,10 @@ class SideMenuDialogFragment : DialogFragment() {
                         phoneEdit.setText(user?.phoneNumber ?: SessionManager.phoneNumber)
 
                         val dialog = AlertDialog.Builder(requireContext())
-                            .setTitle("Edit Profile")
+                            .setTitle(getString(R.string.title_edit_profile))
                             .setView(dialogView)
-                            .setPositiveButton("Save", null) // we override click
-                            .setNegativeButton("Cancel", null)
+                            .setPositiveButton(getString(R.string.text_save), null) // we override click
+                            .setNegativeButton(getString(R.string.text_cancel_button), null)
                             .create()
 
                         dialog.setOnShowListener {
@@ -148,7 +149,7 @@ class SideMenuDialogFragment : DialogFragment() {
                                     if (duplicate) {
                                         Toast.makeText(
                                             requireContext(),
-                                            "Email or phone already in use.",
+                                            getString(R.string.error_email_phone_in_use),
                                             Toast.LENGTH_LONG
                                         ).show()
                                         return@launch
@@ -185,7 +186,7 @@ class SideMenuDialogFragment : DialogFragment() {
 
                                         result
                                             .onSuccess { resp ->
-                                                // ✅ Safe access
+                                                // Safe access
                                                 SessionManager.userId = resp.userId
                                                 SessionManager.firstName = firstName
                                                 SessionManager.lastName = lastName
@@ -207,7 +208,7 @@ class SideMenuDialogFragment : DialogFragment() {
 
                                                 Toast.makeText(
                                                     requireContext(),
-                                                    "Profile updated successfully",
+                                                    getString(R.string.message_profile_updated_success),
                                                     Toast.LENGTH_SHORT
                                                 ).show()
 
@@ -222,7 +223,7 @@ class SideMenuDialogFragment : DialogFragment() {
 
                                                 Toast.makeText(
                                                     requireContext(),
-                                                    "Some issues with server. Please raise a support ticket or contact admin.",
+                                                    getString(R.string.error_server),
                                                     Toast.LENGTH_LONG
                                                 ).show()
                                             }
@@ -234,7 +235,7 @@ class SideMenuDialogFragment : DialogFragment() {
 
                                         Toast.makeText(
                                             requireContext(),
-                                            "Something went wrong. Please try again.",
+                                            getString(R.string.error_server),
                                             Toast.LENGTH_LONG
                                         ).show()
 
@@ -254,14 +255,15 @@ class SideMenuDialogFragment : DialogFragment() {
                 }
 
                 R.id.menu_share -> {
-                    Toast.makeText(requireContext(), "Share App", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(),
+                        getString(R.string.message_share_app), Toast.LENGTH_SHORT).show()
                 }
 
                 R.id.menu_logout -> {
                     AlertDialog.Builder(requireContext())
-                        .setTitle("Confirm Logout")
-                        .setMessage("Are you sure you want to logout?")
-                        .setPositiveButton("Yes") { _, _ ->
+                        .setTitle(getString(R.string.title_confirm_logout))
+                        .setMessage(getString(R.string.message_confirm_logout))
+                        .setPositiveButton(getString(R.string.text_yes)) { _, _ ->
                             try {
                                 FirebaseFirestore.getInstance().terminate()
                             } catch (e: Exception) {
@@ -275,7 +277,7 @@ class SideMenuDialogFragment : DialogFragment() {
                             FirebaseFirestore.getInstance().clearPersistence()
                             Toast.makeText(
                                 requireContext(),
-                                "Successfully Logged Out",
+                                getString(R.string.message_successful_log_out),
                                 Toast.LENGTH_SHORT
                             ).show()
                             val intent = Intent(requireContext(), SplashActivity::class.java)
@@ -287,7 +289,7 @@ class SideMenuDialogFragment : DialogFragment() {
                             findNavController().navigate(action)
                             dismiss()
                         }
-                        .setNegativeButton("Cancel", null)
+                        .setNegativeButton(getString(R.string.text_cancel_button), null)
                         .show()
                 }
             }
@@ -297,31 +299,33 @@ class SideMenuDialogFragment : DialogFragment() {
 
     private fun showFeedbackDialog() {
         val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Submit Feedback")
+        builder.setTitle(getString(R.string.title_submit_feedback))
 
         val input = EditText(requireContext())
-        input.hint = "Enter your feedback..."
+        input.hint = getString(R.string.hint_enter_feedback)
         input.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
         input.minLines = 3
         builder.setView(input)
 
-        builder.setPositiveButton("Submit") { dialog, _ ->
+        builder.setPositiveButton(getString(R.string.button_submit)) { dialog, _ ->
             val message = input.text.toString().trim()
             if (message.isNotEmpty()) {
                 val adminViewModel: AdminViewModel by viewModels()
                 lifecycleScope.launch {
                     adminViewModel.submitFeedback(SessionManager.userId, message)
                 }
-                Toast.makeText(requireContext(), "Thank you for your feedback!", Toast.LENGTH_SHORT)
+                Toast.makeText(requireContext(),
+                    getString(R.string.message_thank_feedback), Toast.LENGTH_SHORT)
                     .show()
             } else {
-                Toast.makeText(requireContext(), "Please enter some feedback", Toast.LENGTH_SHORT)
+                Toast.makeText(requireContext(),
+                    getString(R.string.message_enter_feedback), Toast.LENGTH_SHORT)
                     .show()
             }
             dialog.dismiss()
         }
 
-        builder.setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
+        builder.setNegativeButton(getString(R.string.text_cancel_button)) { dialog, _ -> dialog.cancel() }
         builder.show()
     }
 }

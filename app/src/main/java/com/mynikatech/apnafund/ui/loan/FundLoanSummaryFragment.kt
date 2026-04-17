@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.color.MaterialColors
 import com.mynikatech.apnafund.R
+import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.databinding.FragmentFundLoanSummaryBinding
 import com.mynikatech.apnafund.net.dto.LoanDetailsWithMemberNamesDto
 import com.mynikatech.apnafund.ui.viewmodel.LoansViewModel
@@ -48,7 +49,7 @@ class FundLoanSummaryFragment : Fragment() {
         val args = FundLoanSummaryFragmentArgs.fromBundle(requireArguments())
 
         fundId = args.fundId
-        binding.toolbar.title = "Fund Loans Summary"
+        binding.toolbar.title = getString(R.string.title_fund_loans_summary)
 
         binding.textFundName.text =
             getString(R.string.fund_loans_title, args.fundName)
@@ -93,14 +94,14 @@ class FundLoanSummaryFragment : Fragment() {
         row.setBackgroundResource(R.drawable.table_cell_shape)
         row.setBackgroundColor(colorPrimary)
         val headers = listOf(
-            "Borrower",
-            "Loan#",
-            "Amount",
-            "Issued",
-            "Principal",
-            "Interest",
-            "Status",
-            "Workflow"
+            getString(R.string.text_borrower),
+            getString(R.string.text_loan_num),
+            getString(R.string.text_amount),
+            getString(R.string.text_issued),
+            getString(R.string.text_principal),
+            getString(R.string.text_interest),
+            getString(R.string.text_status),
+            getString(R.string.text_workflow)
         )
 
         headers.forEachIndexed { index, title ->
@@ -190,7 +191,7 @@ class FundLoanSummaryFragment : Fragment() {
         val interest = loans.sumOf { it.currTotalIntPaid }
 
         val pending = loans.count {
-            it.workflowStatus.equals("PENDING", true)
+            it.workflowStatus.equals(ApnaBankConstants.STATUS_PENDING, true)
         }
 
         binding.textTotalLoans.text = totalLoans.toString()
@@ -206,9 +207,9 @@ class FundLoanSummaryFragment : Fragment() {
         val context = requireContext()
 
         return when (status.uppercase()) {
-            "PENDING_APPROVAL" -> ContextCompat.getColor(context, R.color.status_pending)
-            "APPROVED" -> ContextCompat.getColor(context, R.color.status_approved)
-            "REJECTED" -> ContextCompat.getColor(context, R.color.status_rejected)
+            ApnaBankConstants.STATUS_PENDING_APPROVAL -> ContextCompat.getColor(context, R.color.status_pending)
+            ApnaBankConstants.STATUS_APPROVED -> ContextCompat.getColor(context, R.color.status_approved)
+            ApnaBankConstants.STATUS_REJECTED -> ContextCompat.getColor(context, R.color.status_rejected)
             else -> MaterialColors.getColor(context, com.google.android.material.R.attr.colorOnSurface, Color.DKGRAY)
         }
     }

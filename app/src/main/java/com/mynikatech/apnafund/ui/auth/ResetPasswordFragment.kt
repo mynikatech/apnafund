@@ -84,7 +84,8 @@ class ResetPasswordFragment : Fragment() {
                 val localUser = userViewModel.fetchUser(userId)
                 if (localUser == null) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(requireContext(), "User Not found", Toast.LENGTH_SHORT)
+                        Toast.makeText(requireContext(),
+                            getString(R.string.error_user_not_found), Toast.LENGTH_SHORT)
                             .show()
                     }
                     binding.buttonChangePassword.isEnabled = true
@@ -97,7 +98,7 @@ class ResetPasswordFragment : Fragment() {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             requireContext(),
-                            "Incorrect Current Password",
+                            getString(R.string.error_incorrect_current_password),
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -108,7 +109,7 @@ class ResetPasswordFragment : Fragment() {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             requireContext(),
-                            "Password must be at least 8 characters",
+                            getString(R.string.error_pwd_length),
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -120,7 +121,7 @@ class ResetPasswordFragment : Fragment() {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             requireContext(),
-                            "Password is too weak. Please add special symbols @,*,\$ etc and numbers",
+                            getString(R.string.error_password_weak),
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -134,7 +135,7 @@ class ResetPasswordFragment : Fragment() {
 
                         Toast.makeText(
                             requireContext(),
-                            "Password changed successfully",
+                            getString(R.string.message_pwd_update_success),
                             Toast.LENGTH_SHORT
                         ).show()
 
@@ -147,13 +148,13 @@ class ResetPasswordFragment : Fragment() {
                         // 🎯 Handle known server-side validation errors
                         val message = when (e.type) {
                             "PASSWORD_REUSED" ->
-                                "You cannot reuse your last 3 passwords"
+                                getString(R.string.error_pwd_reuse)
 
                             "NETWORK_ERROR" ->
-                                "Please check your internet connection"
+                                getString(R.string.error_internet_connection)
 
                             "SERVER_ERROR" ->
-                                "Server error. Please try again later"
+                                getString(R.string.error_server)
 
                             else ->
                                 e.message
@@ -163,7 +164,7 @@ class ResetPasswordFragment : Fragment() {
                     } catch (e: Exception) {
                         Toast.makeText(
                             requireContext(),
-                            e.message ?: "Password update failed",
+                            e.message ?: getString(R.string.message_pwd_set_failure),
                             Toast.LENGTH_SHORT
                         ).show()
                         binding.buttonChangePassword.isEnabled = true
@@ -175,16 +176,16 @@ class ResetPasswordFragment : Fragment() {
 
     private fun showExitWarning() {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Cancel password reset?")
+            .setTitle(getString(R.string.title_cancel_pwd_reset))
             .setMessage(
-                "If you reset your password again later."
+                getString(R.string.message_reset_password_again_later)
             )
-            .setPositiveButton("Leave") { _, _ ->
+            .setPositiveButton(getString(R.string.text_leave)) { _, _ ->
                 findNavController().navigate(
                     ResetPasswordFragmentDirections.actionResetPasswordFragmentToSettingsFragment()
                 )
             }
-            .setNegativeButton("Stay", null)
+            .setNegativeButton(getString(R.string.text_stay), null)
             .show()
     }
 

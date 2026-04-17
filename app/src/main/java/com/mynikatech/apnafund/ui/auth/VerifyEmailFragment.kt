@@ -175,7 +175,7 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
                     } else {
                         Toast.makeText(
                             requireContext(),
-                            "Unable to resend code. Try again later.",
+                            getString(R.string.message_unable_to_send_code),
                             Toast.LENGTH_SHORT
                         ).show()
                         binding.textResend.isEnabled = true

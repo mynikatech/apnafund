@@ -49,7 +49,7 @@ class LoanEmiFragment : Fragment() {
         (requireActivity() as AppCompatActivity).supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             setDisplayShowHomeEnabled(true)
-            title = "Loan EMIs"
+            title = getString(R.string.title_loan_emis)
         }
         setHasOptionsMenu(true)
         val loanId = args.loanId
@@ -72,7 +72,7 @@ class LoanEmiFragment : Fragment() {
         toolbar.setNavigationOnClickListener {
             navController.navigateUp()
         }
-        toolbar.title = "Loan EMIs"
+        toolbar.title = getString(R.string.title_loan_emis)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

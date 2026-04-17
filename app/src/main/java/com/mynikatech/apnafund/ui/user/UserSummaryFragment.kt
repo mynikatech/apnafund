@@ -139,7 +139,7 @@ class UserSummaryFragment : Fragment() {
         }
         TooltipCompat.setTooltipText(
             binding.fabAssistant,
-            "Ask Maya"
+            getString(R.string.title_ask_Maya)
         )
         Log.d("ApnaFund", "UserFragment: The user Id is $userId")
 

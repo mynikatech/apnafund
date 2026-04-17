@@ -64,7 +64,7 @@ class ChangePasswordFragment : Fragment() {
             val confirmPassword = binding.editTextConfirmPassword.text.toString()
 
             if (newPassword != confirmPassword) {
-                Toast.makeText(requireContext(), "Passwords do not match", Toast.LENGTH_SHORT)
+                Toast.makeText(requireContext(), getString(R.string.error_pwd_not_match), Toast.LENGTH_SHORT)
                     .show()
                 binding.buttonChangePassword.isEnabled = true
                 return@setOnClickListener
@@ -75,7 +75,7 @@ class ChangePasswordFragment : Fragment() {
                 if (newPassword.length < 8) {
                     Toast.makeText(
                         requireContext(),
-                        "Password must be at least 8 characters",
+                        getString(R.string.error_pwd_length),
                         Toast.LENGTH_SHORT
                     ).show()
                     binding.buttonChangePassword.isEnabled = true
@@ -86,7 +86,7 @@ class ChangePasswordFragment : Fragment() {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             requireContext(),
-                            "Password is too weak. Please add special symbols @,*,\$ etc and numbers",
+                            getString(R.string.error_password_weak),
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -100,7 +100,7 @@ class ChangePasswordFragment : Fragment() {
 
                         Toast.makeText(
                             requireContext(),
-                            "Password changed successfully",
+                            getString(R.string.message_pwd_update_success),
                             Toast.LENGTH_SHORT
                         ).show()
 
@@ -113,23 +113,23 @@ class ChangePasswordFragment : Fragment() {
                         // 🎯 Handle known server-side validation errors
                         val message = when (e.type) {
                             "PASSWORD_REUSED" ->
-                                "You cannot reuse your last 3 passwords"
+                                getString(R.string.error_pwd_reuse)
 
                             "NETWORK_ERROR" ->
-                                "Please check your internet connection"
+                                getString(R.string.error_internet_connection)
 
                             "SERVER_ERROR" ->
-                                "Server error. Please try again later"
+                                getString(R.string.error_server)
 
                             else ->
-                                e.message ?: "Password update failed"
+                                e.message
                         }
                         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
                         binding.buttonChangePassword.isEnabled = true
                     } catch (e: Exception) {
                         Toast.makeText(
                             requireContext(),
-                            e.message ?: "Password update failed",
+                            e.message ?: getString(R.string.error_pwd_update),
                             Toast.LENGTH_SHORT
                         ).show()
                         binding.buttonChangePassword.isEnabled = true
@@ -141,17 +141,16 @@ class ChangePasswordFragment : Fragment() {
 
     private fun showExitWarning() {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Cancel password reset?")
+            .setTitle(getString(R.string.title_cancel_pwd_reset))
             .setMessage(
-                "If you leave this screen, you will be redirected to the Login Screen. " +
-                        "You’ll need to reverify your email again to continue."
+                getString(R.string.message_cancel_pwd_reset)
             )
-            .setPositiveButton("Leave") { _, _ ->
+            .setPositiveButton(getString(R.string.text_leave)) { _, _ ->
                 findNavController().navigate(
                     ChangePasswordFragmentDirections.actionChangePasswordFragmentToLoginFragment()
                 )
             }
-            .setNegativeButton("Stay", null)
+            .setNegativeButton(getString(R.string.text_stay), null)
             .show()
     }
 

@@ -10,6 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
+import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.databinding.FragmentSetPasswordBinding
 import com.mynikatech.apnafund.net.ApiException
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
@@ -48,7 +49,7 @@ class SetPasswordFragment : Fragment() {
             if (password.length < 8) {
                 Toast.makeText(
                     requireContext(),
-                    "Password must be at least 8 characters",
+                    getString(R.string.error_pwd_length),
                     Toast.LENGTH_SHORT
                 ).show()
                 binding.buttonSubmit.isEnabled = true
@@ -58,7 +59,7 @@ class SetPasswordFragment : Fragment() {
             if (strength.name == "WEAK") {
                 Toast.makeText(
                     requireContext(),
-                    "Password is too weak. Please add special symbols @,*,$ etc and numbers",
+                    getString(R.string.error_password_weak),
                     Toast.LENGTH_SHORT
                 ).show()
                 binding.buttonSubmit.isEnabled = true
@@ -66,7 +67,7 @@ class SetPasswordFragment : Fragment() {
             }
 
             if (password != confirm) {
-                Toast.makeText(requireContext(), "Passwords do not match", Toast.LENGTH_SHORT)
+                Toast.makeText(requireContext(), getString(R.string.error_pwd_not_match), Toast.LENGTH_SHORT)
                     .show()
                 binding.buttonSubmit.isEnabled = true
                 return@setOnClickListener
@@ -76,7 +77,7 @@ class SetPasswordFragment : Fragment() {
                     userViewModel.changeUserPassword(userId, password)
                     Toast.makeText(
                         requireContext(),
-                        "Password set successfully. Please login",
+                        getString(R.string.message_password_set_successfully),
                         Toast.LENGTH_SHORT
                     ).show()
 
@@ -89,23 +90,23 @@ class SetPasswordFragment : Fragment() {
                     // 🎯 Handle known server-side validation errors
                     val message = when (e.type) {
                         "PASSWORD_REUSED" ->
-                            "You cannot reuse your last 3 passwords"
+                            getString(R.string.error_pwd_reuse)
 
                         "NETWORK_ERROR" ->
-                            "Please check your internet connection"
+                            getString(R.string.error_internet_connection)
 
                         "SERVER_ERROR" ->
-                            "Server error. Please try again later"
+                            getString(R.string.error_server)
 
                         else ->
-                            e.message ?: "Password update failed"
+                            e.message
                     }
                     Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
                     binding.buttonSubmit.isEnabled = true
                 } catch (e: Exception) {
                     Toast.makeText(
                         requireContext(),
-                        e.message ?: "Password set failed",
+                        e.message ?: getString(R.string.message_pwd_set_failure),
                         Toast.LENGTH_SHORT
                     ).show()
                     binding.buttonSubmit.isEnabled = true

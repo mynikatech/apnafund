@@ -228,16 +228,18 @@ class GroupDetailsFragment : Fragment() {
                         }.onFailure {
                             Toast.makeText(
                                 context,
-                                "Failed to add member: ${it.message}",
+                                getString(R.string.error_failed_add_member, it.message),
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
                     } else {
-                        Toast.makeText(context, "Member already added", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context,
+                            getString(R.string.error_member_already_added), Toast.LENGTH_SHORT).show()
                     }
                 }
             } else {
-                Toast.makeText(context, "Please select a valid member", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context,
+                    getString(R.string.message_select_valid_member), Toast.LENGTH_SHORT).show()
             }
         }
         dialogBinding.buttonCancelGrpMember.setOnClickListener {

@@ -38,11 +38,6 @@ class NotificationFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         super.onViewCreated(view, savedInstanceState)
-        /*(requireActivity() as AppCompatActivity).supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
-            setDisplayShowHomeEnabled(true)
-            title = "Notifications"
-        }*/
         binding.recyclerView.layoutManager =
             LinearLayoutManager(requireContext())
 
@@ -71,16 +66,13 @@ class NotificationFragment : Fragment() {
 
 
         val toolbar = view.findViewById<MaterialToolbar>(R.id.toolbar_noification)
-        //(activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
-        //(activity as? AppCompatActivity)?.supportActionBar?.setDisplayShowTitleEnabled(false)
-
         // Enable back arrow
         val navController = findNavController()
         toolbar.setNavigationIcon(R.drawable.ic_back_arrow) // your back icon
         toolbar.setNavigationOnClickListener {
             navController.navigateUp()
         }
-        toolbar.title = "Notifications"
+        toolbar.title = getString(R.string.text_notifications)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

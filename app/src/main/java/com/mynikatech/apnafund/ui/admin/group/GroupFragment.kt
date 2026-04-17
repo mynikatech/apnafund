@@ -101,7 +101,8 @@ class GroupFragment : Fragment() {
                 }
             } catch (e: Exception) {
                 Log.e("GroupFragment", "Error fetching groups", e)
-                Toast.makeText(requireContext(), "Failed to load groups", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(),
+                    getString(R.string.error_failed_load_groups), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -210,7 +211,7 @@ class GroupFragment : Fragment() {
         dialog.setContentView(dialogBinding.root)
         dialog.show()
         var userId = 0
-        dialogBinding.buttonSaveGrp.text = if (addOrEditFlag == 1) "Update Group" else "Add Group"
+        dialogBinding.buttonSaveGrp.text = if (addOrEditFlag == 1) getString(R.string.text_update_group) else getString(R.string.text_add_group)
 
         // Pre-fill group name
         if (addOrEditFlag == 1) {
@@ -307,7 +308,8 @@ class GroupFragment : Fragment() {
                 }
             } catch (e: Exception) {
                 Log.e("GroupFragment", "Error loading users", e)
-                Toast.makeText(context, "Failed to load users", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context,
+                    getString(R.string.error_failed_load_users), Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -343,9 +345,10 @@ class GroupFragment : Fragment() {
                     groupViewModel.saveOrUpdateGroup(groupToSave)
 
                     val message = if (isAdmin) {
-                        "Group created successfully."
+                        getString(R.string.message_group_created_success)
                     } else {
-                        "Group request submitted for approval. You will receive a notification once it is approved."
+                        getString(R.string.message_group_request_submitted_for_approval)
+
                     }
 
                     Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
@@ -353,7 +356,8 @@ class GroupFragment : Fragment() {
                     dialog.dismiss()
                 } catch (e: Exception) {
                     Log.e("GroupFragment", "Error saving group", e)
-                    Toast.makeText(requireContext(), "Failed to save group", Toast.LENGTH_LONG)
+                    Toast.makeText(requireContext(),
+                        getString(R.string.error_failed_save_group), Toast.LENGTH_LONG)
                         .show()
                     dialogBinding.buttonSaveGrp.isEnabled = true
                 }
@@ -365,16 +369,23 @@ class GroupFragment : Fragment() {
     }
 
     private fun showConfirmToggleGroupStatus(group: Groups) {
-        val action =
-            if (group.status == ApnaBankConstants.STATUS_ACTIVE) "Deactivate" else "Activate"
 
+        val action =
+            if (group.status == ApnaBankConstants.STATUS_ACTIVE)
+                getString(R.string.action_deactivate) else getString(R.string.action_deactivate)
+        val title = getString(R.string.group_label, action)
+        val message = getString(
+            R.string.message_group_action_confirmation,
+            action,
+            group.groupName
+        )
         AlertDialog.Builder(requireContext())
-            .setTitle("$action user")
-            .setMessage("Are you sure you want to $action ${group.groupName}")
-            .setPositiveButton("Yes") { _, _ ->
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(getString(R.string.text_yes)) { _, _ ->
                 toggleGroupStatus(group)
             }
-            .setNegativeButton("No", null)
+            .setNegativeButton(getString(R.string.text_no), null)
             .show()
     }
 
@@ -387,11 +398,19 @@ class GroupFragment : Fragment() {
             }
             val updatedGroup = group.copy(status = updatedStatus)
             groupViewModel.saveOrUpdateGroup(updatedGroup)
-            Toast.makeText(
-                requireContext(),
-                "Group ${updatedGroup.groupName} ${if (updatedGroup.status == ApnaBankConstants.STATUS_ACTIVE) "Activated" else "Deactivated"}",
-                Toast.LENGTH_SHORT
-            ).show()
+            val statusText = if (updatedGroup.status == ApnaBankConstants.STATUS_ACTIVE) {
+                getString(R.string.status_activated)
+            } else {
+                getString(R.string.status_deactivated)
+            }
+            val message = getString(
+                R.string.message_group_status,
+                updatedGroup.groupName,
+                statusText
+            )
+
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+
             fetchAllGroups()
         }
     }
