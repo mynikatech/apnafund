@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 050-create-index-bootstrap
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/050-create-index-bootstrap.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

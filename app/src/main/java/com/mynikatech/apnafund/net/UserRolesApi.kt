@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund.net
 
 import com.mynikatech.apnafund.data.model.UserRoles
+import com.mynikatech.apnafund.net.dto.BootstrapData
 import com.mynikatech.apnafund.net.dto.PendingModeratorRequestDto
 import com.mynikatech.apnafund.net.dto.RolesDto
 import com.mynikatech.apnafund.net.dto.UserProfileDto
@@ -21,5 +22,6 @@ interface UserRolesApi {
     suspend fun deleteUserRoles(userRoles: UserRoles)
     suspend fun getUserProfile(userId: Int): List<UserProfileDto>
     suspend fun getPendingModeratorRequests(): List<PendingModeratorRequestDto>
+    suspend fun getBootStrapData(): BootstrapData
 
 }

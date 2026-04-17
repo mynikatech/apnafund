@@ -23,6 +23,7 @@ import com.mynikatech.apnafund.net.PinHistoryApi
 import com.mynikatech.apnafund.net.RolesApi
 import com.mynikatech.apnafund.net.UserRolesApi
 import com.mynikatech.apnafund.net.UsersApi
+import com.mynikatech.apnafund.net.dto.BootstrapData
 import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
 import com.mynikatech.apnafund.net.dto.GroupsDto
 import com.mynikatech.apnafund.net.dto.LoginUserResponse
@@ -45,15 +46,6 @@ import kotlinx.coroutines.withContext
 
 @Suppress("unused") // we kept some method names for API compatibility
 class UserRoleRepository(
-    // Keep constructor parameters for DI compatibility, but we no longer use local DB/DAOs.
-    // (Commented out property storage to avoid accidental usage.)
-    /* userDao: UsersDao,
-    rolesDao: RolesDao,
-    userRolesDao: UserRolesDao,
-    passwordHistDao: PasswordHistoryDao,
-    adminDao: AdminDao,
-    pinHistoryDao: PinHistoryDao, */
-
     private val usersApi: UsersApi,
     private val rolesApi: RolesApi,
     private val groupsApi: GroupsApi,
@@ -64,6 +56,8 @@ class UserRoleRepository(
 ) {
 
     // --- Sync helpers (no local cache) ---
+    private var cachedUserProfile: UserProfile? = null
+    private var cachedUserId: Int? = null
 
     suspend fun refreshUsers() = withContext(Dispatchers.IO) {
         // Network-only: Fetch to validate connectivity; no local writes.
@@ -193,16 +187,31 @@ class UserRoleRepository(
         return userRolesApi.getAllUserRoleIds(userId)
     }
 
-    suspend fun getUserProfile(userId: Int): UserProfile =
-        withContext(Dispatchers.IO) {
+    suspend fun getBootStrapData(): BootstrapData {
+        return userRolesApi.getBootStrapData()
+    }
 
+    suspend fun getUserProfile(userId: Int, force: Boolean = false): UserProfile =
+        withContext(Dispatchers.IO) {
+            if (!force &&
+                cachedUserId == userId &&
+                cachedUserProfile != null
+            ) {
+                return@withContext cachedUserProfile!!
+            }
             val remote = usersApi.getUserProfile(userId)
 
             if (remote == null) {
                 throw InvalidSessionException("User profile not found for userId=$userId")
             }
 
-            remote.toEntity()
+            val profile = remote.toEntity()
+
+            // Cache
+            cachedUserId = userId
+            cachedUserProfile = profile
+
+            profile
         }
 
     suspend fun insertPasswordHistory(entry: UserPasswordHistory) {

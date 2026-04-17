@@ -35,6 +35,7 @@ class UserSummaryViewModel : ViewModel() {
 
     private val _sessionInvalid = MutableSharedFlow<Unit>()
     val sessionInvalid = _sessionInvalid.asSharedFlow()
+    private var lastFundId: Int? = null
 
     val userName = MutableLiveData<String>()
     private val userRoles = MutableLiveData<List<String>>()
@@ -49,9 +50,19 @@ class UserSummaryViewModel : ViewModel() {
     val fundDepositSummary = MutableLiveData<Double?>()
     val fundMaturity = MutableLiveData<Double?>()
     private val fundLoan = MutableLiveData<Double?>()
+    private var lastUserId: Int? = null
+    private var lastGroupId: Int? = null
 
-    fun loadUserSummary(userId: Int, selectedGroupId: Int?) {
+    fun loadUserSummary(userId: Int, selectedGroupId: Int? , force: Boolean = false) {
+        if (!force &&
+            lastUserId == userId  &&
+            lastGroupId == selectedGroupId
+        ) {
+            return
+        }
 
+        lastUserId = userId
+        lastGroupId = selectedGroupId
         viewModelScope.launch {
 
             val userDetails = userSummaryRepository.getUserDetails(userId, selectedGroupId)
@@ -94,12 +105,14 @@ class UserSummaryViewModel : ViewModel() {
         }
     }
 
-    fun loadFundDetails(userId: Int, fundId: Int) {
+    fun loadFundDetails(userId: Int, fundId: Int, force: Boolean = false) {
+        if (!force && lastFundId == fundId) return
         fundDepositSummary.postValue(null)
         fundMaturity.postValue(null)
         fundLoan.postValue(null)
         userLoans.postValue(emptyList())
         selectedFundDetails.postValue(null)
+        lastFundId = fundId
         viewModelScope.launch {
             val userFundDetails = getUserFundDetails(userId, fundId)
             if (userFundDetails != null) {

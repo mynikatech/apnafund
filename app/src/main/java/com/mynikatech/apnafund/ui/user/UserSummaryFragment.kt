@@ -103,8 +103,8 @@ class UserSummaryFragment : Fragment() {
         super.onResume()
         Log.d("UserSummary", "On Resume called")
         Log.d("UserSummary", "The group name in session is ${SessionManager.groupName}")
-        binding.textViewWelcomeMessage.text =
-            getString(R.string.text_welcome_message, SessionManager.userName)
+        /*binding.textViewWelcomeMessage.text =
+            getString(R.string.text_welcome_message, SessionManager.userName)*/
         refreshGroupChip()
     }
 
@@ -165,13 +165,14 @@ class UserSummaryFragment : Fragment() {
                 val userProfile = userSummaryViewModel.getUserProfile(userId)
                 if (!isAdded) return@launch
                 saveUserProfilesSession(userProfile)
-                userSummaryViewModel.userName.value = SessionManager.getFormattedUserName()
+                val newName = SessionManager.getFormattedUserName()
+                if (userSummaryViewModel.userName.value.isNullOrBlank()) {
+                    userSummaryViewModel.userName.value = newName
+                }
                 refreshGroupChip()
                 ensureFirebaseLogin()
 
                 notificationViewModel.loadUnreadCount(SessionManager.userId)
-
-                //userSummaryViewModel.syncFirebaseUidIfNeeded()
 
             } catch (_: InvalidSessionException) {
                 // already handled
@@ -181,7 +182,7 @@ class UserSummaryFragment : Fragment() {
 
                 Toast.makeText(
                     requireContext(),
-                    "Failed to load profile. Please try again.",
+                    getString(R.string.error_failed_load_profile),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -215,13 +216,6 @@ class UserSummaryFragment : Fragment() {
                 ?.getLiveData<Boolean>("profile_updated")
                 ?.observe(viewLifecycleOwner) {
 
-                    if (it == true) {
-                        binding.textViewWelcomeMessage.text =
-                            getString(
-                                R.string.text_welcome_message,
-                                SessionManager.getFormattedUserName()
-                            )
-                    }
                 }
 
             if (!hasGroup) {
@@ -456,19 +450,20 @@ class UserSummaryFragment : Fragment() {
                         )
                     findNavController().navigate(action)
                 }
-                userSummaryViewModel.userLoans.observe(viewLifecycleOwner) { loans ->
-                    val hasLoans = !loans.isNullOrEmpty()
-                    val selectedFund = fundSharedViewModel.selectedFund.value
-                    val isClosedFund =
-                        selectedFund?.fundStatus == ApnaBankConstants.CLOSED_STATUS ||
-                                selectedFund?.fundStatus == ApnaBankConstants.INACTIVE_STATUS
 
-                    binding.recyclerViewLoans.visibility = if (hasLoans) View.VISIBLE else View.GONE
-                    binding.textViewNoLoans.visibility =
-                        if (!hasLoans && !isClosedFund) View.VISIBLE else View.GONE
-                    binding.textViewLoansHeader.text = getString(R.string.text_loan)
-                    adapter?.setLoans(loans ?: emptyList())
-                }
+            }
+            userSummaryViewModel.userLoans.observe(viewLifecycleOwner) { loans ->
+                val hasLoans = !loans.isNullOrEmpty()
+                val selectedFund = fundSharedViewModel.selectedFund.value
+                val isClosedFund =
+                    selectedFund?.fundStatus == ApnaBankConstants.CLOSED_STATUS ||
+                            selectedFund?.fundStatus == ApnaBankConstants.INACTIVE_STATUS
+
+                binding.recyclerViewLoans.visibility = if (hasLoans) View.VISIBLE else View.GONE
+                binding.textViewNoLoans.visibility =
+                    if (!hasLoans && !isClosedFund) View.VISIBLE else View.GONE
+                binding.textViewLoansHeader.text = getString(R.string.text_loan)
+                adapter?.setLoans(loans ?: emptyList())
             }
         }
 

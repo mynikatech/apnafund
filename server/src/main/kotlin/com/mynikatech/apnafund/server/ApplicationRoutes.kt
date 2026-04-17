@@ -62,7 +62,7 @@ fun Application.registerRoutes(
         usersRoutes(usersDao,eventDispatchService, moderatorRegistrationService,userManagementService,emailVerificationService, userRolesDao)
         groupsRoutes(groupsDao,eventDispatchService,usersDao,notificationService,approvalDao)
         rolesRoutes(roleDao)
-        userRolesRoutes(userRolesDao)
+        userRolesRoutes(userRolesDao, roleDao, typeDao)
         fundsRoutes(fundDao,notificationService,usersDao )
         depositsRoutes(deposistsDao)
         loansRoutes(loansDao,eventDispatchService,usersDao, fundDao, notificationService,approvalDao)

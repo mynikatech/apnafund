@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund.net
 
 import com.mynikatech.apnafund.data.model.UserRoles
+import com.mynikatech.apnafund.net.dto.BootstrapData
 import com.mynikatech.apnafund.net.dto.PendingModeratorRequestDto
 import com.mynikatech.apnafund.net.dto.RolesDto
 import com.mynikatech.apnafund.net.dto.UserProfileDto
@@ -77,5 +78,8 @@ class UserRolesApiKtor(
             contentType(ContentType.Application.Json)
             setBody(userRoles)
         }.body<Unit>()
+    }
+    override suspend fun getBootStrapData(): BootstrapData {
+        return client.get("/user-roles/bootstrap/data").unwrap<BootstrapData>()
     }
 }

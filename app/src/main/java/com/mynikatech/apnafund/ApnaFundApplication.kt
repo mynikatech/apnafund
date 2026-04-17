@@ -31,6 +31,7 @@ import com.mynikatech.apnafund.net.RolesApiKtor
 import com.mynikatech.apnafund.net.TypeApiKtor
 import com.mynikatech.apnafund.net.UserRolesApiKtor
 import com.mynikatech.apnafund.net.UsersApiKtor
+import com.mynikatech.apnafund.net.dto.BootstrapData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -99,9 +100,13 @@ class ApnaFundApplication : Application() {
 
         )
         CoroutineScope(Dispatchers.IO).launch {
-            rolePrivilegesMap = userRolesRepository.getPrivilegesGroupedByRole()
-            rolesMap = userRolesRepository.getRoleCodesByRoleId()
-            typeMap = typeRepository.getAllTypes()
+            bootStrapData = userRolesRepository.getBootStrapData()
+            rolePrivilegesMap = bootStrapData.rolePrivileges
+            rolesMap = bootStrapData.roles
+            typeMap = bootStrapData.types
+            //rolePrivilegesMap = userRolesRepository.getPrivilegesGroupedByRole()
+            //rolesMap = userRolesRepository.getRoleCodesByRoleId()
+            //typeMap = typeRepository.getAllTypes()
         }
 
     }
@@ -121,6 +126,7 @@ class ApnaFundApplication : Application() {
         lateinit var rolesMap: Map<String, Int>
         lateinit var approvalRepository: ApprovalRepository
         lateinit var aiRepository: AIRepository
+        lateinit var bootStrapData: BootstrapData
 
 
     }

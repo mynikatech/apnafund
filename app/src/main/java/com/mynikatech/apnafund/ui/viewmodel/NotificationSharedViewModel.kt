@@ -16,6 +16,7 @@ class NotificationSharedViewModel : ViewModel() {
 
     private val _unreadCount = MutableLiveData<Int>()
     val unreadCount: LiveData<Int> = _unreadCount
+    private var currentUserId: Int? = null
 
     fun loadNotifications(userId: Int) {
         viewModelScope.launch {
@@ -25,6 +26,12 @@ class NotificationSharedViewModel : ViewModel() {
     }
 
     fun loadUnreadCount(userId: Int) {
+        // If user changed → always reload
+        if (currentUserId != userId) {
+            currentUserId = userId
+        } else if (_unreadCount.value != null) {
+            return
+        }
         viewModelScope.launch {
             val count = repository.getUnreadNotificationCount(userId)
             _unreadCount.value = count

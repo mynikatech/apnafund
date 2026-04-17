@@ -195,9 +195,9 @@ class SideMenuDialogFragment : DialogFragment() {
                                                 SessionManager.userName =
                                                     "${SessionManager.firstName} ${SessionManager.lastName}".trim()
 
-                                                profileSharedViewModel.publishDisplayName(
+                                                /*profileSharedViewModel.publishDisplayName(
                                                     SessionManager.userName
-                                                )
+                                                )*/
                                                 userSummaryViewModel.userName.postValue(
                                                     SessionManager.userName
                                                 )

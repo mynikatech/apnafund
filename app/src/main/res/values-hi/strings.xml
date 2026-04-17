@@ -545,4 +545,5 @@
     <string name="title_submit_feedback">फीडबैक सबमिट करें</string>
 
     <string name="hint_enter_feedback">अपना फीडबैक दर्ज करें...</string>
+    <string name="error_failed_load_profile">Failed to load profile. Please try again.</string>
 </resources>

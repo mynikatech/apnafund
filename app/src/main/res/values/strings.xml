@@ -349,4 +349,5 @@
     <string name="message_thank_feedback">Thank you for your feedback!</string>
     <string name="title_submit_feedback">Submit Feedback</string>
     <string name="hint_enter_feedback">Enter your feedback...</string>
+    <string name="error_failed_load_profile">Failed to load profile. Please try again.</string>
 </resources>
