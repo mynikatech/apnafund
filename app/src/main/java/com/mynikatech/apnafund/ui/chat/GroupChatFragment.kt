@@ -1,17 +1,23 @@
 package com.mynikatech.apnafund.ui.chat
 
+import android.app.AlertDialog
+import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.OpenableColumns
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -20,13 +26,18 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.MetadataChanges
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.storage.FirebaseStorage
+import com.mynikatech.apnafund.R
+import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.constants.ApnaBankConstants.DAILY_MESSAGE_LIMIT
 import com.mynikatech.apnafund.constants.ApnaBankConstants.TYPING_DEBOUNCE_MS
 import com.mynikatech.apnafund.databinding.FragmentGroupChatBinding
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.chat.model.ChatMessage
 import com.mynikatech.apnafund.ui.chat.model.ChatRow
+import com.mynikatech.apnafund.ui.chat.model.MessageType
 import com.mynikatech.apnafund.util.ApnaBankDate
+import java.util.UUID
 
 
 class GroupChatFragment : Fragment() {
@@ -49,6 +60,24 @@ class GroupChatFragment : Fragment() {
     private var messageListener: ListenerRegistration? = null
     private var typingListener: ListenerRegistration? = null
     private var permissionErrorHandled = false
+    private val imagePicker =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let { uploadAndSend(groupId, it, MessageType.IMAGE) }
+        }
+
+    private fun pickImage() {
+        imagePicker.launch("image/*")
+    }
+
+    private val docPicker =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let { uploadAndSend(groupId, it, MessageType.DOCUMENT) }
+        }
+
+    private fun pickDocument() {
+        docPicker.launch("*/*")   // or specific: application/pdf
+    }
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -75,7 +104,7 @@ class GroupChatFragment : Fragment() {
             binding.noGroupMessageContainer.visibility = View.VISIBLE
             binding.recyclerViewMessages.visibility = View.GONE
             binding.chatInputContainer.visibility = View.GONE
-            binding.textChatTitle.text = "Group Chat"
+            binding.textChatTitle.text = getString(R.string.text_group_chat)
             return
         }
         Log.d(
@@ -90,10 +119,23 @@ class GroupChatFragment : Fragment() {
                 Log.d("TOKEN_DEBUG", "claims=${result.claims}")
             }
 
-        binding.textChatTitle.text = "$groupName Chat"
+        binding.textChatTitle.text = getString(R.string.chat_title, groupName)
         setupRecyclerView()
         setupSendButton(groupId)
         setupTypingListener()
+        binding.btnAttach.setOnClickListener {
+            val options = arrayOf("Image", "Document")
+
+            AlertDialog.Builder(requireContext())
+                .setTitle("Select Type")
+                .setItems(options) { _, which ->
+                    when (which) {
+                        0 -> pickImage()
+                        1 -> pickDocument()
+                    }
+                }
+                .show()
+        }
 
         // 🔑 CRITICAL FIX: refresh token BEFORE touching Firestore
         refreshFirebaseToken {
@@ -138,7 +180,7 @@ class GroupChatFragment : Fragment() {
             }
 
             val filtered = allMessages.filter {
-                it.text.contains(query, ignoreCase = true)
+                it.text?.contains(query, ignoreCase = true) == true
             }
 
             chatAdapter.submit(buildChatRows(filtered))
@@ -188,7 +230,7 @@ class GroupChatFragment : Fragment() {
             return
         }
 
-        binding.textChatTitle.text = "$groupName Chat"
+        binding.textChatTitle.text = getString(R.string.chat_title, groupName)
 
         listenForMessages(groupId)
         listenTyping()
@@ -205,7 +247,7 @@ class GroupChatFragment : Fragment() {
                     "${doc.getString("name") ?: "Group"} Chat"
             }
             .addOnFailureListener {
-                binding.textChatTitle.text = "Group Chat"
+                binding.textChatTitle.text = getString(R.string.text_group_chat)
             }
     }
 
@@ -288,7 +330,7 @@ class GroupChatFragment : Fragment() {
 
                 val messages = snapshot.documents.mapNotNull { doc ->
                     doc.toObject(ChatMessage::class.java)?.apply {
-                        id = doc.id          // 👈 IMPORTANT for updates
+                        id = doc.id          // IMPORTANT for updates
                     }
                 }
                 allMessages = messages
@@ -397,7 +439,15 @@ class GroupChatFragment : Fragment() {
                 SetOptions.merge()
             )
         }.addOnSuccessListener {
-            sendMessage(groupId, text)
+            val message = ChatMessage(
+                id = UUID.randomUUID().toString(),
+                senderId = SessionManager.firebaseUid,
+                senderName = SessionManager.getFormattedUserName(),
+                text = text,
+                type = MessageType.TEXT,
+                createdAt = Timestamp.now()
+            )
+            sendMessage(groupId, message)
             binding.editTextMessage.setText("")
             sendTyping(false)
         }.addOnFailureListener { e ->
@@ -406,7 +456,7 @@ class GroupChatFragment : Fragment() {
                 binding.editTextMessage.isEnabled = false
                 binding.buttonSend.isEnabled = false
 
-                binding.textTyping.text = "Daily message limit reached"
+                binding.textTyping.text = getString(R.string.error_daily_message_limit_reached)
                 binding.textTyping.visibility = View.VISIBLE
                 Toast.makeText(
                     requireContext(),
@@ -421,32 +471,44 @@ class GroupChatFragment : Fragment() {
         }
     }
 
-    private fun sendMessage(groupId: Int, text: String) {
+    private fun sendMessage(groupId: Int, msg: ChatMessage) {
+
         if (SessionManager.firebaseUid.isBlank()) {
             Log.e("CHAT_SEND", "Blocked send: firebaseUid is empty")
-            Toast.makeText(requireContext(), "Chat not ready yet", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.message_chat_not_ready_yet),
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
-        val message = hashMapOf(
+
+        val message = hashMapOf<String, Any?>(
             "senderId" to SessionManager.firebaseUid,
             "senderName" to SessionManager.getFormattedUserName(),
-            "text" to text,
+            "text" to msg.text,
+            "type" to msg.type.name,
+            "fileUrl" to msg.fileUrl,
+            "fileName" to msg.fileName,
+            "fileSize" to msg.fileSize,
+            "mimeType" to msg.mimeType,
             "createdAt" to FieldValue.serverTimestamp()
         )
-        Log.d(
-            "CHAT_SEND",
-            """
-        Sending message:
-        groupId=$groupId
-        authUid=${SessionManager.firebaseUid}
-        payload=$message
-        """.trimIndent()
-        )
+
+        Log.d("CHAT_SEND", "Sending message: $message")
+
+        // Reply handling
         replyToMessage?.let {
             message["replyToMessageId"] = it.id
             message["replySenderName"] = it.senderName
-            message["replyPreview"] = it.text.take(100)
+            message["replyPreview"] = when (it.type) {
+                MessageType.TEXT -> it.text?.take(100) ?: ""
+                MessageType.IMAGE -> "📷 Image"
+                MessageType.DOCUMENT -> "📄 ${it.fileName ?: "Document"}"
+                else -> ""
+            }
         }
+
         firestore.collection("groups")
             .document(groupId.toString())
             .collection("messages")
@@ -455,7 +517,8 @@ class GroupChatFragment : Fragment() {
                 Log.d("CHAT_SEND", "Message write SUCCESS")
             }
             .addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to send message", Toast.LENGTH_SHORT)
+                Toast.makeText(requireContext(),
+                    getString(R.string.error_failed_send_message), Toast.LENGTH_SHORT)
                     .show()
             }
     }
@@ -470,21 +533,20 @@ class GroupChatFragment : Fragment() {
 
         // Send "typing = true" once
         if (!isTypingSent && isTyping) {
-            writeTyping(true)
+            writeTyping(groupId, true)
             isTypingSent = true
         }
 
         typingRunnable = Runnable {
-            writeTyping(false)
+            writeTyping(groupId,false)
             isTypingSent = false
         }
 
         typingHandler.postDelayed(typingRunnable!!, TYPING_DEBOUNCE_MS)
     }
 
-    private fun writeTyping(isTyping: Boolean) {
+    private fun writeTyping(groupId: Int, isTyping: Boolean) {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val groupId = SessionManager.groupId ?: return
         if (uid.isBlank()) return
         if (!isAdded || _binding == null) return
 
@@ -555,9 +617,9 @@ class GroupChatFragment : Fragment() {
             binding.textTyping.visibility = View.VISIBLE
             binding.textTyping.text =
                 if (names.size == 1)
-                    "${names[0]} is typing…"
+                    getString(R.string.typing_single, names[0])
                 else
-                    "Several people are typing…"
+                    getString(R.string.typing_multiple)
         }
     }
 
@@ -622,8 +684,9 @@ class GroupChatFragment : Fragment() {
 
         firestore.runTransaction { tx ->
             val snap = tx.get(ref)
-            val reactions =
-                snap.get("reactions") as? Map<String, List<String>> ?: emptyMap()
+            val reactions = (snap.get("reactions") as? Map<*, *>)?.mapValues { entry ->
+                (entry.value as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+            }?.mapKeys { it.key.toString() } ?: emptyMap()
 
             val users = reactions[emoji]?.toMutableList() ?: mutableListOf()
 
@@ -647,8 +710,118 @@ class GroupChatFragment : Fragment() {
         binding.recyclerViewMessages.visibility = View.GONE
         binding.chatInputContainer.visibility = View.GONE
         binding.noGroupMessageContainer.visibility = View.VISIBLE
-        binding.textChatTitle.text = "Access denied"
+        binding.textChatTitle.text = getString(R.string.error_access_denied)
 
         Log.w("GroupChat", "Access denied for group")
+    }
+
+    private fun uploadAndSend(groupId: Int, uri: Uri, type: MessageType) {
+        val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+        if (currentUid.isBlank()) {
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.message_chat_not_ready_yet), Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        val (name, size) = getFileMeta(requireContext(), uri)
+
+        // FILE SIZE CHECK
+        if (size > ApnaBankConstants.MAX_FILE_SIZE) {
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.error_file_too_large),
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        //size unknown (0 or -1)
+        if (size <= 0) {
+            val stream = requireContext().contentResolver.openInputStream(uri)
+            val bytes = stream?.readBytes()
+
+            if (bytes == null || bytes.size > ApnaBankConstants.MAX_FILE_SIZE) {
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.error_file_too_large_invalid),
+                    Toast.LENGTH_SHORT
+                ).show()
+                return
+            }
+        }
+
+        // Step 1: upload file → get URL
+        uploadFileToServer(uri) { fileUrl, fileName, fileSize ->
+
+            val message = ChatMessage(
+                id = UUID.randomUUID().toString(),
+                senderId = currentUid,
+                senderName = SessionManager.getFormattedUserName(),
+                type = type,
+                fileUrl = fileUrl,
+                fileName = fileName,
+                fileSize = fileSize,
+                text = null,
+                createdAt = Timestamp.now()
+            )
+
+            sendMessage(groupId, message)
+        }
+    }
+
+    fun getFileMeta(
+        context: Context,
+        uri: Uri
+    ): Pair<String, Long> {
+        var name = "file"
+        var size = 0L
+
+        val cursor = context.contentResolver.query(uri, null, null, null, null)
+        cursor?.use {
+            val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            val sizeIndex = it.getColumnIndex(OpenableColumns.SIZE)
+
+            if (it.moveToFirst()) {
+                name = it.getString(nameIndex)
+                size = it.getLong(sizeIndex)
+            }
+        }
+        return name to size
+    }
+
+    fun uploadFileToServer(
+        uri: Uri,
+        onComplete: (url: String, name: String, size: Long) -> Unit
+    ) {
+        val (name, size) = getFileMeta(requireContext(), uri)
+
+        val safeName = name.replace("[^a-zA-Z0-9._-]".toRegex(), "_")
+        val storage = FirebaseStorage.getInstance("gs://apnabank-fcb2c.firebasestorage.app")
+        val ref = storage.reference.child("chat/${System.currentTimeMillis()}_$safeName")
+
+        val stream = requireContext().contentResolver.openInputStream(uri)
+        val bytes = stream?.readBytes()
+
+        if (bytes == null) {
+            Log.e("UPLOAD", "Failed to read file")
+            return
+        }
+
+        ref.putBytes(bytes)
+            .continueWithTask { task ->
+                if (!task.isSuccessful) {
+                    throw task.exception ?: Exception("Upload failed")
+                }
+                ref.downloadUrl
+            }
+            .addOnSuccessListener { downloadUrl ->
+                onComplete(downloadUrl.toString(), name, size)
+            }
+            .addOnFailureListener { e ->
+                Log.e("UPLOAD", "Upload failed", e)
+            }
     }
 }

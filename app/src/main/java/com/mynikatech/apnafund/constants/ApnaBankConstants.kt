@@ -40,6 +40,7 @@ object ApnaBankConstants {
     const val TYPING_DEBOUNCE_MS = 2000L
     const val DAILY_MESSAGE_LIMIT = 100
     const val RESEND_COOLDOWN_MS = 2 * 60 * 1000L // 2 minutes
+    const val MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
 
 
 }

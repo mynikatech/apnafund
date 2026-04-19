@@ -350,4 +350,15 @@
     <string name="title_submit_feedback">Submit Feedback</string>
     <string name="hint_enter_feedback">Enter your feedback...</string>
     <string name="error_failed_load_profile">Failed to load profile. Please try again.</string>
+    <string name="text_attach">Attach</string>
+    <string name="error_file_too_large">File too large (max 5MB)</string>
+    <string name="error_file_too_large_invalid">File too large or invalid</string>
+    <string name="error_access_denied">Access denied</string>
+    <string name="message_chat_not_ready_yet">Chat not ready yet</string>
+    <string name="error_daily_message_limit_reached">Daily message limit reached</string>
+    <string name="text_group_chat">Group Chat</string>
+    <string name="typing_single">%1$s is typing…</string>
+    <string name="typing_multiple">Several people are typing…</string>
+    <string name="chat_title">%1$s Chat</string>
+    <string name="error_failed_send_message">Failed to send message</string>
 </resources>

@@ -3,13 +3,16 @@ package com.mynikatech.apnafund.ui.chat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.ui.chat.model.ChatMessage
 import com.mynikatech.apnafund.ui.chat.model.ChatRow
+import com.mynikatech.apnafund.ui.chat.model.MessageType
 import com.mynikatech.apnafund.util.toHHmm
 
 class ChatAdapter(
@@ -24,10 +27,18 @@ class ChatAdapter(
     init {
         setHasStableIds(true)
     }
+
     companion object {
         private const val TYPE_DATE = 0
-        private const val TYPE_SENT = 1
-        private const val TYPE_RECEIVED = 2
+
+        private const val TYPE_SENT_TEXT = 1
+        private const val TYPE_RECEIVED_TEXT = 2
+
+        private const val TYPE_SENT_IMAGE = 3
+        private const val TYPE_RECEIVED_IMAGE = 4
+
+        private const val TYPE_SENT_DOC = 5
+        private const val TYPE_RECEIVED_DOC = 6
     }
 
     fun submit(list: List<ChatRow>) {
@@ -47,12 +58,23 @@ class ChatAdapter(
 
     override fun getItemViewType(position: Int): Int {
         return when (val row = items[position]) {
+
             is ChatRow.DateHeader -> TYPE_DATE
-            is ChatRow.MessageRow ->
-                if (row.message.senderId == currentUid)
-                    TYPE_SENT
-                else
-                    TYPE_RECEIVED
+
+            is ChatRow.MessageRow -> {
+                val isSent = row.message.senderId == currentUid
+
+                when (row.message.type) {
+
+                    MessageType.TEXT -> if (isSent) TYPE_SENT_TEXT else TYPE_RECEIVED_TEXT
+
+                    MessageType.IMAGE -> if (isSent) TYPE_SENT_IMAGE else TYPE_RECEIVED_IMAGE
+
+                    MessageType.DOCUMENT -> if (isSent) TYPE_SENT_DOC else TYPE_RECEIVED_DOC
+
+                    else -> if (isSent) TYPE_SENT_TEXT else TYPE_RECEIVED_TEXT
+                }
+            }
         }
     }
 
@@ -73,17 +95,43 @@ class ChatAdapter(
                 DateVH(view)
             }
 
-            TYPE_SENT -> {
+            TYPE_SENT_TEXT -> {
                 val view = LayoutInflater.from(parent.context)
                     .inflate(R.layout.item_chat_sent, parent, false)
                 ChatVH(view)
             }
 
-            else -> {
+            TYPE_RECEIVED_TEXT -> {
                 val view = LayoutInflater.from(parent.context)
                     .inflate(R.layout.item_chat_received, parent, false)
                 ChatVH(view)
             }
+
+            TYPE_SENT_IMAGE -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_chat_sent_image, parent, false)
+                ChatVH(view)
+            }
+
+            TYPE_RECEIVED_IMAGE -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_chat_received_image, parent, false)
+                ChatVH(view)
+            }
+
+            TYPE_SENT_DOC -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_chat_sent_doc, parent, false)
+                ChatVH(view)
+            }
+
+            TYPE_RECEIVED_DOC -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_chat_received_doc, parent, false)
+                ChatVH(view)
+            }
+
+            else -> throw IllegalArgumentException("Unknown viewType")
         }
     }
 
@@ -125,10 +173,26 @@ class ChatAdapter(
         private val replyText: TextView =
             view.findViewById(R.id.textReplyPreview)
 
+        private val imageMessage: ImageView? =
+            itemView.findViewById(R.id.imageMessage)
+
+        private val textFileName: TextView? =
+            itemView.findViewById(R.id.textFileName)
+
+        private val textFileSize: TextView? =
+            itemView.findViewById(R.id.textFileSize)
+
         fun bind(msg: ChatMessage) {
 
             /* ---- message text ---- */
-            itemView.findViewById<TextView>(R.id.textMessage).text = msg.text
+            val textMessage = itemView.findViewById<TextView?>(R.id.textMessage)
+
+            if (msg.type == MessageType.TEXT) {
+                textMessage?.visibility = View.VISIBLE
+                textMessage?.text = msg.text ?: ""
+            } else {
+                textMessage?.visibility = View.GONE
+            }
             itemView.findViewById<TextView>(R.id.textSender)?.text = msg.senderName
             itemView.findViewById<TextView>(R.id.textTime).text =
                 msg.createdAt?.toHHmm() ?: ""
@@ -144,6 +208,27 @@ class ChatAdapter(
             } else {
                 textStatus?.visibility = View.GONE
             }
+            if (msg.type == MessageType.IMAGE) {
+                imageMessage?.visibility = View.VISIBLE
+
+                // Example using Glide
+                imageMessage?.let {
+                    Glide.with(itemView)
+                        .load(msg.fileUrl)
+                        .into(it)
+                }
+            } else {
+                imageMessage?.visibility = View.GONE
+            }
+            if (msg.type == MessageType.DOCUMENT) {
+                textFileName?.visibility = View.VISIBLE
+                textFileSize?.visibility = View.VISIBLE
+                textFileName?.text = msg.fileName ?: "Document"
+                textFileSize?.text = msg.fileSize?.let { formatFileSize(it) } ?: ""
+            } else {
+                textFileName?.visibility = View.GONE
+                textFileSize?.visibility = View.GONE
+            }
 
             /* ---- reply preview ---- */
             if (msg.replyPreview != null) {
@@ -156,35 +241,42 @@ class ChatAdapter(
 
             /* ---- reactions ---- */
             val reactionLayout =
-                itemView.findViewById<LinearLayout>(R.id.reactionLayout)
-            reactionLayout.removeAllViews()
+                itemView.findViewById<LinearLayout?>(R.id.reactionLayout)
 
-            if (msg.reactions.isNotEmpty()) {
-                reactionLayout.visibility = View.VISIBLE
+            reactionLayout?.let { layout ->
 
-                msg.reactions.forEach { (emoji, users) ->
-                    if (users.isNotEmpty()) {
-                        val tv = TextView(itemView.context).apply {
-                            text = "$emoji ${users.size}"
-                            textSize = 12f
-                            setPadding(8, 4, 8, 4)
-                            alpha = 0f
-                            scaleX = 0.8f
-                            scaleY = 0.8f
+                layout.removeAllViews()
+
+                if (msg.reactions.isNotEmpty()) {
+                    layout.visibility = View.VISIBLE
+
+                    msg.reactions.forEach { (emoji, users) ->
+                        if (users.isNotEmpty()) {
+
+                            val tv = TextView(itemView.context).apply {
+                                text = "$emoji ${users.size}"
+                                textSize = 12f
+                                setPadding(8, 4, 8, 4)
+                                alpha = 0f
+                                scaleX = 0.8f
+                                scaleY = 0.8f
+                            }
+
+                            layout.addView(tv)
+
+                            // ✅ KEEP THIS — your animation is good
+                            tv.animate()
+                                .alpha(1f)
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(150)
+                                .start()
                         }
-
-                        reactionLayout.addView(tv)
-
-                        tv.animate()
-                            .alpha(1f)
-                            .scaleX(1f)
-                            .scaleY(1f)
-                            .setDuration(150)
-                            .start()
                     }
+
+                } else {
+                    layout.visibility = View.GONE
                 }
-            } else {
-                reactionLayout.visibility = View.GONE
             }
 
             /* ---- double tap ❤️ ---- */
@@ -225,6 +317,14 @@ class ChatAdapter(
                 true
             }
             popup.show()
+        }
+
+        fun formatFileSize(size: Long): String {
+            return when {
+                size >= 1024 * 1024 -> "${size / (1024 * 1024)} MB"
+                size >= 1024 -> "${size / 1024} KB"
+                else -> "$size B"
+            }
         }
     }
 }

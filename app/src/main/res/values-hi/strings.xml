@@ -545,5 +545,27 @@
     <string name="title_submit_feedback">फीडबैक सबमिट करें</string>
 
     <string name="hint_enter_feedback">अपना फीडबैक दर्ज करें...</string>
-    <string name="error_failed_load_profile">Failed to load profile. Please try again.</string>
+    <string name="error_failed_load_profile">प्रोफ़ाइल लोड करने में विफल। कृपया पुनः प्रयास करें।</string>
+
+    <string name="text_attach">संलग्न करें</string>
+
+    <string name="error_file_too_large">फ़ाइल बहुत बड़ी है (अधिकतम 5MB)</string>
+
+    <string name="error_file_too_large_invalid">फ़ाइल बहुत बड़ी या अमान्य है</string>
+
+    <string name="error_access_denied">पहुंच अस्वीकृत</string>
+
+    <string name="message_chat_not_ready_yet">चैट अभी तैयार नहीं है</string>
+
+    <string name="error_daily_message_limit_reached">दैनिक संदेश सीमा पूरी हो गई है</string>
+
+    <string name="text_group_chat">ग्रुप चैट</string>
+
+    <string name="typing_single">%1$s टाइप कर रहे हैं…</string>
+
+    <string name="typing_multiple">कई लोग टाइप कर रहे हैं…</string>
+
+    <string name="chat_title">%1$s चैट</string>
+
+    <string name="error_failed_send_message">संदेश भेजने में विफल</string>
 </resources>
