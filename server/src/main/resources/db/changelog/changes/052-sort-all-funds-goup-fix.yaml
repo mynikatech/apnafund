@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 052-sorting-add-all-fund-group-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/052-sorting-add-all-fund-group-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

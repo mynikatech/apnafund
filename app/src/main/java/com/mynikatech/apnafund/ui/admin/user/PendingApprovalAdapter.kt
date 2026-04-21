@@ -12,6 +12,8 @@ class PendingApprovalAdapter(
     private val listener: OnActionClickListener
 ) : RecyclerView.Adapter<PendingApprovalAdapter.PendingViewHolder>() {
 
+
+
     interface OnActionClickListener {
         fun onApproveClicked(item: PendingApprovalDto, position: Int)
         fun onRejectClicked(item: PendingApprovalDto, position: Int)
@@ -41,7 +43,7 @@ class PendingApprovalAdapter(
             binding.buttonReject.setOnClickListener {
                 binding.buttonApprove.isEnabled = false
                 binding.buttonReject.isEnabled = false
-                listener.onApproveClicked(item, bindingAdapterPosition)
+                listener.onRejectClicked(item, bindingAdapterPosition)
             }
         }
     }
@@ -63,4 +65,5 @@ class PendingApprovalAdapter(
         items = newItems
         notifyDataSetChanged()
     }
+    fun getItems(): List<PendingApprovalDto> = items
 }

@@ -453,7 +453,7 @@ class DepositEntryFragment : BaseEntryFragment() {
                             Snackbar.LENGTH_SHORT
                         )
                             .show()
-                        fundSharedViewModel.triggerRefresh()
+                        fundSharedViewModel.refreshFunds()
                         hasAnyDepositEdits = false
 
                     } else {
@@ -472,7 +472,7 @@ class DepositEntryFragment : BaseEntryFragment() {
                             Snackbar.LENGTH_SHORT
                         )
                             .show()
-                        fundSharedViewModel.triggerRefresh()
+                        fundSharedViewModel.refreshFunds()
                     }
                 } else {
                     Snackbar.make(

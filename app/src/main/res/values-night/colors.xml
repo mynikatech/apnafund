@@ -45,4 +45,9 @@
     <color name="status_pending">#FF9800</color>
     <color name="status_approved">#4CAF50</color>
     <color name="status_rejected">#F44336</color>
+    <color name="status_active_bg">#1B3A2A</color>
+    <color name="status_active_text">#A5D6A7</color>
+
+    <color name="status_closed_bg">#3B1F1F</color>
+    <color name="status_closed_text">#F2B8B5</color>
 </resources>

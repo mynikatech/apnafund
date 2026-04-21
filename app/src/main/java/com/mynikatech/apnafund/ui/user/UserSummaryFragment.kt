@@ -16,7 +16,9 @@ import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -25,6 +27,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.mynikatech.apnafund.Exception.InvalidSessionException
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
+import com.mynikatech.apnafund.data.model.FundWithDetails
 import com.mynikatech.apnafund.data.model.Groups
 import com.mynikatech.apnafund.data.model.LoanDetailsWithMemberNames
 import com.mynikatech.apnafund.data.model.UserProfile
@@ -238,10 +241,15 @@ class UserSummaryFragment : Fragment() {
                 showAddGroupDialog(requireContext(), 0)
             }
         }
+
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun lazyLoadContent() {
+        val groupId = SessionManager.groupId ?: return
+        val isAdmin = SessionManager.roleNames.contains("ADMIN")
+
+        fundSharedViewModel.loadFunds(isAdmin, groupId)
         if (adapter == null) {
             adapter = LoanAdapter(
                 onEditLoanClick = { loan ->
@@ -325,80 +333,11 @@ class UserSummaryFragment : Fragment() {
                 }
                 .show()
         }
-        userSummaryViewModel.userFunds.observe(viewLifecycleOwner) { funds ->
-            val fundNames = funds.map { it.fundName }
-
-
-            binding.layoutFundSelector.setOnClickListener {
-                val fundNamesMap = userSummaryViewModel.userFunds.value?.map { it.fundName }
-                    ?: return@setOnClickListener
-
-                AlertDialog.Builder(requireContext())
-                    .setTitle(getString(R.string.text_select_fund))
-                    .setItems(fundNamesMap.toTypedArray()) { _, which ->
-                        val funds = userSummaryViewModel.userFunds.value ?: return@setItems
-                        val selectedFund = funds.getOrNull(which) ?: return@setItems
-                        binding.textViewSelectedFund.text = selectedFund.fundName
-
-                        // Update status dot
-                        val isInactive =
-                            selectedFund.fundStatus == ApnaBankConstants.INACTIVE_STATUS || selectedFund.fundStatus == ApnaBankConstants.CLOSED_STATUS
-                        binding.imageFundStatus.setImageResource(
-                            if (isInactive) R.drawable.status_inactive_dot else R.drawable.status_active_dot
-                        )
-                        updateLoanAddVisibility(selectedFund.fundStatus)
-                        userSummaryViewModel.loadFundDetails(userId, selectedFund.fundId)
-                    }
-                    .show()
-            }
-
-            if (fundNames.isNotEmpty()) {
-                //check if the fundSharedModel has the selectedFund
-                binding.noFundsMessageContainer.visibility = View.GONE
-                binding.FundMessageContainer.visibility = View.VISIBLE
-                binding.loadingFunds.visibility = View.GONE
-                val selectedFund = fundSharedViewModel.selectedFund.value
-                val selectedFundId = fundSharedViewModel.selectedFundId.value
-                val fundToUse = funds.firstOrNull { it.fundId == selectedFundId } ?: funds.first()
-                val fundId: Int
-                val fundStatus: String
-                val firstFund = funds[0]
-                if (selectedFund == null) {
-                    fundId = firstFund.fundId
-                    fundStatus = firstFund.fundStatus
-                    fundSharedViewModel.setSelectedFundId(fundToUse.fundId)
-                    binding.textViewSelectedFund.text = fundNames[0]
-                } else {
-                    fundId = selectedFund.fundId
-                    fundStatus = selectedFund.fundStatus
-                    binding.textViewSelectedFund.text = selectedFund.fundName
-                    fundSharedViewModel.setSelectedFundId(fundToUse.fundId)
-                    updateLoanAddVisibility(selectedFund.fundStatus)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                fundSharedViewModel.funds.collect { funds ->
+                    handleFundsUI(funds)
                 }
-                userSummaryViewModel.loadFundDetails(userId, fundId)
-                val isInactive =
-                    fundStatus == ApnaBankConstants.INACTIVE_STATUS || fundStatus == ApnaBankConstants.CLOSED_STATUS
-                if (isInactive) {
-                    binding.imageFundStatus.setBackgroundResource(R.drawable.status_inactive_dot)
-                    binding.imageFundStatus.tooltipText = ApnaBankConstants.INACTIVE_STATUS
-                } else {
-                    binding.imageFundStatus.setBackgroundResource(R.drawable.status_active_dot)
-                    binding.imageFundStatus.tooltipText = ApnaBankConstants.STATUS_ACTIVE
-                }
-                if (isFundExpanded) {
-                    binding.lineFundDetails.visibility =
-                        if (isFundExpanded) View.VISIBLE else View.GONE
-                    binding.fundDetailsSection.visibility =
-                        if (isFundExpanded) View.VISIBLE else View.GONE
-                    binding.imageFundExpandCollapse.setImageResource(
-                        if (isFundExpanded) R.drawable.ic_up_arrow else R.drawable.ic_down_arrow
-                    )
-                }
-
-            } else {
-                binding.FundMessageContainer.visibility = View.GONE
-                binding.noFundsMessageContainer.visibility = View.VISIBLE
-                binding.loadingFunds.visibility = View.GONE
             }
         }
 
@@ -452,31 +391,25 @@ class UserSummaryFragment : Fragment() {
                 }
 
             }
-            userSummaryViewModel.userLoans.observe(viewLifecycleOwner) { loans ->
-                val hasLoans = !loans.isNullOrEmpty()
-                val selectedFund = fundSharedViewModel.selectedFund.value
-                val isClosedFund =
-                    selectedFund?.fundStatus == ApnaBankConstants.CLOSED_STATUS ||
-                            selectedFund?.fundStatus == ApnaBankConstants.INACTIVE_STATUS
 
-                binding.recyclerViewLoans.visibility = if (hasLoans) View.VISIBLE else View.GONE
-                binding.textViewNoLoans.visibility =
-                    if (!hasLoans && !isClosedFund) View.VISIBLE else View.GONE
-                binding.textViewLoansHeader.text = getString(R.string.text_loan)
-                adapter?.setLoans(loans ?: emptyList())
-            }
+        }
+        userSummaryViewModel.userLoans.observe(viewLifecycleOwner) { loans ->
+            val hasLoans = !loans.isNullOrEmpty()
+            val selectedFund = fundSharedViewModel.selectedFund.value
+            val isClosedFund =
+                selectedFund?.fundStatus == ApnaBankConstants.CLOSED_STATUS ||
+                        selectedFund?.fundStatus == ApnaBankConstants.INACTIVE_STATUS
+
+            binding.recyclerViewLoans.visibility = if (hasLoans) View.VISIBLE else View.GONE
+            binding.textViewNoLoans.visibility =
+                if (!hasLoans && !isClosedFund) View.VISIBLE else View.GONE
+            binding.textViewLoansHeader.text = getString(R.string.text_loan)
+            adapter?.setLoans(loans ?: emptyList())
         }
 
         binding.imageFundExpandCollapse.setOnClickListener {
             isFundExpanded = !isFundExpanded
-            binding.lineFundDetails.visibility =
-                if (isFundExpanded) View.VISIBLE else View.GONE
-            binding.fundDetailsSection.visibility =
-                if (isFundExpanded) View.VISIBLE else View.GONE
-            binding.imageFundExpandCollapse.setImageResource(
-                if (isFundExpanded) R.drawable.ic_up_arrow else R.drawable.ic_down_arrow
-
-            )
+            updateFundExpandUI()
         }
         binding.loanAddGroup.setOnClickListener {
             val fundId = fundSharedViewModel.selectedFundId.value
@@ -492,6 +425,19 @@ class UserSummaryFragment : Fragment() {
                     .show()
             }
         }
+    }
+
+    private fun updateFundExpandUI() {
+        binding.lineFundDetails.visibility =
+            if (isFundExpanded) View.VISIBLE else View.GONE
+
+        binding.fundDetailsSection.visibility =
+            if (isFundExpanded) View.VISIBLE else View.GONE
+
+        binding.imageFundExpandCollapse.setImageResource(
+            if (isFundExpanded) R.drawable.ic_up_arrow
+            else R.drawable.ic_down_arrow
+        )
     }
 
     private fun updateUserSummary() {
@@ -523,8 +469,10 @@ class UserSummaryFragment : Fragment() {
             val fund = userSummaryViewModel.getFund(fundId)
 
             if (fund == null) {
-                Toast.makeText(requireContext(),
-                    getString(R.string.warn_fund_not_found), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.warn_fund_not_found), Toast.LENGTH_SHORT
+                ).show()
                 return@launch
             }
             //Get current available amount in the Fund display to the user and also add a validation
@@ -625,6 +573,7 @@ class UserSummaryFragment : Fragment() {
 
     private fun forceLogout() {
         PreferencesHelper(requireContext()).clearSession()
+        fundSharedViewModel.clearCache()
 
         findNavController().navigate(
             R.id.loginFragment,
@@ -649,9 +598,11 @@ class UserSummaryFragment : Fragment() {
     private fun reloadForSelectedGroup() {
 
         val groupId = SessionManager.groupId ?: return
+        val isAdmin = SessionManager.roleNames.contains("ADMIN")
 
         fundSharedViewModel.clearSelectedFund()
         fundSharedViewModel.clearSelectedFundId()
+        fundSharedViewModel.loadFunds(isAdmin, groupId)
 
         userSummaryViewModel.loadUserSummary(
             userId = SessionManager.userId,
@@ -875,6 +826,75 @@ class UserSummaryFragment : Fragment() {
         }
         dialogBinding.buttonCancelGrp.setOnClickListener {
             dialog.dismiss()
+        }
+    }
+
+    private fun handleFundsUI(funds: List<FundWithDetails>) {
+
+        val fundNames = funds.map { it.fundName }
+
+        if (funds.isNotEmpty()) {
+            binding.noFundsMessageContainer.visibility = View.GONE
+            binding.FundMessageContainer.visibility = View.VISIBLE
+            binding.loadingFunds.visibility = View.GONE
+
+            val selectedFundId = fundSharedViewModel.selectedFundId.value
+            val fundToUse = funds.firstOrNull { it.fundId == selectedFundId } ?: funds.first()
+
+            fundSharedViewModel.setSelectedFundId(fundToUse.fundId)
+
+            binding.textViewSelectedFund.text = fundToUse.fundName
+
+            val fundStatus = fundToUse.fundStatus
+
+            val isInactive =
+                fundStatus == ApnaBankConstants.INACTIVE_STATUS ||
+                        fundStatus == ApnaBankConstants.CLOSED_STATUS
+
+            binding.imageFundStatus.setImageResource(
+                if (isInactive) R.drawable.status_inactive_dot
+                else R.drawable.status_active_dot
+            )
+
+            updateLoanAddVisibility(fundStatus)
+
+            userSummaryViewModel.loadFundDetails(userId, fundToUse.fundId)
+
+        } else {
+            binding.FundMessageContainer.visibility = View.GONE
+            binding.noFundsMessageContainer.visibility = View.VISIBLE
+            binding.loadingFunds.visibility = View.GONE
+        }
+        updateFundExpandUI()
+
+        // 👇 IMPORTANT: use funds directly (not userFunds)
+        binding.layoutFundSelector.setOnClickListener {
+            if (funds.isEmpty()) return@setOnClickListener
+
+            AlertDialog.Builder(requireContext())
+                .setTitle(getString(R.string.text_select_fund))
+                .setItems(fundNames.toTypedArray()) { _, which ->
+
+                    val selectedFund = funds.getOrNull(which) ?: return@setItems
+
+                    binding.textViewSelectedFund.text = selectedFund.fundName
+
+                    val isInactive =
+                        selectedFund.fundStatus == ApnaBankConstants.INACTIVE_STATUS ||
+                                selectedFund.fundStatus == ApnaBankConstants.CLOSED_STATUS
+
+                    binding.imageFundStatus.setImageResource(
+                        if (isInactive) R.drawable.status_inactive_dot
+                        else R.drawable.status_active_dot
+                    )
+
+                    updateLoanAddVisibility(selectedFund.fundStatus)
+
+                    fundSharedViewModel.setSelectedFundId(selectedFund.fundId)
+
+                    userSummaryViewModel.loadFundDetails(userId, selectedFund.fundId)
+                }
+                .show()
         }
     }
 }

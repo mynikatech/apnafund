@@ -1,5 +1,6 @@
 package com.mynikatech.apnafund.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,12 +16,12 @@ import com.mynikatech.apnafund.data.model.UserFundDetails
 import com.mynikatech.apnafund.data.model.UserLoanDetails
 import com.mynikatech.apnafund.data.model.UserNotifications
 import com.mynikatech.apnafund.data.model.UserProfile
+import com.mynikatech.apnafund.net.dto.FundAvailabilityDto
 import com.mynikatech.apnafund.session.SessionManager
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import android.util.Log
-import com.mynikatech.apnafund.net.dto.FundAvailabilityDto
 
 class UserSummaryViewModel : ViewModel() {
     private val userSummaryRepository = ApnaFundApplication.userSummaryRepository
@@ -44,6 +45,8 @@ class UserSummaryViewModel : ViewModel() {
     var userFunds = MutableLiveData<List<Funds>>()
     private val userNoifications = MutableLiveData<List<UserNotifications>?>()
     val userLoans = MutableLiveData<List<LoanDetailsWithMemberNames>>()
+    private val fundDetailsCache = mutableMapOf<Int, UserFundDetails>()
+    private val loanCache = mutableMapOf<Int, List<LoanDetailsWithMemberNames>>()
 
     val selectedFundDetails = MutableLiveData<FundWithDetails?>()
 
@@ -52,10 +55,11 @@ class UserSummaryViewModel : ViewModel() {
     private val fundLoan = MutableLiveData<Double?>()
     private var lastUserId: Int? = null
     private var lastGroupId: Int? = null
+    private var isLoading = false
 
-    fun loadUserSummary(userId: Int, selectedGroupId: Int? , force: Boolean = false) {
+    fun loadUserSummary(userId: Int, selectedGroupId: Int?, force: Boolean = false) {
         if (!force &&
-            lastUserId == userId  &&
+            lastUserId == userId &&
             lastGroupId == selectedGroupId
         ) {
             return
@@ -107,25 +111,54 @@ class UserSummaryViewModel : ViewModel() {
 
     fun loadFundDetails(userId: Int, fundId: Int, force: Boolean = false) {
         if (!force && lastFundId == fundId) return
+        if (isLoading) return
+        lastFundId = fundId
+        val cachedDetails = fundDetailsCache[fundId]
+        val cachedLoans = loanCache[fundId]
+        if (!force && cachedDetails != null) {
+
+            fundDepositSummary.postValue(cachedDetails.totalDeposit)
+            fundMaturity.postValue(cachedDetails.userExpMatAmount)
+            fundLoan.postValue(cachedDetails.totalLoanAmount)
+            selectedFundDetails.postValue(cachedDetails.fundDetails)
+
+            userLoans.postValue(cachedLoans ?: emptyList())
+
+            return
+        }
         fundDepositSummary.postValue(null)
         fundMaturity.postValue(null)
         fundLoan.postValue(null)
         userLoans.postValue(emptyList())
         selectedFundDetails.postValue(null)
-        lastFundId = fundId
+        isLoading = true
         viewModelScope.launch {
-            val userFundDetails = getUserFundDetails(userId, fundId)
-            if (userFundDetails != null) {
-                val deposit = userFundDetails.totalDeposit
-                val totalLoanAmount = userFundDetails.totalLoanAmount
-                val loansDetails = loanRepository.getAllLoanDetailsForFundForUser(fundId, userId)
-                val maturityAmount = userFundDetails.userExpMatAmount
-                val selFund = userFundDetails.fundDetails
-                fundDepositSummary.postValue(deposit)
-                fundMaturity.postValue(maturityAmount)
-                fundLoan.postValue(totalLoanAmount)
-                selectedFundDetails.postValue(selFund)
-                userLoans.postValue(loansDetails.ifEmpty { emptyList() })
+            try {
+
+                val userFundDeferred = async { getUserFundDetails(userId, fundId) }
+                val loansDeferred =
+                    async { loanRepository.getAllLoanDetailsForFundForUser(fundId, userId) }
+
+                val userFundDetails = userFundDeferred.await()
+                val loansDetails = loansDeferred.await()
+
+                if (userFundDetails != null) {
+
+                    // Cache results
+                    fundDetailsCache[fundId] = userFundDetails
+                    loanCache[fundId] = loansDetails
+
+                    // Update UI
+                    fundDepositSummary.postValue(userFundDetails.totalDeposit)
+                    fundMaturity.postValue(userFundDetails.userExpMatAmount)
+                    fundLoan.postValue(userFundDetails.totalLoanAmount)
+                    selectedFundDetails.postValue(userFundDetails.fundDetails)
+                    userLoans.postValue(loansDetails)
+                }
+            } catch (e: Exception) {
+                Log.e("FundDetails", "Error loading fund details", e)
+            } finally {
+                isLoading = false
             }
         }
     }
@@ -235,9 +268,9 @@ class UserSummaryViewModel : ViewModel() {
 
     fun syncFirebaseUidIfNeeded() {
 
-        Log.d("FireBase"," Firebase Synced ${SessionManager.isFirebaseSynced}")
-        Log.d("FireBase"," Firebase UID ${SessionManager.firebaseUid}")
-        Log.d("FireBase"," Groups ${SessionManager.userGroups}")
+        Log.d("FireBase", " Firebase Synced ${SessionManager.isFirebaseSynced}")
+        Log.d("FireBase", " Firebase UID ${SessionManager.firebaseUid}")
+        Log.d("FireBase", " Groups ${SessionManager.userGroups}")
 
         if (SessionManager.isFirebaseSynced ||
             SessionManager.firebaseUid.isBlank()
@@ -260,6 +293,17 @@ class UserSummaryViewModel : ViewModel() {
 
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+    }
+
+    fun refreshUserFunds(userId: Int) {
+        viewModelScope.launch {
+            try {
+                val userDetails = getUserDetails(userId)
+                userFunds.postValue(userDetails?.userFunds ?: emptyList())
+            } catch (e: Exception) {
+                // optionally log / handle error
             }
         }
     }

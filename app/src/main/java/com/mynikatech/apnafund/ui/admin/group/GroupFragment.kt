@@ -82,7 +82,19 @@ class GroupFragment : Fragment() {
             ContextCompat.getDrawable(requireContext(), R.drawable.table_cell_border_white)!!
         grayBg =
             ContextCompat.getDrawable(requireContext(), R.drawable.table_cell_border_gray)!!
+        binding.layoutEmpty.textEmptyMessage.text =
+            getString(R.string.text_no_groups_available)
         fetchAllGroups()
+
+    }
+
+    private fun updateUI(isEmpty: Boolean) {
+
+        binding.layoutEmpty.root.visibility =
+            if (isEmpty) View.VISIBLE else View.GONE
+
+        binding.scrollviewHeader.visibility =
+            if (isEmpty) View.GONE else View.VISIBLE
     }
 
     private fun fetchAllGroups() {
@@ -108,7 +120,9 @@ class GroupFragment : Fragment() {
     }
 
     private fun populateUserTable(groups: List<Groups>) {
+        updateUI(groups.isEmpty())
         cleanTable(tableLayoutGroupDetails)
+        if (groups.isEmpty()) return
         lifecycleScope.launch {
             try {
 

@@ -531,7 +531,9 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                             Snackbar.LENGTH_SHORT
                         )
                             .show()
-                        fundSharedViewModel.triggerRefresh()
+
+                        fundSharedViewModel.refreshFunds()
+
                         hasAnyLoanEmiEdits = false
 
                     } else {
@@ -562,7 +564,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                             Snackbar.LENGTH_SHORT
                         )
                             .show()
-                        fundSharedViewModel.triggerRefresh()
+                        fundSharedViewModel.refreshFunds()
                     }
 
                 } else {

@@ -568,4 +568,9 @@
     <string name="chat_title">%1$s चैट</string>
 
     <string name="error_failed_send_message">संदेश भेजने में विफल</string>
+    <string name="fund_date_range">%1$s • %2$s</string>
+    <string name="fund_amount_month">%1$s / month</string>
+    <string name="fund_name_with_group">%1$s (%2$s)</string>
+    <string name="text_no_approval_pending">There is no approval pending.</string>
+    <string name="text_no_groups_available">There is no Group where you are a moderator.</string>
 </resources>

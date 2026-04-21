@@ -18,6 +18,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.mynikatech.apnafund.R
@@ -151,17 +152,17 @@ class FundFragment : Fragment() {
             }
         )
         binding.recyclerView.adapter = adapter
-        lifecycleScope.launch {
-            val fundWithDetails = fetchAllFunds(adapter)
-            if (fundWithDetails.isEmpty())
-                binding.noFundMessageContainer.visibility = View.VISIBLE
+        viewLifecycleOwner.lifecycleScope.launch {
+            fundSharedViewModel.loadFunds(isAdmin, moderatorGroupId)
         }
-        fundSharedViewModel.fundDataRefreshTrigger.observe(viewLifecycleOwner) { shouldRefresh ->
-            if (shouldRefresh == true) {
-                lifecycleScope.launch {
-                    fetchAllFunds(adapter)
-                    fundSharedViewModel.resetRefresh()
-                }// prevent repeated reloads
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+                fundSharedViewModel.funds.collect {
+                    adapter.setFundsWithDetails(it)
+
+                    binding.noFundMessageContainer.visibility =
+                        if (it.isEmpty()) View.VISIBLE else View.GONE
+                }
             }
         }
     }
@@ -445,11 +446,7 @@ class FundFragment : Fragment() {
                         groupId,
                         recalculateFinance
                     )
-                    fetchAllFunds(adapter)
-                    // set the funds in the User summary screen
-                    val userDetails = userSummaryViewModel.getUserDetails(SessionManager.userId)
-                    userSummaryViewModel.userFunds.postValue(userDetails!!.userFunds)
-
+                    fundSharedViewModel.refreshFunds()
                     binding.noFundMessageContainer.visibility = View.GONE
                     AlertDialog.Builder(requireContext())
                         .setTitle(getString(R.string.title_fund_update_created_success))
@@ -469,7 +466,7 @@ class FundFragment : Fragment() {
                     Toast.makeText(
                         requireContext(),
                         getString(R.string.error_server),
-                        Toast.LENGTH_SHORT
+                        Toast.LENGTH_LONG
                     ).show()
                 }
             }

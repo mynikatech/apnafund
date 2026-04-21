@@ -62,9 +62,37 @@ class FundsApiKtor(
     override suspend fun getAllFundsWithDetails(): List<FundWithDetailsDto> =
         client.get("/funds/get/with-details/all").unwrap<List<FundWithDetailsDto>>()
 
-    override suspend fun getAllFundsWithDetailsForGroup(groupId: Int): List<FundWithDetailsDto> =
-        client.get("/funds/get/with-details/group/$groupId").unwrap<List<FundWithDetailsDto>>()
+    override suspend fun getAllFundsWithDetailsForGroup(
+        groupId: Int
+    ): List<FundWithDetailsDto> {
 
+        val start = System.currentTimeMillis()
+
+        return try {
+            val result = client
+                .get("/funds/get/with-details/group/$groupId")
+                .unwrap<List<FundWithDetailsDto>>()
+
+            val end = System.currentTimeMillis()
+            println("CLIENT SUCCESS TIME: ${end - start} ms")
+
+            result
+
+        } catch (e: io.ktor.client.plugins.HttpRequestTimeoutException) {
+
+            val end = System.currentTimeMillis()
+            println("CLIENT TIMEOUT after ${end - start} ms")
+
+            emptyList() // or return cached / fallback
+
+        } catch (e: Exception) {
+
+            val end = System.currentTimeMillis()
+            println("CLIENT ERROR after ${end - start} ms: ${e.message}")
+
+            emptyList()
+        }
+    }
     override suspend fun getFundWithDetails(fundId: Int): FundWithDetailsDto =
         client.get("/funds/get/with-details/$fundId").unwrap<FundWithDetailsDto>()
 

@@ -48,7 +48,7 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
     private fun observePendingRequests() {
         lifecycleScope.launch {
             val requests = approvalViewModel.getPendingApprovals(SessionManager.userId)
-            adapter.updateList(requests)
+            updateUI(requests)
         }
     }
 
@@ -66,6 +66,9 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
                     ApnaBankConstants.TEXT_LOAN ->
                         approvalViewModel.approveLoan(item.approvalId, SessionManager.userId)
                 }
+                val currentList = adapter.getItems().toMutableList()
+                currentList.removeAt(position)
+                updateUI(currentList)
 
                 Toast.makeText(
                     requireContext(),
@@ -108,6 +111,9 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
                     ApnaBankConstants.TEXT_LOAN ->
                         approvalViewModel.rejectLoan(item.approvalId, SessionManager.userId)
                 }
+                val currentList = adapter.getItems().toMutableList()
+                currentList.removeAt(position)
+                updateUI(currentList)
 
                 Toast.makeText(
                     requireContext(),
@@ -121,6 +127,7 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
                     getString(R.string.error_request_timed_out),
                     Toast.LENGTH_LONG
                 ).show()
+                adapter.notifyItemChanged(position)
 
             } catch (e: Exception) {
                 Log.e("PendingApprovalFragment", e.message.toString())
@@ -129,7 +136,20 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
                     getString(R.string.error_server),
                     Toast.LENGTH_LONG
                 ).show()
+                adapter.notifyItemChanged(position)
             }
         }
+    }
+
+    private fun updateUI(list: List<PendingApprovalDto>) {
+        adapter.updateList(list)
+
+        val isEmpty = list.isEmpty()
+
+        binding.recyclerPendingApproval.visibility =
+            if (isEmpty) View.GONE else View.VISIBLE
+
+        binding.layoutEmpty.visibility =
+            if (isEmpty) View.VISIBLE else View.GONE
     }
 }
