@@ -1,17 +1,20 @@
 package com.mynikatech.apnafund.server.funds
 
 import com.mynikatech.apnafund.net.dto.*
+import com.mynikatech.apnafund.server.mapper.FundWithDetailsMapper
 import org.jdbi.v3.sqlobject.customizer.Bind
 import org.jdbi.v3.sqlobject.kotlin.BindKotlin
 import org.jdbi.v3.sqlobject.kotlin.RegisterKotlinMapper
 import org.jdbi.v3.sqlobject.statement.SqlQuery
 import org.jdbi.v3.sqlobject.statement.SqlUpdate
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper
 
 @RegisterKotlinMapper(FundsDto::class)
 @RegisterKotlinMapper(FundDetailsDto::class)
 @RegisterKotlinMapper(FundWithDetailsDto::class)
 @RegisterKotlinMapper(FundMembersDto::class)
 @RegisterKotlinMapper(UsersDto::class)
+@RegisterRowMapper(FundWithDetailsMapper::class)
 interface FundsSql {
 
     // ---- Funds (DTO/basic) ----
@@ -90,7 +93,7 @@ interface FundsSql {
     @SqlQuery("""SELECT * FROM get_fund_members(:fundId)""")
     fun getFundMembers(@Bind("fundId") fundId: Int): List<FundMembersDto>
 
-    @SqlQuery("""SELECT add_fund_member(:userId, :fundId, CAST(:joiningDate AS date))""")
+    @SqlQuery("""SELECT add_fund_member(:userId, :fundId, :joiningDate)""")
     fun addFundMember(@BindKotlin m: FundMembersDto): Int
 
     @SqlQuery("""SELECT add_fund_members_batch(CAST(:itemsJson AS jsonb))""")

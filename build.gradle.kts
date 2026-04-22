@@ -14,5 +14,6 @@ plugins {
     alias(libs.plugins.ktor.io) apply false
     alias(libs.plugins.liquibase.gradle) apply false
 
+
 }
 

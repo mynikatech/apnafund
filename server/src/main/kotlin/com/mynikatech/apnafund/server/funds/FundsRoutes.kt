@@ -11,6 +11,7 @@ import com.mynikatech.apnafund.server.api.respondOk
 import com.mynikatech.apnafund.server.db.Db.jdbi
 import com.mynikatech.apnafund.server.notifications.NotificationService
 import com.mynikatech.apnafund.server.users.UsersSql
+import com.mynikatech.apnafund.server.util.Converters
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.log
@@ -50,7 +51,7 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
     post("add") {
         val dto = call.receive<FundsDto>()
 
-        if (dto.fundName.isNullOrBlank()) {
+        if (dto.fundName.isBlank()) {
             return@post call.respondError(
                 HttpStatusCode.BadRequest,
                 "validation",
@@ -61,7 +62,7 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
 
             val fundId = sql.addFund(dto)
 
-            // 🔥 UPSERT FUND MODERATOR ROLE
+            // UPSERT FUND MODERATOR ROLE
             userSql.upsertUserRoleByCode(
                 dto.moderator,   // make sure this exists in DTO
                 "FUND_MODERATOR",
@@ -148,13 +149,18 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
     get("get/with-details/all") { call.respondOk(sql.allWithDetails()) }
 
     get("get/with-details/group/{groupId}") {
+        val start = System.currentTimeMillis()
         val gid = call.parameters["groupId"]?.toIntOrNull()
             ?: return@get call.respondError(
                 HttpStatusCode.BadRequest,
                 "validation",
                 "groupId required"
             )
-        call.respondOk(sql.allWithDetailsForGroup(gid))
+        val result = sql.allWithDetailsForGroup(gid)
+        val stop = System.currentTimeMillis()
+        val timeTaken = stop - start
+        call.application.log.info("The time to call DB SQL is : $timeTaken")
+        call.respondOk(result)
     }
 
     get("get/with-details/{fundId}") {
@@ -379,10 +385,10 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
     post("add/with-details") {
         val req = call.receive<AddFundWithDetailsRequest>()
 
-        // minimal validation (add more if you need)
+
         if (req.fund.groupId == null) {
             return@post call.respondError(
-                io.ktor.http.HttpStatusCode.BadRequest,
+                HttpStatusCode.BadRequest,
                 "validation",
                 "groupId required on fund"
             )
@@ -392,18 +398,38 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
         val json = Json { explicitNulls = false }
 
         // Option A: pass explicit serializers (no extra import needed)
-        val fundJson = json.encodeToString(FundsDto.serializer(), req.fund)
-        val detailsJson = json.encodeToString(FundDetailsDto.serializer(), req.details)
-        val newId = sql.addFundWithDetails(
-            fundJson, detailsJson
-        )
+        val fundToSave = req.fund
+        val fundDetailsToSave = req.details
+        val totalMembers = 1
+        val totalExpectedDeposit =
+            fundToSave.recurringDepositAmount * totalMembers * fundToSave.fundPeriod
 
-        // 🔔 Trigger fund created notification (async)
+        val updatedFundDetails = fundDetailsToSave.copy(
+            totalExpectedDeposit = totalExpectedDeposit,
+            totalExpectedMaturityAmount = totalExpectedDeposit
+        )
+        val fundJson = json.encodeToString(FundsDto.serializer(), fundToSave)
+        val detailsJson = json.encodeToString(FundDetailsDto.serializer(), updatedFundDetails)
+        val newId = jdbi.inTransaction<Int, Exception> { handle ->
+
+            val newFundId = sql.addFundWithDetails(fundJson, detailsJson)
+
+            val fundMember = FundMembersDto(
+                userId = fundToSave.moderator,
+                fundId = newFundId,
+                joiningDate = Converters.getCurrentDate()
+            )
+
+            sql.addFundMember(fundMember)
+
+            newFundId
+        }
+        // Trigger fund created notification (async)
         call.application.launch {
             notificationService.notifyFundCreated(
                 fundId = newId,
                 fundName = req.fund.fundName,
-                groupId = req.fund.groupId!!
+                groupId = req.fund.groupId
             )
         }
 
@@ -458,7 +484,7 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
                 notificationService.notifyFundClosed(
                     fundId = fundId,
                     fundName = fund.fundName,
-                    closedByName = closedByUser.fullName ?: "Moderator",
+                    closedByName = closedByUser.fullName, // if required moderator
                     reason = request.reason
                 )
             } else
@@ -475,7 +501,7 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
             )
 
         } catch (e: Exception) {
-
+            call.application.log.error(e.message)
             call.respondError(
                 status = HttpStatusCode.InternalServerError,
                 type = "SERVER_ERROR",

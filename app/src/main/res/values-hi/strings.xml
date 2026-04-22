@@ -568,9 +568,98 @@
     <string name="chat_title">%1$s चैट</string>
 
     <string name="error_failed_send_message">संदेश भेजने में विफल</string>
+    <string name="text_help">मदद</string>
+
+    <string name="text_no_approval_pending">कोई अनुमोदन लंबित नहीं है।</string>
+    <string name="text_no_groups_available">कोई ऐसा समूह नहीं है जहाँ आप मॉडरेटर हैं।</string>
+
+    <!-- Fund related -->
     <string name="fund_date_range">%1$s • %2$s</string>
-    <string name="fund_amount_month">%1$s / month</string>
+    <string name="fund_amount_month">%1$s / महीना</string>
     <string name="fund_name_with_group">%1$s (%2$s)</string>
-    <string name="text_no_approval_pending">There is no approval pending.</string>
-    <string name="text_no_groups_available">There is no Group where you are a moderator.</string>
+
+    <!-- Deposits -->
+    <string name="section_help_deposit">जमा</string>
+
+    <string name="help_deposit_add_title">जमा जोड़ना</string>
+    <string name="help_deposit_edit_title">जमा संपादित करना</string>
+
+    <string name="help_deposit_add_desc"><![CDATA[
+    <b>जमा कैसे जोड़ें</b><br/><br/>
+
+    <b>चरण:</b><br/>
+    • उपयोगकर्ता और फंड चुनें<br/>
+    • महीना और वर्ष चुनें<br/>
+    • राशि दर्ज करें और सेव करें<br/><br/>
+
+    <b>सुझाव:</b><br/>
+    सही फंड का चयन सुनिश्चित करें।<br/><br/>
+
+    <a href="app://deposit_entry">जमा स्क्रीन पर जाएँ</a>
+    ]]></string>
+
+    <!-- Group -->
+    <string name="section_help_group">समूह</string>
+
+    <string name="help_title_general_description">सामान्य विवरण</string>
+
+    <string name="help_group_general_desc"><![CDATA[
+    <b>समूह क्या है</b><br/><br/>
+
+    समूह वह टीम है जिसके साथ आप फंड बनाते और प्रबंधित करते हैं।<br/>
+    आप कई समूह बना और प्रबंधित कर सकते हैं।<br/>
+    हर समूह में एक मॉडरेटर होना आवश्यक है।<br/>
+    होम स्क्रीन पर ग्रुप ड्रॉपडाउन से आप समूह बदल सकते हैं।<br/><br/>
+
+    <b>क्रियाएँ:</b><br/>
+    • अपने समूह में सदस्य जोड़ें<br/>
+    • मिलकर फंड बनाएं और प्रबंधित करें<br/>
+    • जमा और ऋण ट्रैक करें<br/>
+    • प्रबंधन के लिए मॉडरेटर नियुक्त करें
+    ]]></string>
+
+    <string name="section_help_fund">फंड</string>
+    <string name="section_help_loan">ऋण</string>
+
+    <!-- Fund Help -->
+    <string name="help_fund_general_desc"><![CDATA[
+    <b>फंड क्या है</b><br/><br/>
+
+    फंड एक मासिक योगदान है जिसे आप समूह के सदस्यों के बीच बना सकते हैं।<br/>
+    आप एक समूह में कई फंड बना और प्रबंधित कर सकते हैं।<br/>
+    केवल मॉडरेटर ही फंड बना सकता है।<br/>
+    फंड स्क्रीन पर आप "+" आइकन पर क्लिक करके नया फंड जोड़ सकते हैं।<br/><br/>
+
+    <b>क्रियाएँ:</b><br/>
+    • अपने फंड में सदस्य जोड़ें<br/>
+    • मिलकर फंड बनाएं और प्रबंधित करें<br/>
+    • जमा और ऋण ट्रैक करें<br/>
+    • प्रबंधन के लिए मॉडरेटर नियुक्त करें
+    ]]></string>
+
+    <!-- Loan EMI -->
+    <string name="help_loan_emi_add_title">ईएमआई जोड़ना</string>
+
+    <string name="help_loan_emi_add_desc"><![CDATA[
+    <b>लोन ईएमआई कैसे जोड़ें</b><br/><br/>
+
+    <b>चरण:</b><br/>
+    • फंड चुनें<br/>
+    • महीना और वर्ष चुनें<br/>
+    • राशि दर्ज करें और सेव करें<br/><br/>
+
+    <b>सुझाव:</b><br/>
+    सही फंड का चयन सुनिश्चित करें।
+    ]]></string>
+
+    <!-- Errors / Messages -->
+    <string name="error_loan_id_not_available">लोन आईडी उपलब्ध नहीं है</string>
+
+    <string name="error_unable_oad_data">डेटा लोड करने में असमर्थ</string>
+
+    <string name="message_select_valid_fund">कृपया एक मान्य फंड चुनें</string>
+
+    <string name="error_group_name_3_characters">
+    समूह का नाम कम से कम 3 अक्षरों का होना चाहिए
+    </string>
 </resources>

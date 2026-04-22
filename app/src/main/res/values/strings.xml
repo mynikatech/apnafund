@@ -366,4 +366,59 @@
     <string name="fund_name_with_group">%1$s (%2$s)</string>
     <string name="text_no_approval_pending">There is no approval pending.</string>
     <string name="text_no_groups_available">There is no Group where you are a moderator.</string>
+    <string name="text_help">Help</string>
+    <string name="section_help_deposit">Deposits</string>
+    <string name="help_deposit_add_title">Adding a Deposit</string>
+    <string name="help_deposit_edit_title">Editing a Deposit</string>
+    <string name="help_deposit_add_desc"> <![CDATA[<b>How to add a deposit</b><br/><br/>
+
+        <b>Steps:</b><br/>
+        • Select user and fund<br/>
+        • Choose month and year<br/>
+        • Enter amount and save<br/><br/>
+
+        <b>Tip:</b><br/>
+        Ensure the correct fund is selected.<br/><br/>]]></string>
+
+    <string name="section_help_group">Group</string>
+    <string name="help_title_general_description">General Description</string>
+    <string name="help_group_general_desc"><![CDATA[<b>What is a group</b><br/><br/>
+        A Group is your team with whom you want to create and manage funds.
+        You can create and manage multiple groups. Each group needs to have a moderator.
+        On the Home screen you can click on the Group dropdown to change the group if you have multiple groups.
+         On the Home screen click on the + Add Group icon to add Group<br/>
+        <b>Actions:</b><br/>
+        • Add members to your group<br/>
+        • Create and manage funds together<br/>
+        • Track deposits and loans<br/>
+        • Assign moderators for management<br/><br/>
+    ]]></string>
+    <string name="help_fund_general_desc"><![CDATA[<b>What is a fund</b><br/><br/>
+        A Fund is the monthly contribution of funds which you can create among the group members.
+        You can create and manage multiple funds in a group. Only a moderator can create funds.
+        On the Funds screen you can click + icon to add Funds.<br/>
+        <b>Actions:</b><br/>
+        • Add members to your fund<br/>
+        • Create and manage funds together<br/>
+        • Track deposits and loans<br/>
+        • Assign moderators for management<br/><br/>
+    ]]></string>
+    <string name="help_loan_emi_add_desc"> <![CDATA[<b>How to add a loan emi</b><br/><br/>
+
+        <b>Steps:</b><br/>
+        • Select fund<br/>
+        • Choose month and year<br/>
+        • Enter amount and save<br/><br/>
+
+        <b>Tip:</b><br/>
+        Ensure the correct fund is selected.<br/><br/>
+
+        ]]></string>
+    <string name="section_help_fund">Fund</string>
+    <string name="section_help_loan">Loans</string>
+    <string name="help_loan_emi_add_title">Adding a EMI</string>
+    <string name="error_loan_id_not_available">Loan ID not available</string>
+    <string name="error_unable_oad_data">Unable to load data</string>
+    <string name="message_select_valid_fund">Please select a valid fund</string>
+    <string name="error_group_name_3_characters">Group name must be more than 3 characters</string>
 </resources>

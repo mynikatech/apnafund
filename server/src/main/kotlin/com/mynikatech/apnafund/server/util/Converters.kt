@@ -2,7 +2,10 @@ package com.mynikatech.apnafund.server.util
 
 
 import java.security.MessageDigest
+import java.text.SimpleDateFormat
 import java.util.Base64
+import java.util.Date
+import java.util.Locale
 
 
 object Converters {
@@ -79,5 +82,9 @@ object Converters {
     fun formatWithBraces(name: String): String {
         //add braces
         return "($name)"
+    }
+    fun getCurrentDate(): String {
+        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        return dateFormat.format(Date())
     }
 }

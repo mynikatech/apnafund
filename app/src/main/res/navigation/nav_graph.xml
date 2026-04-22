@@ -386,4 +386,9 @@
         android:id="@+id/aiChatFragment"
         android:name="com.mynikatech.apnafund.ui.assistant.AiChatFragment"
         android:label="AI Chat"/>
+
+    <fragment
+        android:id="@+id/helpFragment"
+        android:name="com.mynikatech.apnafund.ui.help.HelpFragment"
+        android:label="Help"/>
 </navigation>

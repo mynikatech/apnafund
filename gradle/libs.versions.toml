@@ -112,3 +112,4 @@ kotlin-jvm  = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ktor-io = { id = "io.ktor.plugin", version.ref = "ktorVer" }
 liquibase-gradle = { id = "org.liquibase.gradle", version.ref = "liquibaseGradVer"}
+kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize" }

@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!-- Help -->
+    <item
+        android:id="@+id/action_help"
+        android:icon="@drawable/ic_help"
+        android:title="@string/text_help"
+        app:showAsAction="always"/>
     <!-- Notifications -->
     <item
         android:id="@+id/action_notifications"
         android:icon="@drawable/ic_notifications"
-        android:title="Notifications"
+        android:title="@string/text_notifications"
         app:showAsAction="always"
         app:actionLayout="@layout/notification_badge_layout"/>
 </menu>

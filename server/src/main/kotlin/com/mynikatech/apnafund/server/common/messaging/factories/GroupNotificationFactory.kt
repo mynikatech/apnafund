@@ -23,7 +23,7 @@ object GroupNotificationFactory {
 
             email = EmailPayload(
                 to = recipient.emailId,
-                userName = recipient.fullName ?: "User",
+                userName = recipient.fullName,
                 data = mapOf(
                     "fundName" to fundName,
                     "closedBy" to closedByName,
@@ -61,11 +61,9 @@ object GroupNotificationFactory {
 
             eventData = mapOf(
                 "fundId" to fundId,
-                "fundName" to fundName
+                "fundName" to fundName,
+                "fundMembers" to fundMemberNames
             )
         )
     }
-
-
-
 }

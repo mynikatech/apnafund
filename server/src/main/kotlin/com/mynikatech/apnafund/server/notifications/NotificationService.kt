@@ -73,10 +73,12 @@ class NotificationService(
             logger.info("Inserted into user notifications")
 
             val fundMemberNames =
-                if (fundMembers.isEmpty())
+                if (fundMembers.isEmpty()) {
                     "No members added yet"
+                }
                 else
                     fundMembers.joinToString(", ") { it.fullName }
+            logger.info("The fund Member Names are $fundMemberNames")
 
             groupMembers.forEach { member ->
                 logger.info("Dispatching email to ${member.emailId}")

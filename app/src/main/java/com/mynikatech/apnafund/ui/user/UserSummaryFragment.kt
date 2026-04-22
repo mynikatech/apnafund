@@ -271,7 +271,7 @@ class UserSummaryFragment : Fragment() {
                     } ?: run {
                         Toast.makeText(
                             requireContext(),
-                            "Loan ID not available",
+                            getString(R.string.error_loan_id_not_available),
                             Toast.LENGTH_SHORT
                         ).show()
                         Log.w("UserSummary", "Loan EMI click attempted with null loanId")
@@ -289,7 +289,7 @@ class UserSummaryFragment : Fragment() {
 
             Toast.makeText(
                 requireContext(),
-                "Unable to load data",
+                getString(R.string.error_unable_oad_data),
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -421,7 +421,8 @@ class UserSummaryFragment : Fragment() {
                     borrowerName = SessionManager.getFormattedUserName()
                 )
             } else {
-                Toast.makeText(requireContext(), "Please select a valid fund", Toast.LENGTH_SHORT)
+                Toast.makeText(requireContext(),
+                    getString(R.string.message_select_valid_fund), Toast.LENGTH_SHORT)
                     .show()
             }
         }
@@ -671,7 +672,11 @@ class UserSummaryFragment : Fragment() {
         dialog.show()
         val isAdmin = SessionManager.isAdmin()
         var userId = 0
-        dialogBinding.buttonSaveGrp.text = if (addOrEditFlag == 1) "Update Group" else "Add Group"
+        dialogBinding.buttonSaveGrp.text =
+            if (addOrEditFlag == 1)
+                getString(R.string.text_update_group)
+            else
+                getString(R.string.text_add_group)
 
         // Pre-fill group name
         if (addOrEditFlag == 1) {
@@ -688,7 +693,8 @@ class UserSummaryFragment : Fragment() {
             dialogBinding.buttonSaveGrp.isEnabled = isValid
 
             if (!GroupInputValidator.isGroupNameValidInput(name) && name.isNotEmpty()) {
-                dialogBinding.editTextGroupName.error = "Group name must be more than 3 characters"
+                dialogBinding.editTextGroupName.error =
+                    getString(R.string.error_group_name_3_characters)
             }
         }
 

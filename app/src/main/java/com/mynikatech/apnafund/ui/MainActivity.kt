@@ -210,6 +210,10 @@ class MainActivity : AppCompatActivity() {
                         navController.navigate(R.id.notificationFragment)
                         true
                     }
+                    R.id.action_help -> {
+                        navController.navigate(R.id.helpFragment)
+                        true
+                    }
 
                     else -> false
                 }
