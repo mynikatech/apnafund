@@ -68,4 +68,5 @@ class GroupViewModel : ViewModel() {
             groupRepository.updateGroup(group)
         }
     }
+
 }

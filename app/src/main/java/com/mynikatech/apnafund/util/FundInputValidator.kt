@@ -10,8 +10,12 @@ object FundInputValidator {
         return periodStr?.toDoubleOrNull() != null
     }
 
-    fun isDepositAmountValid(amountStr: String?): Boolean {
-        return amountStr?.toDoubleOrNull() != null
+    fun isDepositAmountValid(depAmount: String?): Boolean {
+        if (depAmount.isNullOrBlank()) return false
+
+        val amount = depAmount.toDoubleOrNull() ?: return false
+
+        return amount > 0
     }
 
     fun isLoanInterestValid(interestStr: String?): Boolean {

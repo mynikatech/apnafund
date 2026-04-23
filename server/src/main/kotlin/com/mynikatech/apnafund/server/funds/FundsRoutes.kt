@@ -4,6 +4,7 @@ import com.mynikatech.apnafund.net.dto.AddFundWithDetailsRequest
 import com.mynikatech.apnafund.net.dto.CloseFundRequest
 import com.mynikatech.apnafund.net.dto.FundDetailsDto
 import com.mynikatech.apnafund.net.dto.FundMembersDto
+import com.mynikatech.apnafund.net.dto.FundUpdateRequestDto
 import com.mynikatech.apnafund.net.dto.FundsDto
 import com.mynikatech.apnafund.net.dto.UsersDto
 import com.mynikatech.apnafund.server.api.respondError
@@ -133,6 +134,22 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
                 "groupId required"
             )
         call.respondOk(sql.getAllActiveFundsForGroup(gid))
+    }
+
+    get("get/active/group/{groupId}/{userId}") {
+        val gid = call.parameters["groupId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "groupId required"
+            )
+        val uid = call.parameters["userId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "userId required"
+            )
+        call.respondOk(sql.getAllActiveFundsForGroupAndModerator(gid, uid))
     }
 
     get("get/group/{groupId}") {
@@ -347,7 +364,7 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
 
     // ---- Atomic multi-update ----
     put("update/with-details") {
-        val body = call.receive<UpdateWithDetailsRequest>()
+        val body = call.receive<FundUpdateRequestDto>()
         val ok = sql.updateFund(
             id = body.fund.fundId!!,
             fundName = body.fund.fundName,
@@ -364,7 +381,7 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
             groupId = body.fund.groupId,
             fundCode = body.fund.fundCode
         )
-        sql.upsertDetails(body.details)
+        sql.updateFundDetails(body.fundDetails)
         if (!ok) return@put call.respondError(
             HttpStatusCode.NotFound,
             "not_found",
@@ -493,12 +510,7 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
             }
 
             // ---------- RESPONSE ----------
-            call.respondOk(
-                data = mapOf(
-                    "fundId" to fundId,
-                    "status" to "CLOSED"
-                )
-            )
+            call.respond(HttpStatusCode.NoContent)
 
         } catch (e: Exception) {
             call.application.log.error(e.message)

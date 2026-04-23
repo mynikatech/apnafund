@@ -72,6 +72,9 @@ interface FundsSql {
     @SqlQuery("""SELECT * FROM get_active_funds_for_group(:groupId)""")
     fun getAllActiveFundsForGroup(@Bind("groupId") groupId: Int): List<FundsDto>
 
+    @SqlQuery("""SELECT * FROM get_active_funds_for_group_moderator(:groupId, :userId)""")
+    fun getAllActiveFundsForGroupAndModerator(@Bind("groupId") groupId: Int, @Bind("userId") userId: Int): List<FundsDto>
+
     @SqlQuery("""SELECT * FROM get_funds_for_group(:groupId)""")
     fun getAllFundsForGroup(@Bind("groupId") groupId: Int): List<FundsDto>
 

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 054-get-active-funds-moderator
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/054-get-active-funds-moderator.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

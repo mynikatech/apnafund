@@ -57,7 +57,9 @@ class ChangePasswordFragment : Fragment() {
         )
         binding.authToolbar.title = getString(R.string.text_change_password)
 
-
+        binding.buttonCancel.setOnClickListener {
+            findNavController().navigateUp()
+        }
         binding.buttonChangePassword.setOnClickListener {
             binding.buttonChangePassword.isEnabled = false
             val newPassword = binding.editTextNewPassword.text.toString()

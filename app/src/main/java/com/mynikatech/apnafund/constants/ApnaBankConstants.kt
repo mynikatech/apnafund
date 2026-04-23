@@ -28,7 +28,7 @@ object ApnaBankConstants {
     const val STATUS_PENDING_APPROVAL = "PENDING_APPROVAL"
     const val STATUS_REJECTED = "REJECTED"
     const val RESET_PASSWORD = "RESET_PASSWORD"
-    const val USER_EMAIL = "RESET_PASSWORD"
+    const val USER_EMAIL = "userEmail"
     const val STATUS_APPROVED = "APPROVED"
     const val STATUS_ACTIVE = "ACTIVE"
     const val STATUS_INACTIVE = "INACTIVE"

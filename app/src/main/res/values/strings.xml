@@ -421,4 +421,5 @@
     <string name="error_unable_oad_data">Unable to load data</string>
     <string name="message_select_valid_fund">Please select a valid fund</string>
     <string name="error_group_name_3_characters">Group name must be more than 3 characters</string>
+    <string name="message_fund_update_success">Fund updated successfully</string>
 </resources>

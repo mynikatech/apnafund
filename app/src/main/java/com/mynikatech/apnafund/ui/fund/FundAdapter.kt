@@ -14,6 +14,7 @@ import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.model.FundWithDetails
 import com.mynikatech.apnafund.databinding.ItemFundBinding
+import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.util.Converters
 import com.mynikatech.apnafund.util.FundInputValidator
 import java.time.LocalDate
@@ -78,6 +79,7 @@ class FundAdapter(
                 // 2) Determine if it’s closed
                 val isClosed = fundWithDetails.fundStatus == ApnaBankConstants.CLOSED_STATUS ||
                         !maturityDate.isAfter(today)  // true if maturity <= today
+                val isModerator = fundWithDetails.moderator == SessionManager.userId
 
                 // 3) Update status badge
                 if (isClosed) {
@@ -106,10 +108,11 @@ class FundAdapter(
                     popup.inflate(R.menu.fund_item_menu)
 
                     val isActive = !isClosed
-                    val canEdit = Converters.userHasPrivilege(ApnaBankConstants.ADD_FUND_PRIV)
+                    // add check if moderator for the fund
+                    val canEdit = Converters.userHasPrivilege(ApnaBankConstants.ADD_FUND_PRIV) && isModerator
                     val canApplyLoan = Converters.userHasPrivilege(
                         ApnaBankConstants.APPROVE_APPLY_LOAN_PRIV
-                    )
+                    ) || isModerator
                     // Edit → only if active + moderator/admin
                     popup.menu.findItem(R.id.menu_edit).isVisible =
                         isActive && canEdit

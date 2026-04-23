@@ -14,6 +14,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.widget.addTextChangedListener
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -26,10 +27,10 @@ import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.model.FundDetails
 import com.mynikatech.apnafund.data.model.FundWithDetails
 import com.mynikatech.apnafund.data.model.Funds
-import com.mynikatech.apnafund.data.model.GroupMemberWithName
 import com.mynikatech.apnafund.data.model.LoanDetailsWithMemberNames
 import com.mynikatech.apnafund.databinding.DialogAddFundBinding
 import com.mynikatech.apnafund.databinding.FragmentFundBinding
+import com.mynikatech.apnafund.net.dto.UserDisplay
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.loan.AddLoanDialog
 import com.mynikatech.apnafund.ui.viewmodel.FundSharedViewModel
@@ -166,6 +167,7 @@ class FundFragment : Fragment() {
             }
         }
     }
+
     @RequiresApi(Build.VERSION_CODES.O)
     private fun showCloseFundDialog(fund: FundWithDetails) {
 
@@ -237,11 +239,6 @@ class FundFragment : Fragment() {
         var groupId = -1
         var moderator = -1
         dialogBinding.buttonSaveFund.isEnabled = false
-        setupModeratorDropdown(dialogBinding) {
-            moderator = it
-            dialogBinding.buttonSaveFund.isEnabled =
-                validateInputs(dialogBinding, groupId, moderator)
-        }
         if (existingFund != null) {
             dialogBinding.buttonSaveFund.text = getString(R.string.text_update_fund)
             dialogBinding.editTextFundName.setText(existingFund.fundName)
@@ -275,7 +272,9 @@ class FundFragment : Fragment() {
             }
         }
         lifecycleScope.launch {
-            groupViewModel.fetchAllGroups().collectLatest { groups ->
+            val groupsFlow =
+                groupViewModel.fetchAllGroups()
+            groupsFlow.collectLatest { groups ->
                 val groupNames = groups.map { it.groupName }
                 val idToIndex = groups.mapIndexed { idx, g -> g.groupId to idx }.toMap()
                 val adapter = ArrayAdapter(
@@ -292,6 +291,27 @@ class FundFragment : Fragment() {
                         dialogBinding.buttonSaveFund.isEnabled =
                             validateInputs(dialogBinding, groupId, moderator)
                     }
+                    dialogBinding.editTextAutoGroup.isEnabled = false
+                    refreshModeratorDropdown(
+                        groupId,
+                        dialogBinding,
+                        context,
+                        existingFund,
+                        defaultModerator = moderator
+                    ) { members, preselectedId->
+
+                        // Now setup dropdown WITH data
+                        setupModeratorDropdown(dialogBinding, members) { selectedId ->
+                            moderator = selectedId
+                            dialogBinding.buttonSaveFund.isEnabled =
+                                validateInputs(dialogBinding, groupId, moderator)
+                        }
+                        // 🔥 set default moderator properly
+                        if (preselectedId != null) {
+                            moderator = preselectedId
+                            updateSaveButtonState(dialogBinding, groupId, moderator)
+                        }
+                    }
                 } else if (!isAdmin) {
                     idToIndex[moderatorGroupId]?.let { idx ->
                         dialogBinding.editTextAutoGroup.setText(groupNames[idx], false)
@@ -304,10 +324,19 @@ class FundFragment : Fragment() {
                             context,
                             existingFund,
                             defaultModerator = moderator
-                        ) {
-                            moderator = it
-                            dialogBinding.buttonSaveFund.isEnabled =
-                                validateInputs(dialogBinding, groupId, moderator)
+                        )  { members, preselectedId->
+
+                            // Now setup dropdown WITH data
+                            setupModeratorDropdown(dialogBinding, members) { selectedId ->
+                                moderator = selectedId
+                                dialogBinding.buttonSaveFund.isEnabled =
+                                    validateInputs(dialogBinding, groupId, moderator)
+                            }
+                            // 🔥 set default moderator properly
+                            if (preselectedId != null) {
+                                moderator = preselectedId
+                                updateSaveButtonState(dialogBinding, groupId, moderator)
+                            }
                         }
                     }
                     dialogBinding.editTextAutoGroup.isEnabled = false
@@ -332,10 +361,19 @@ class FundFragment : Fragment() {
                         context,
                         existingFund,
                         defaultModerator = moderator
-                    ) {
-                        moderator = it
-                        dialogBinding.buttonSaveFund.isEnabled =
-                            validateInputs(dialogBinding, groupId, moderator)
+                    ) { members, preselectedId->
+
+                        // Now setup dropdown WITH data
+                        setupModeratorDropdown(dialogBinding, members) { selectedId ->
+                            moderator = selectedId
+                            dialogBinding.buttonSaveFund.isEnabled =
+                                validateInputs(dialogBinding, groupId, moderator)
+                        }
+                        // set default moderator properly
+                        if (preselectedId != null) {
+                            moderator = preselectedId
+                            updateSaveButtonState(dialogBinding, groupId, moderator)
+                        }
                     }
                 }
                 dialogBinding.editTextAutoGroup.addTextChangedListener {
@@ -353,36 +391,28 @@ class FundFragment : Fragment() {
         }
         // add TextChangeListener
         dialogBinding.editTextFundName.addTextChangedListener {
-            dialogBinding.buttonSaveFund.isEnabled =
-                validateInputs(dialogBinding, groupId, moderator)
+            updateSaveButtonState(dialogBinding, groupId, moderator)
         }
         dialogBinding.editTextFundStartDate.addTextChangedListener {
-            dialogBinding.buttonSaveFund.isEnabled =
-                validateInputs(dialogBinding, groupId, moderator)
+            updateSaveButtonState(dialogBinding, groupId, moderator)
         }
         dialogBinding.editTextPeriod.addTextChangedListener {
-            dialogBinding.buttonSaveFund.isEnabled =
-                validateInputs(dialogBinding, groupId, moderator)
+            updateSaveButtonState(dialogBinding, groupId, moderator)
         }
         dialogBinding.editTextDepFrequency.addTextChangedListener {
-            dialogBinding.buttonSaveFund.isEnabled =
-                validateInputs(dialogBinding, groupId, moderator)
+            updateSaveButtonState(dialogBinding, groupId, moderator)
         }
-        dialogBinding.editTextDepAmount.addTextChangedListener {
-            dialogBinding.buttonSaveFund.isEnabled =
-                validateInputs(dialogBinding, groupId, moderator)
+        dialogBinding.editTextDepAmount.doAfterTextChanged {
+            updateSaveButtonState(dialogBinding, groupId, moderator)
         }
         dialogBinding.editTextLoanIntRate.addTextChangedListener {
-            dialogBinding.buttonSaveFund.isEnabled =
-                validateInputs(dialogBinding, groupId, moderator)
+            updateSaveButtonState(dialogBinding, groupId, moderator)
         }
         dialogBinding.editTextLateFeeRate.addTextChangedListener {
-            dialogBinding.buttonSaveFund.isEnabled =
-                validateInputs(dialogBinding, groupId, moderator)
+            updateSaveButtonState(dialogBinding, groupId, moderator)
         }
         dialogBinding.editTextDepositLastDate.addTextChangedListener {
-            dialogBinding.buttonSaveFund.isEnabled =
-                validateInputs(dialogBinding, groupId, moderator)
+            updateSaveButtonState(dialogBinding, groupId, moderator)
         }
 
         dialogBinding.buttonSaveFund.setOnClickListener {
@@ -440,24 +470,34 @@ class FundFragment : Fragment() {
                         fundId = existingFund?.fundId ?: 0
 
                     )
-                    val newFundId = fundViewModel.saveOrUpdateFund(
-                        fundToSave,
-                        fundDetailsToSave,
-                        groupId,
-                        recalculateFinance
-                    )
+                    val newFundId = withContext(Dispatchers.IO) {
+                        fundViewModel.saveOrUpdateFund(
+                            fundToSave,
+                            fundDetailsToSave,
+                            groupId,
+                            recalculateFinance
+                        )
+                    }
                     fundSharedViewModel.refreshFunds()
                     binding.noFundMessageContainer.visibility = View.GONE
-                    AlertDialog.Builder(requireContext())
-                        .setTitle(getString(R.string.title_fund_update_created_success))
-                        .setMessage(getString(R.string.message_want_add_update_members_now))
-                        .setPositiveButton(getString(R.string.text_yes)) { _, _ ->
-                            val action = FundFragmentDirections
-                                .actionFundFragmentToFundMemberDetailsFragment(fundId = newFundId)
-                            findNavController().navigate(action)
-                        }
-                        .setNegativeButton(getString(R.string.text_cancel_button), null)
-                        .show()
+                    if (fundDetailsToSave.totalCurrentDeposit > 0) {
+                        Toast.makeText(
+                            requireContext(),
+                            getString(R.string.message_fund_update_success),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        AlertDialog.Builder(requireContext())
+                            .setTitle(getString(R.string.title_fund_update_created_success))
+                            .setMessage(getString(R.string.message_want_add_update_members_now))
+                            .setPositiveButton(getString(R.string.text_yes)) { _, _ ->
+                                val action = FundFragmentDirections
+                                    .actionFundFragmentToFundMemberDetailsFragment(fundId = newFundId)
+                                findNavController().navigate(action)
+                            }
+                            .setNegativeButton(getString(R.string.text_cancel_button), null)
+                            .show()
+                    }
                     dialog.dismiss()
                 } catch (e: Exception) {
                     Log.e("FundFragment", e.message.toString())
@@ -474,6 +514,19 @@ class FundFragment : Fragment() {
         }
         dialogBinding.buttonCancelFund.setOnClickListener {
             dialog.dismiss()
+        }
+    }
+
+    private fun updateSaveButtonState(
+        dialogBinding: DialogAddFundBinding,
+        groupId: Int,
+        moderator: Int
+    ) {
+        dialogBinding.buttonSaveFund.isEnabled =
+            validateInputs(dialogBinding, groupId, moderator)
+
+        if (dialogBinding.buttonSaveFund.isEnabled) {
+            dialogBinding.buttonSaveFund.isClickable = true
         }
     }
 
@@ -594,14 +647,15 @@ class FundFragment : Fragment() {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun setupModeratorDropdown(
         dialogBinding: DialogAddFundBinding,
+        members: List<UserDisplay>,
         onModeratorSelected: (Int) -> Unit
     ) {
-        dialogBinding.editTextModerator.setOnItemClickListener { parent, _, position, _ ->
-            val selectedName = parent.getItemAtPosition(position) as String
-            val user = dialogBinding.editTextModerator.tag as? Map<String, GroupMemberWithName>
-            onModeratorSelected(user?.get(selectedName)?.userId ?: -1)
+        dialogBinding.editTextModerator.setOnItemClickListener { _, _, position, _ ->
+            val selectedUser = members[position]
+            onModeratorSelected(selectedUser.userId)
         }
 
         dialogBinding.editTextModerator.setOnClickListener {
@@ -623,25 +677,71 @@ class FundFragment : Fragment() {
         context: Context,
         existingFund: FundWithDetails?,
         defaultModerator: Int?,
-        onModeratorSelected: (Int) -> Unit
+        onDataReady: (List<UserDisplay>, Int?) -> Unit
     ) {
         lifecycleScope.launch {
-            val groupMembers = groupViewModel.fetchGroupMembersforGrpWithNames(groupId)
-            val nameMap = groupMembers.associateBy { "${it.firstName} ${it.lastName}" }
+
+            val members: List<UserDisplay> = if (existingFund == null) {
+                // ADD → group members
+                groupViewModel.fetchGroupMembersforGrpWithNames(groupId)
+                    .map {
+                        UserDisplay(
+                            userId = it.userId,
+                            displayName = "${it.firstName} ${it.lastName}"
+                        )
+                    }
+            } else {
+                // EDIT → fund members
+                fundViewModel.getFundMembersWithNamesForFund(existingFund.fundId)
+                    .map {
+                        UserDisplay(
+                            userId = it.userId,
+                            displayName = "${it.firstName} ${it.lastName}"
+                        )
+                    }
+            }
+            if (members.isEmpty()) {
+                dialogBinding.editTextModerator.setText("", false)
+                dialogBinding.editTextModerator.setAdapter(null)
+                return@launch
+            }
+            val nameMap = members.associateBy { it.displayName }
             val nameList = nameMap.keys.toList()
 
             val adapter = ArrayAdapter(context, R.layout.dropdown_item_apnabank, nameList)
             dialogBinding.editTextModerator.setAdapter(adapter)
-            dialogBinding.editTextModerator.tag = nameMap
 
             // Pre-select if editing existing fund
             val preselectUserId = existingFund?.moderator ?: defaultModerator
-            val preselectUser = groupMembers.find { it.userId == preselectUserId }
+            val preselectUser = members.find { it.userId == preselectUserId }
             if (preselectUser != null) {
-                val name = "${preselectUser.firstName} ${preselectUser.lastName}"
+                val name = preselectUser.displayName
                 dialogBinding.editTextModerator.setText(name, false)
-                onModeratorSelected(preselectUser.userId)
+
+
             }
+            if (members.size == 1) {
+                val singleUser = members.first()
+
+                dialogBinding.editTextModerator.setText(singleUser.displayName, false)
+
+                // Disable interaction
+                dialogBinding.editTextModerator.isEnabled = false
+                dialogBinding.editTextModerator.isClickable = false
+
+
+                // still notify selection
+                onDataReady(members,preselectUser?.userId )
+
+                return@launch
+            } else {
+                // Enable interaction for multiple users
+                dialogBinding.editTextModerator.isEnabled = true
+                dialogBinding.editTextModerator.isClickable = true
+                dialogBinding.editTextModerator.isFocusable = false
+                dialogBinding.editTextModerator.isFocusableInTouchMode = false
+            }
+            onDataReady(members,preselectUser?.userId )
         }
     }
 }

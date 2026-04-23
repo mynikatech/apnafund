@@ -8,6 +8,7 @@ import com.mynikatech.apnafund.net.dto.FundDetailsDto
 import com.mynikatech.apnafund.net.dto.FundMemberWithNameDto
 import com.mynikatech.apnafund.net.dto.FundsDto
 import com.mynikatech.apnafund.net.dto.FundMembersDto
+import com.mynikatech.apnafund.net.dto.FundUpdateRequestDto
 import com.mynikatech.apnafund.net.dto.FundWithDetailsDto
 import com.mynikatech.apnafund.net.dto.UsersDto
 import io.ktor.client.call.body
@@ -37,11 +38,12 @@ class FundsApiKtor(
             setBody(dto)
         }.unwrap<Int>()
 
-    override suspend fun updateFund(id: Int, dto: FundsDto): Boolean =
+    override suspend fun updateFund(id: Int, dto: FundsDto) {
         client.put("/funds/update/$id") {
             contentType(ContentType.Application.Json)
             setBody(dto)
-        }.unwrap<Boolean>()
+        }
+    }
 
     override suspend fun deleteFund(id: Int): Boolean =
         client.delete("/funds/delete/$id").unwrap<Boolean>()
@@ -58,6 +60,9 @@ class FundsApiKtor(
 
     override suspend fun getAllActiveFundsForGroup(groupId: Int): List<FundsDto> =
         client.get("/funds/get/active/group/$groupId").unwrap<List<FundsDto>>()
+
+    override suspend fun getAllActiveFundsForGroupAndModerator(groupId: Int, userId: Int): List<FundsDto> =
+        client.get("/funds/get/active/group/$groupId/$userId").unwrap<List<FundsDto>>()
 
     override suspend fun getAllFundsWithDetails(): List<FundWithDetailsDto> =
         client.get("/funds/get/with-details/all").unwrap<List<FundWithDetailsDto>>()
@@ -176,11 +181,11 @@ class FundsApiKtor(
             parameter("fundId", fundId)
         }.unwrap<List<UsersDto>>()
 
-    override suspend fun updateFundWithDetails(fund: FundsDto, fundDetails: FundDetailsDto) {
+    override suspend fun updateFundWithDetails(fundUpdateReq: FundUpdateRequestDto) {
         client.put("/funds/update/with-details") {
             contentType(ContentType.Application.Json)
-            setBody(mapOf("fund" to fund, "details" to fundDetails))
-        }.body<Unit>()
+            setBody(fundUpdateReq)
+        }
     }
 
     override suspend fun getFundMembersWithNamesForFund(fundId: Int): List<FundMemberWithNameDto> =
@@ -203,14 +208,14 @@ class FundsApiKtor(
     override suspend fun closeFund(
         fundId: Int,
         request: CloseFundRequest
-    ): Boolean {
+    ) {
 
-        return client.post(
+        client.post(
             "funds/$fundId/close"
         ) {
             contentType(ContentType.Application.Json)
             setBody(request)
-        }.body()
+        }
     }
 
 }

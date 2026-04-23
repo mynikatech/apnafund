@@ -17,6 +17,7 @@ import com.mynikatech.apnafund.databinding.FragmentVerifyEmailBinding
 import com.mynikatech.apnafund.net.ApiException
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
 
@@ -116,6 +117,7 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
 
                 } catch (e: Exception) {
                     // Network / unexpected crash
+                    Log.e("VerifyEmailFragment", e.message.toString())
                     Toast.makeText(
                         requireContext(),
                         getString(R.string.message_unexpected_error),
@@ -168,7 +170,7 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
                     if (e.code == 429) {
                         Toast.makeText(
                             requireContext(),
-                            e.message ?: getString(R.string.error_resend_wait),
+                            getString(R.string.error_resend_wait),
                             Toast.LENGTH_SHORT
                         ).show()
                         binding.textResend.isEnabled = true
@@ -247,6 +249,7 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
         resendTimer = object : CountDownTimer(ApnaBankConstants.RESEND_COOLDOWN_MS, 1000) {
 
             override fun onTick(ms: Long) {
+                if (!isAdded) return
                 val min = (ms / 1000) / 60
                 val sec = (ms / 1000) % 60
                 binding.textResendTimer.text =
@@ -310,6 +313,8 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
     override fun onDestroyView() {
         otpTimer?.cancel()
         otpTimer = null
+        resendTimer?.cancel()
+        resendTimer = null
         super.onDestroyView()
     }
 }

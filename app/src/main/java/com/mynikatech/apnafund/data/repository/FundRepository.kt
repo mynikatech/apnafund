@@ -13,6 +13,7 @@ import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.net.FundsApi
 import com.mynikatech.apnafund.net.dto.CloseFundRequest
 import com.mynikatech.apnafund.net.dto.FundAvailabilityDto
+import com.mynikatech.apnafund.net.dto.FundUpdateRequestDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -46,6 +47,11 @@ class FundRepository(
 
     }
 
+    suspend fun fetchFundsByGroupAndModerator(groupId: Int, moderatorId: Int): List<Funds> {
+        return api.getAllActiveFundsForGroupAndModerator(groupId,moderatorId).toEntity()
+
+    }
+
     suspend fun fetchFund(fundId: Int): Funds? {
         return api.getFund(fundId)?.toEntity()
     }
@@ -59,7 +65,11 @@ class FundRepository(
     }
 
     suspend fun updateFundAndDetails(fund: Funds, fundDetails: FundDetails) {
-        api.updateFundWithDetails(fund.toDto(), fundDetails.toDto())
+        val fundUpdateReq = FundUpdateRequestDto(
+            fund = fund.toDto(),
+            fundDetails = fundDetails.toDto()
+        )
+        api.updateFundWithDetails(fundUpdateReq)
     }
 
     suspend fun getAllFundWithDetails(): List<FundWithDetails> {

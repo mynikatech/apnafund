@@ -15,11 +15,11 @@ class FundViewModel : ViewModel() {
 
     private val fundRepository = ApnaFundApplication.fundRepository
 
-    suspend fun fetchAllActiveFunds(isAdmin: Boolean, moderatorGroupId: Int): List<Funds> {
+    suspend fun fetchAllActiveFunds(isAdmin: Boolean, moderatorGroupId: Int, moderatorFundId: Int): List<Funds> {
         return if (isAdmin)
             fundRepository.fetchAllActiveFunds()
         else
-            fundRepository.fetchAllActiveFundsforGroup(moderatorGroupId)
+            fundRepository.fetchFundsByGroupAndModerator(moderatorGroupId, moderatorFundId)
     }
 
     suspend fun fetchAllFundsWithDetails(

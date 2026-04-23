@@ -662,4 +662,5 @@
     <string name="error_group_name_3_characters">
     समूह का नाम कम से कम 3 अक्षरों का होना चाहिए
     </string>
+    <string name="message_fund_update_success">फंड सफलतापूर्वक अपडेट हो गया</string>
 </resources>

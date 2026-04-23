@@ -145,7 +145,7 @@ abstract class BaseEntryFragment : Fragment() {
         this.fundDropdown = fundDropdown
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val funds = fundViewModel.fetchAllActiveFunds(isAdmin, moderatorGroupId)
+            val funds = fundViewModel.fetchAllActiveFunds(isAdmin, moderatorGroupId, SessionManager.userId)
             val fundNames = funds.map { it.fundName }
 
             fundMap.clear()

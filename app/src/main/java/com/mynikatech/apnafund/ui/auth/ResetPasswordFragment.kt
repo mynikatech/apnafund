@@ -57,7 +57,9 @@ class ResetPasswordFragment : Fragment() {
         )
         binding.authToolbar.title = getString(R.string.text_reset_password)
 
-
+        binding.buttonCancel.setOnClickListener {
+            findNavController().navigateUp()
+        }
         binding.buttonChangePassword.setOnClickListener {
             binding.buttonChangePassword.isEnabled = false
             val userId = args.userId
