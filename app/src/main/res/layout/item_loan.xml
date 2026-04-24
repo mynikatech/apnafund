@@ -57,12 +57,14 @@
                     style="@style/TextAppearance.MaterialComponents.Body2"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:paddingHorizontal="8dp"
                     android:paddingVertical="4dp"
                     android:textAlignment="viewEnd"
                     android:textColor="?attr/colorOnSurface"
+                    android:ellipsize="end"
+                    android:maxLines="1"
                     app:layout_constraintBottom_toBottomOf="@id/text_view_loan_number_value"
+                    app:layout_constraintEnd_toStartOf="@id/text_view_loan_status_value"
                     app:layout_constraintStart_toEndOf="@id/image_edit_loan"
                     app:layout_constraintTop_toTopOf="@id/text_view_loan_number_value"
                     tools:text="₹ 5000" />
@@ -75,8 +77,8 @@
                     android:paddingVertical="4dp"
                     android:textColor="@color/green"
                     android:textSize="16sp"
+                    app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintBottom_toBottomOf="@id/text_view_loan_number_value"
-                    app:layout_constraintStart_toEndOf="@id/text_view_loan_amount_value"
                     app:layout_constraintTop_toTopOf="@id/text_view_loan_number_value"
                     tools:text="[Active]" />
 

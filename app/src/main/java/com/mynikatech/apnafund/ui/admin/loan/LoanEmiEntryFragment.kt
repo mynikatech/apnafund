@@ -21,13 +21,14 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ScrollView
 import android.widget.TableRow
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.snackbar.Snackbar
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.data.model.LoanEmiWithMemberNames
@@ -40,6 +41,7 @@ import com.mynikatech.apnafund.ui.viewmodel.LoansViewModel
 import com.mynikatech.apnafund.util.ApnaBankDate
 import com.mynikatech.apnafund.util.LoanEmiInputValidator
 import com.mynikatech.apnafund.util.ViewTags
+import com.mynikatech.apnafund.util.showLoanDetailsDialog
 import kotlinx.coroutines.launch
 import java.time.LocalDate.now
 import java.util.Calendar
@@ -95,6 +97,23 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
         binding.buttonSaveLoanEmi.setOnClickListener {
             saveAllLoansEmi()
         }
+        attachAutoScroll(binding.tableLoanEmiEntries, binding.verticalEmiScrollView)
+    }
+
+    fun attachAutoScroll(view: View, scrollView: ScrollView) {
+        if (view is EditText) {
+            view.setOnFocusChangeListener { v, hasFocus ->
+                if (hasFocus) {
+                    scrollView.post {
+                        scrollView.smoothScrollTo(0, v.bottom)
+                    }
+                }
+            }
+        } else if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                attachAutoScroll(view.getChildAt(i), scrollView)
+            }
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -102,8 +121,9 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
         val fundId = fundMap[selectedFundName] ?: return
         lifecycleScope.launch {
             val fund = fundViewModel.fetchFund(fundId)
-            if (null!= fund)
-                validMonthYearList = getValidMonthYearList(fund.fundStartDate, fund.fundMaturityDate)
+            if (null != fund)
+                validMonthYearList =
+                    getValidMonthYearList(fund.fundStartDate, fund.fundMaturityDate)
 
             val validMonths = validMonthYearList.map { it.first }.distinct()
             val validYears = validMonthYearList.map { it.second }.distinct()
@@ -143,12 +163,20 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
     private fun observeData() {
         val selectedFundName = binding.dropdownFund.text.toString()
         if (selectedFundName.isBlank()) {
-            Toast.makeText(requireContext(), getString(R.string.warning_select_fund), Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.warning_select_fund),
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
         val fundId = fundMap[selectedFundName] ?: 0
         if (fundId == 0) {
-            Toast.makeText(requireContext(), getString(R.string.error_invalid_fund_selected), Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.error_invalid_fund_selected),
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
         val month = binding.dropdownMonth.text.toString()
@@ -259,7 +287,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
         val lateFeeRate = fundLateFeeRate[binding.dropdownFund.text.toString()] ?: 0.0
         val row = TableRow(requireContext())
         val loanId = loanEmis.loanId
-        row.setTag(ViewTags.LOAN_ID,loanId)
+        row.setTag(ViewTags.LOAN_ID, loanId)
         val fullName = "${loanEmis.firstName} ${loanEmis.lastName}"
         val loanNumber = "(${loanEmis.loanNumber})"
         val combinedText = "$fullName\n$loanNumber"
@@ -286,8 +314,11 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                 override fun updateDrawState(ds: TextPaint) {
                     super.updateDrawState(ds)
                     ds.isUnderlineText = false
-                    ds.color =
-                        ContextCompat.getColor(requireContext(), R.color.primary_colour)
+                    ds.color = MaterialColors.getColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorOnSurface,
+                        Color.BLUE // fallback
+                    )
                 }
             }, loanStart, loanEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
@@ -297,6 +328,13 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
             maxLines = 2
             movementMethod = LinkMovementMethod.getInstance()
             highlightColor = Color.TRANSPARENT
+        }
+        tvBorrowerName.layoutParams = TableRow.LayoutParams(
+            resources.getDimensionPixelSize(R.dimen.loan_number_col_width),
+            TableRow.LayoutParams.WRAP_CONTENT
+        )
+        tvBorrowerName.setOnClickListener {
+            context?.showLoanDetailsDialog(loanEmis)
         }
         val etEmiAmount = EditText(requireContext()).apply {
 
@@ -479,11 +517,21 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
 
             if (fundId == 0) {
                 originalLoanEmis
-                Toast.makeText(requireContext(), getString(R.string.error_invalid_fund_selected), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.error_invalid_fund_selected),
+                    Toast.LENGTH_SHORT
+                ).show()
+                binding.buttonSaveLoanEmi.isEnabled = true
                 return@launch
             }
             if (!hasChanges) {
-                Toast.makeText(requireContext(), getString(R.string.message_no_changes_to_save), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.message_no_changes_to_save),
+                    Toast.LENGTH_SHORT
+                ).show()
+                binding.buttonSaveLoanEmi.isEnabled = true
                 return@launch
             } else {
                 val selectedMonthName = binding.dropdownMonth.text.toString()
@@ -510,6 +558,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                             )
                             if (errorMessage != null) {
                                 showToast(errorMessage)
+                                binding.buttonSaveLoanEmi.isEnabled = true
                                 return@launch
                             }
                         }
@@ -547,6 +596,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                             )
                             if (errorMessage != null) {
                                 showToast(errorMessage)
+                                binding.buttonSaveLoanEmi.isEnabled = true
                                 return@launch
                             }
                         }

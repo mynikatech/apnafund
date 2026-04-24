@@ -64,6 +64,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:hint="@string/text_email"
+                app:endIconDrawable="@drawable/ic_info"
+                app:endIconMode="custom"
                 app:layout_constraintTop_toBottomOf="@id/input_layout_last_name">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -80,6 +82,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:hint="@string/text_phone_number"
+                app:endIconDrawable="@drawable/ic_info"
+                app:endIconMode="custom"
                 app:layout_constraintTop_toBottomOf="@id/input_layout_email">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -146,6 +150,14 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/text_moderator" />
+                <ImageView
+                    android:id="@+id/iconModeratorInfo"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginStart="6dp"
+                    android:src="@drawable/ic_info"
+                    android:contentDescription="@string/text_moderator_info"/>
             </RadioGroup>
 
             <!-- Moderator Fields -->
@@ -162,7 +174,9 @@
                     android:id="@+id/input_layout_group_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/text_group_name">
+                    android:hint="@string/text_group_name"
+                    app:endIconDrawable="@drawable/ic_info"
+                    app:endIconMode="custom">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_text_group_name"

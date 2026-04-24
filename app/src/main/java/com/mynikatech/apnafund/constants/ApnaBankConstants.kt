@@ -3,7 +3,7 @@ package com.mynikatech.apnafund.constants
 object ApnaBankConstants {
 
     const val INACTIVE_STATUS = "InActive"
-    const val CLOSED_STATUS = "CLOSED"
+    const val STATUS_CLOSED = "CLOSED"
     const val ADD_GROUP_PRIV = "ADDGROUP"
     const val ADD_USER_PRIV = "ADDUSER"
     const val ADD_FUND_PRIV = "ADDFUND"
@@ -36,6 +36,7 @@ object ApnaBankConstants {
     const val TEXT_GROUP = "GROUP"
     const val TEXT_LOAN = "LOAN"
     const val TEXT_EMAIL_VERIFY = "EMAIL_VERIFY"
+    const val TEXT_WEAK = "WEAK"
     const val TEXT_ADD_LOAN_DIALOG = "AddLoanDialog"
     const val TYPING_DEBOUNCE_MS = 2000L
     const val DAILY_MESSAGE_LIMIT = 100

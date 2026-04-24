@@ -92,7 +92,7 @@ class LoanAdapter(
                     append("%")
                 }
                 textViewLoanMaturityDateValue.text = loan.maturityDate
-                val isClosed = loan.status == ApnaBankConstants.CLOSED_STATUS
+                val isClosed = loan.status == ApnaBankConstants.STATUS_CLOSED
                 val isPending = loan.status == ApnaBankConstants.STATUS_PENDING
                 if (isClosed) {
                     textViewLoanStatusValue.text = context.getString(R.string.status_closed)

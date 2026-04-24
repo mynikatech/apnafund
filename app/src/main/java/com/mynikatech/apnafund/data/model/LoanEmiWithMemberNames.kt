@@ -31,4 +31,8 @@ data class LoanEmiWithMemberNames(
 ) {
     @Ignore
     var isEdited: Boolean = false
+
+    val fullName: String
+        get() = listOfNotNull(firstName, lastName)
+            .joinToString(", ")
 }

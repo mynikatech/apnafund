@@ -51,8 +51,8 @@
 
     <string name="text_edit">एडिट</string>
 
-    <string name="text_month">महीना</string>
-    <string name="text_year">साल</string>
+    <string name="text_month">महीना चुनें</string>
+    <string name="text_year">साल चुनें</string>
     <string name="text_date">तारीख</string>
 
     <string name="text_prepay">प्रीपे</string>
@@ -72,7 +72,7 @@
     <string name="welcome_message">स्वागत है, %1$s!</string>
 
     <string name="text_borrower">उधार लेने वाला</string>
-    <string name="text_principal">मूल राशि</string>
+    <string name="text_principal">वर्तमान मूल राशि</string>
     <string name="text_issue_date">इश्यू डेट</string>
 
     <string name="text_period_months">अवधि (महीनों में)</string>
@@ -663,4 +663,38 @@
     समूह का नाम कम से कम 3 अक्षरों का होना चाहिए
     </string>
     <string name="message_fund_update_success">फंड सफलतापूर्वक अपडेट हो गया</string>
+    <string name="text_moderator_role">मॉडरेटर की भूमिका</string>
+
+    <string name="text_moderator_info">
+    यदि आप समूह को प्रबंधित करना, उपयोगकर्ताओं को जोड़ना और फंड की निगरानी करना चाहते हैं, तो मॉडरेटर चुनें। इस भूमिका के लिए एडमिन की स्वीकृति आवश्यक है।
+    </string>
+    <string name="info_fund_period">Define the duration of the fund in months.</string>
+    <string name="title_fund_period_info">Period Info</string>
+    <string name="info_fund_loan_int_rate">Define the Interest Rate of a Loan within this Fund. It would be fixed for any loan taken in the fund</string>
+    <string name="title_fund_loan_int_rate_info">Fund Loan Interest Rate Info</string>
+    <string name="info_fund_late_fee_rate">Define the late fee per day to be charged when the last deposit date of the month is passed.</string>
+    <string name="title_fund_late_fee_rate_info">Fund Late Fee Info</string>
+    <string name="info_fund_monthly_deposit_last_day">Define the last day of the month by which the deposit has to be completed. Beyond this day a fixed late fee would be charged</string>
+    <string name="title_fund_monthly_deposit_last_day_info">Fund Deposit Last Day Info</string>
+    <string name="info_fund_moderator">Select the moderator for your fund who will manage the fund, add members to the fund, add deposits, emis. Anyone from the group could be a moderator.</string>
+    <string name="title_fund_moderator_info">Fund Moderator Info</string>
+    <string name="info_fund_dep_frequency">Fequency of deposit. Currently it is fixed as monthly. We can change it later, for now you can ignore this field</string>
+    <string name="title_fund_dep_frequency_info">Fund Deposit Frequency Info</string>
+    <string name="info_user_email">Email Id where you would receive notifications, verification otps and all other notifications. It is unique per account</string>
+    <string name="title_user_email_info">User Email Info</string>
+    <string name="info_user_phone">Phone Number where you would receive Otps for login and all other notifications. It is unique per account. Just provide the 10 number Phone number without any space</string>
+    <string name="title_user_phone_info">User Phone Number Info</string>
+    <string name="info_user_group"> This is the name of your group to create and manage funds</string>
+    <string name="title_user_group_info">User Group Name Info</string>
+    <string name="text_button_ok">OK</string>
+    <string name="text_registering">Registering...</string>
+    <string name="heading_pending">Pending</string>
+    <string name="title_loan_details">Loan Details</string>
+    <string name="label_status">Status:</string>
+    <string name="label_issued_date">Issued Date:</string>
+    <string name="label_interest_paid">Interest Paid:</string>
+    <string name="label_outstanding">Outstanding:</string>
+    <string name="label_borrower">Borrower:</string>
+    <string name="label_loan_no">Loan No:</string>
+    <string name="label_amount">Amount:</string>
 </resources>

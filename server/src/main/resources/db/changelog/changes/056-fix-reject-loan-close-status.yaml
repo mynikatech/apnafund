@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 056-fix-reject-loan-request-status
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/056-fix-reject-loan-request-status.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

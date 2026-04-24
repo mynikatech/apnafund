@@ -51,6 +51,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:hint="@string/text_period"
+            app:endIconDrawable="@drawable/ic_info"
+            app:endIconMode="custom"
             app:layout_constraintTop_toBottomOf="@id/input_layout_start_date">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -68,6 +70,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:hint="@string/text_deposit_frequency"
+            app:endIconDrawable="@drawable/ic_info"
+            app:endIconMode="custom"
             app:layout_constraintTop_toBottomOf="@id/input_layout_period">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -85,6 +89,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:hint="@string/text_loan_interest_rate"
+            app:endIconDrawable="@drawable/ic_info"
+            app:endIconMode="custom"
             app:layout_constraintTop_toBottomOf="@id/input_layout_dep_frequency">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -102,6 +108,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:hint="@string/text_late_fee_rate_in_per_day"
+            app:endIconDrawable="@drawable/ic_info"
+            app:endIconMode="custom"
             app:layout_constraintTop_toBottomOf="@id/input_layout_loan_int_rate">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -119,6 +127,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:hint="@string/text_monthly_deposit_last_date"
+            app:endIconDrawable="@drawable/ic_info"
+            app:endIconMode="custom"
             app:layout_constraintTop_toBottomOf="@id/input_layout_late_fee_rate">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -178,6 +188,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:hint="@string/text_select_moderator"
+            app:endIconDrawable="@drawable/ic_info"
+            app:endIconMode="custom"
             app:layout_constraintTop_toBottomOf="@id/input_layout_group">
 
             <AutoCompleteTextView

@@ -50,4 +50,5 @@
 
     <color name="status_closed_bg">#3B1F1F</color>
     <color name="status_closed_text">#F2B8B5</color>
+    <color name="status_bg_neutral">#E0E0E0</color>
 </resources>

@@ -5,11 +5,21 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <AutoCompleteTextView
-        android:id="@+id/dropdown_fund"
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/text_select_fund" />
+        android:hint="@string/text_select_fund">
+
+        <AutoCompleteTextView
+            android:id="@+id/dropdown_fund"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/text_select_fund"
+            android:inputType="none"
+            android:minHeight="36dp" />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,20 +27,40 @@
         android:layout_marginTop="8dp"
         android:orientation="horizontal">
 
-        <AutoCompleteTextView
-            android:id="@+id/dropdown_month"
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="@string/text_month" />
 
-        <AutoCompleteTextView
-            android:id="@+id/dropdown_year"
+            android:hint="@string/text_month">
+
+            <AutoCompleteTextView
+                android:id="@+id/dropdown_month"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/text_month"
+                android:inputType="none"
+                android:minHeight="36dp"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:hint="@string/text_year" />
+            android:hint="@string/text_year">
+
+            <AutoCompleteTextView
+                android:id="@+id/dropdown_year"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/text_year"
+                android:inputType="none"
+                android:minHeight="36dp"/>
+        </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 
     <TextView
@@ -45,18 +75,23 @@
 
     <ScrollView
         android:layout_width="match_parent"
+        android:id="@+id/verticalDepScrollView"
         android:layout_height="0dp"
         android:layout_marginTop="8dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:scrollbars="vertical"
+        android:fillViewport="true"
+        android:fadeScrollbars="false">
 
         <HorizontalScrollView
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginTop="8dp">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:scrollbars="horizontal">
 
             <TableLayout
                 android:id="@+id/table_deposit_entries"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:stretchColumns="1,2,3,4">
 
@@ -90,8 +125,9 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/button_save_all"
         style="@style/ApnaFundButton.Primary"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:text="@string/text_save_deposits" />
 
 </LinearLayout>

@@ -13,6 +13,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ScrollView
 import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
@@ -87,6 +88,23 @@ class DepositEntryFragment : BaseEntryFragment() {
 
         binding.buttonSaveAll.setOnClickListener {
             saveAllDeposits()
+        }
+        attachAutoScroll(binding.tableDepositEntries, binding.verticalDepScrollView)
+    }
+
+    fun attachAutoScroll(view: View, scrollView: ScrollView) {
+        if (view is EditText) {
+            view.setOnFocusChangeListener { v, hasFocus ->
+                if (hasFocus) {
+                    scrollView.post {
+                        scrollView.smoothScrollTo(0, v.bottom)
+                    }
+                }
+            }
+        } else if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                attachAutoScroll(view.getChildAt(i), scrollView)
+            }
         }
     }
 
@@ -355,7 +373,7 @@ class DepositEntryFragment : BaseEntryFragment() {
             setImageResource(R.drawable.ic_edit)
         }
 
-        if (deposit?.depositAmount != null || deposit?.depositAmount == 0.0) {
+        if (deposit?.depositAmount != null) {
             etAmount.setText(deposit.depositAmount.toString())
             etDate.setText(deposit.depositedDate)
             lateFee.setText(deposit.lateFee.toString())
@@ -414,6 +432,7 @@ class DepositEntryFragment : BaseEntryFragment() {
                     getString(R.string.error_invalid_fund_selected),
                     Toast.LENGTH_SHORT
                 ).show()
+                binding.buttonSaveAll.isEnabled = true
                 return@launch
             }
             if (!hasChanges) {
@@ -421,6 +440,7 @@ class DepositEntryFragment : BaseEntryFragment() {
                     requireContext(),
                     getString(R.string.message_no_changes_to_save), Toast.LENGTH_SHORT
                 ).show()
+                binding.buttonSaveAll.isEnabled = true
                 return@launch
             } else {
                 val selectedMonthName = binding.dropdownMonth.text.toString()

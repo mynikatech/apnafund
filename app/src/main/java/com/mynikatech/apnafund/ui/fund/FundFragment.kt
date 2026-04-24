@@ -3,8 +3,12 @@ package com.mynikatech.apnafund.ui.fund
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Context
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -22,6 +26,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.textfield.TextInputLayout
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.model.FundDetails
@@ -239,6 +244,7 @@ class FundFragment : Fragment() {
         var groupId = -1
         var moderator = -1
         dialogBinding.buttonSaveFund.isEnabled = false
+        dialogBinding.setupForm()
         if (existingFund != null) {
             dialogBinding.buttonSaveFund.text = getString(R.string.text_update_fund)
             dialogBinding.editTextFundName.setText(existingFund.fundName)
@@ -517,6 +523,67 @@ class FundFragment : Fragment() {
         }
     }
 
+    fun TextInputLayout.setInfoDialog(
+        titleRes: Int,
+        messageRes: Int
+    ) {
+        setEndIconOnClickListener {
+            AlertDialog.Builder(context)
+                .setTitle(context.getString(titleRes))
+                .setMessage(context.getString(messageRes))
+                .setPositiveButton(context.getString(R.string.text_button_ok), null)
+                .show()
+        }
+    }
+
+    fun DialogAddFundBinding.setupForm() {
+
+        // Required fields
+        listOf(
+            inputLayoutFundName,
+            inputLayoutPeriod,
+            inputLayoutStartDate,
+            inputLayoutDepositLastDate,
+            inputLayoutLateFeeRate,
+            textInputDepAmount,
+            inputLayoutModerator,
+            inputLayoutLoanIntRate,
+            inputLayoutGroup
+        ).forEach { it.markRequired() }
+
+        // Info dialogs
+        val infoFields = mapOf(
+            inputLayoutPeriod to Pair(
+                R.string.title_fund_period_info,
+                R.string.info_fund_period
+            ),
+            inputLayoutLoanIntRate to Pair(
+                R.string.title_fund_loan_int_rate_info,
+                R.string.info_fund_loan_int_rate
+            ),
+            inputLayoutLateFeeRate to Pair(
+                R.string.title_fund_late_fee_rate_info,
+                R.string.info_fund_late_fee_rate
+            ),
+            inputLayoutDepositLastDate to Pair(
+                R.string.title_fund_monthly_deposit_last_day_info,
+                R.string.info_fund_monthly_deposit_last_day
+            ),
+            inputLayoutModerator to Pair(
+                R.string.title_fund_moderator_info,
+                R.string.info_fund_moderator
+            ),
+            inputLayoutDepFrequency to Pair(
+                R.string.title_fund_dep_frequency_info,
+                R.string.info_fund_dep_frequency
+            )
+        )
+
+        infoFields.forEach { (view, data) ->
+            view.setInfoDialog(data.first, data.second)
+        }
+    }
+
     private fun updateSaveButtonState(
         dialogBinding: DialogAddFundBinding,
         groupId: Int,
@@ -743,5 +810,17 @@ class FundFragment : Fragment() {
             }
             onDataReady(members,preselectUser?.userId )
         }
+    }
+
+    fun TextInputLayout.markRequired() {
+        val label = this.hint?.toString() ?: ""
+        val spannable = SpannableString("$label *")
+        spannable.setSpan(
+            ForegroundColorSpan(Color.RED),
+            spannable.length - 1,
+            spannable.length,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        this.hint = spannable
     }
 }

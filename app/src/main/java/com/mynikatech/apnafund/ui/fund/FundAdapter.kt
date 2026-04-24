@@ -77,7 +77,7 @@ class FundAdapter(
                 val today = LocalDate.now()
 
                 // 2) Determine if it’s closed
-                val isClosed = fundWithDetails.fundStatus == ApnaBankConstants.CLOSED_STATUS ||
+                val isClosed = fundWithDetails.fundStatus == ApnaBankConstants.STATUS_CLOSED ||
                         !maturityDate.isAfter(today)  // true if maturity <= today
                 val isModerator = fundWithDetails.moderator == SessionManager.userId
 

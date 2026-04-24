@@ -22,7 +22,9 @@ import com.mynikatech.apnafund.databinding.FragmentFundLoanSummaryBinding
 import com.mynikatech.apnafund.net.dto.LoanDetailsWithMemberNamesDto
 import com.mynikatech.apnafund.ui.viewmodel.LoansViewModel
 import com.mynikatech.apnafund.util.Converters
+import com.mynikatech.apnafund.util.showLoanDetailsSummaryDialog
 import kotlinx.coroutines.launch
+import com.mynikatech.apnafund.util.applyStatusStyle
 
 class FundLoanSummaryFragment : Fragment() {
 
@@ -71,8 +73,9 @@ class FundLoanSummaryFragment : Fragment() {
             addHeaderRow()
 
             updateSummary(loans)
+            val sortedLoans = loans.sortedBy { getLoanPriority(it) }
 
-            loans.forEachIndexed { index, loan ->
+            sortedLoans.forEachIndexed { index, loan ->
                 addLoanRow(loan, index)
             }
         }
@@ -82,9 +85,24 @@ class FundLoanSummaryFragment : Fragment() {
         binding.tableLoans.removeAllViews()
     }
 
+    private fun getLoanPriority(loan: LoanDetailsWithMemberNamesDto): Int {
+        return when {
+            loan.status.equals(ApnaBankConstants.STATUS_ACTIVE, true) &&
+                    loan.workflowStatus.equals(ApnaBankConstants.STATUS_APPROVED, true) -> 1
+
+            loan.status.equals(ApnaBankConstants.STATUS_ACTIVE, true) &&
+                    loan.workflowStatus.equals(ApnaBankConstants.STATUS_PENDING, true) -> 2
+
+            loan.status.equals(ApnaBankConstants.STATUS_CLOSED, true) &&
+                    loan.workflowStatus.equals(ApnaBankConstants.STATUS_APPROVED, true) -> 3
+
+            loan.workflowStatus.equals(ApnaBankConstants.STATUS_REJECTED, true) -> 4
+
+            else -> 5
+        }
+    }
+
     private fun addHeaderRow() {
-
-
 
         val row = TableRow(requireContext())
         val colorPrimary = MaterialColors.getColor(
@@ -95,12 +113,12 @@ class FundLoanSummaryFragment : Fragment() {
         row.setBackgroundColor(colorPrimary)
         val headers = listOf(
             getString(R.string.text_borrower),
+            getString(R.string.text_status),
             getString(R.string.text_loan_num),
             getString(R.string.text_amount),
             getString(R.string.text_issued),
             getString(R.string.text_principal),
             getString(R.string.text_interest),
-            getString(R.string.text_status),
             getString(R.string.text_workflow)
         )
 
@@ -117,7 +135,7 @@ class FundLoanSummaryFragment : Fragment() {
             tv.setTextColor(colorOnPrimary)
             tv.isSingleLine = true
             tv.maxLines = 1
-            if (index == 2 || index == 4 || index == 5)
+            if (index == 3 || index == 4 || index == 5)
                 tv.gravity = Gravity.END
 
             row.addView(tv)
@@ -143,12 +161,12 @@ class FundLoanSummaryFragment : Fragment() {
 
         val values = listOf(
             borrower,
+            loan.status,
             loan.loanNumber,
             "₹${loan.loanAmount}",
             loan.issuedDate,
             "₹${loan.currPrincipal}",
             "₹${loan.currTotalIntPaid}",
-            loan.status,
             loan.workflowStatus
         )
 
@@ -166,15 +184,29 @@ class FundLoanSummaryFragment : Fragment() {
             tv.isSingleLine = true
             tv.maxLines = 1
             tv.ellipsize = TextUtils.TruncateAt.END
+            if (i == 2) {
+                tv.maxWidth = resources.getDimensionPixelSize(R.dimen.loan_number_col_width)
+
+                // Show full value on click
+                tv.setOnClickListener {
+                    context?.showLoanDetailsSummaryDialog(loan)
+                }
+            }
+
             // Right align numbers
-            if (i == 2 || i == 4 || i == 5)
+            if (i == 3 || i == 4 || i == 5)
                 tv.gravity = Gravity.END
+
+            if(i == 1) {
+                tv.applyStatusStyle(value)
+            }
 
             if (i == 7) {
                 tv.setTextColor(getWorkflowColor(value))
             } else {
                 tv.setTextColor(textColor)
             }
+
 
             row.addView(tv)
         }
@@ -184,11 +216,21 @@ class FundLoanSummaryFragment : Fragment() {
 
     private fun updateSummary(loans: List<LoanDetailsWithMemberNamesDto>) {
 
+        val activeLoans = loans.filter {
+            it.status.equals(ApnaBankConstants.STATUS_ACTIVE, true) &&
+                    it.workflowStatus.equals(ApnaBankConstants.STATUS_APPROVED, true)
+        }
+
+        // APPROVED (ACTIVE + CLOSED) → for interest
+        val approvedLoans = loans.filter {
+            it.workflowStatus.equals(ApnaBankConstants.STATUS_APPROVED, true)
+        }
+
         val totalLoans = loans.size
 
-        val outstanding = loans.sumOf { it.currPrincipal }
+        val outstanding = activeLoans.sumOf { it.currPrincipal }
 
-        val interest = loans.sumOf { it.currTotalIntPaid }
+        val interest = approvedLoans.sumOf { it.currTotalIntPaid }
 
         val pending = loans.count {
             it.workflowStatus.equals(ApnaBankConstants.STATUS_PENDING, true)
@@ -198,7 +240,7 @@ class FundLoanSummaryFragment : Fragment() {
 
         binding.textTotalOutstanding.text = Converters.formatCurrency(outstanding)
 
-        binding.textTotalInterest.text =  Converters.formatCurrency(interest)
+        binding.textTotalInterest.text = Converters.formatCurrency(interest)
 
         binding.textPendingLoans.text = pending.toString()
     }
@@ -207,10 +249,26 @@ class FundLoanSummaryFragment : Fragment() {
         val context = requireContext()
 
         return when (status.uppercase()) {
-            ApnaBankConstants.STATUS_PENDING_APPROVAL -> ContextCompat.getColor(context, R.color.status_pending)
-            ApnaBankConstants.STATUS_APPROVED -> ContextCompat.getColor(context, R.color.status_approved)
-            ApnaBankConstants.STATUS_REJECTED -> ContextCompat.getColor(context, R.color.status_rejected)
-            else -> MaterialColors.getColor(context, com.google.android.material.R.attr.colorOnSurface, Color.DKGRAY)
+            ApnaBankConstants.STATUS_PENDING_APPROVAL -> ContextCompat.getColor(
+                context,
+                R.color.status_pending
+            )
+
+            ApnaBankConstants.STATUS_APPROVED -> ContextCompat.getColor(
+                context,
+                R.color.status_approved
+            )
+
+            ApnaBankConstants.STATUS_REJECTED -> ContextCompat.getColor(
+                context,
+                R.color.status_rejected
+            )
+
+            else -> MaterialColors.getColor(
+                context,
+                com.google.android.material.R.attr.colorOnSurface,
+                Color.DKGRAY
+            )
         }
     }
 

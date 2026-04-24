@@ -210,24 +210,23 @@ abstract class BaseEntryFragment : Fragment() {
     protected fun createTextView(
         text: String,
         bold: Boolean = false,
-        header: Boolean = false
+        header: Boolean = false,
+        gravity: Int? = null
     ): TextView {
         return TextView(requireContext()).apply {
             this.text = text
             setPadding(8, 8, 8, 8)
-            if (header) {
-                gravity = Gravity.CENTER
-                if (bold) setTypeface(null, Typeface.BOLD)
-            } else {
-                gravity = Gravity.START
-            }
+
+            this.gravity = gravity ?: if (header) Gravity.CENTER else Gravity.START
+
+            if (bold) setTypeface(null, Typeface.BOLD)
         }
     }
 
     // tableType = 0 for Deposits Table and 1 for loan Emis
     protected fun createHeaderRow(tableType: Int): TableRow {
         val header = TableRow(requireContext())
-        header.addView(createTextView(getString(R.string.header_member_name), bold = true, header = true))
+        header.addView(createTextView(getString(R.string.header_member_name), bold = true, header = true,gravity = Gravity.START))
         header.addView(createTextView(getString(R.string.text_amount), bold = true, header = true))
         header.addView(createTextView(getString(R.string.text_late_fee), bold = true, header = true))
         if (tableType == 1)

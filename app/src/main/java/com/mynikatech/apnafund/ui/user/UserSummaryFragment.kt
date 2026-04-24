@@ -397,7 +397,7 @@ class UserSummaryFragment : Fragment() {
             val hasLoans = !loans.isNullOrEmpty()
             val selectedFund = fundSharedViewModel.selectedFund.value
             val isClosedFund =
-                selectedFund?.fundStatus == ApnaBankConstants.CLOSED_STATUS ||
+                selectedFund?.fundStatus == ApnaBankConstants.STATUS_CLOSED ||
                         selectedFund?.fundStatus == ApnaBankConstants.INACTIVE_STATUS
 
             binding.recyclerViewLoans.visibility = if (hasLoans) View.VISIBLE else View.GONE
@@ -590,7 +590,7 @@ class UserSummaryFragment : Fragment() {
             fundStatus != null &&
                     Converters.userHasPrivilege(ApnaBankConstants.ADD_APPLY_LOAN_PRIV) &&
                     fundStatus != ApnaBankConstants.INACTIVE_STATUS &&
-                    fundStatus != ApnaBankConstants.CLOSED_STATUS
+                    fundStatus != ApnaBankConstants.STATUS_CLOSED
 
         binding.loanAddFab.visibility = if (canAddLoan) View.VISIBLE else View.GONE
         binding.loanAddText.visibility = if (canAddLoan) View.VISIBLE else View.GONE
@@ -855,7 +855,7 @@ class UserSummaryFragment : Fragment() {
 
             val isInactive =
                 fundStatus == ApnaBankConstants.INACTIVE_STATUS ||
-                        fundStatus == ApnaBankConstants.CLOSED_STATUS
+                        fundStatus == ApnaBankConstants.STATUS_CLOSED
 
             binding.imageFundStatus.setImageResource(
                 if (isInactive) R.drawable.status_inactive_dot
@@ -887,7 +887,7 @@ class UserSummaryFragment : Fragment() {
 
                     val isInactive =
                         selectedFund.fundStatus == ApnaBankConstants.INACTIVE_STATUS ||
-                                selectedFund.fundStatus == ApnaBankConstants.CLOSED_STATUS
+                                selectedFund.fundStatus == ApnaBankConstants.STATUS_CLOSED
 
                     binding.imageFundStatus.setImageResource(
                         if (isInactive) R.drawable.status_inactive_dot

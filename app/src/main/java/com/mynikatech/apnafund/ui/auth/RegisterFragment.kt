@@ -1,8 +1,13 @@
 // RegisterFragment.kt
 package com.mynikatech.apnafund.ui.auth
 
+import android.app.AlertDialog
+import android.graphics.Color
 import android.os.Bundle
 import android.text.InputFilter
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
@@ -17,6 +22,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
@@ -63,6 +69,7 @@ class RegisterFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         auth = FirebaseAuth.getInstance()
         binding.buttonRegister.isEnabled = false
+        setupForm()
         // Phone input filter: only digits, max 10, not starting with 0
         binding.editTextPhone.filters = arrayOf(
             InputFilter.LengthFilter(10),
@@ -94,9 +101,16 @@ class RegisterFragment : Fragment() {
                 }
             }
         }
+        binding.iconModeratorInfo.setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle(getString(R.string.text_moderator_role))
+                .setMessage(getString(R.string.text_moderator_info))
+                .setPositiveButton(getString(R.string.text_button_ok), null)
+                .show()
+        }
         binding.buttonRegister.setOnClickListener {
             binding.buttonRegister.isEnabled = false
-            binding.buttonRegister.text = "Registering..."
+            binding.buttonRegister.text = getString(R.string.text_registering)
             val firstName = binding.editTextFirstName.text.toString().trim().toTitleCase()
             val lastName = binding.editTextLastName.text.toString().trim().toTitleCase()
 
@@ -135,7 +149,7 @@ class RegisterFragment : Fragment() {
                                         userName = "$firstName $lastName",
                                         shouldSetPin = binding.setPinFlag.isChecked,
                                         emailOtpExpiresAtMillis = resp.emailOtpExpiresAtMillis ?: 0,
-                                        purpose = "EMAIL_VERIFY"
+                                        purpose = ApnaBankConstants.TEXT_EMAIL_VERIFY
                                     )
                             findNavController().navigate(action)
                         } else {
@@ -172,7 +186,7 @@ class RegisterFragment : Fragment() {
                                             shouldSetPin = shouldSetPin,
                                             emailOtpExpiresAtMillis = resp.emailOtpExpiresAtMillis
                                                 ?: 0,
-                                            purpose = "EMAIL_VERIFY"
+                                            purpose = ApnaBankConstants.TEXT_EMAIL_VERIFY
                                         )
                                     findNavController().navigate(action)
                                 } else {
@@ -202,6 +216,63 @@ class RegisterFragment : Fragment() {
         }
         binding.buttonCancel.setOnClickListener {
             findNavController().navigateUp()
+        }
+    }
+
+    fun TextInputLayout.setInfoDialog(
+        titleRes: Int,
+        messageRes: Int
+    ) {
+        setEndIconOnClickListener {
+            AlertDialog.Builder(context)
+                .setTitle(context.getString(titleRes))
+                .setMessage(context.getString(messageRes))
+                .setPositiveButton(context.getString(R.string.text_button_ok), null)
+                .show()
+        }
+    }
+
+    fun TextInputLayout.markRequired() {
+        val label = this.hint?.toString() ?: ""
+        val spannable = SpannableString("$label *")
+        spannable.setSpan(
+            ForegroundColorSpan(Color.RED),
+            spannable.length - 1,
+            spannable.length,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        this.hint = spannable
+    }
+
+    fun setupForm() {
+
+        // Required fields
+        listOf(
+            binding.inputLayoutFirstName,
+            binding.inputLayoutEmail,
+            binding.inputLayoutPhone,
+            binding.inputLayoutGroupName
+
+        ).forEach { it.markRequired() }
+
+        // Info dialogs
+        val infoFields = mapOf(
+            binding.inputLayoutEmail to Pair(
+                R.string.title_user_email_info,
+                R.string.info_user_email
+            ),
+            binding.inputLayoutPhone to Pair(
+                R.string.title_user_phone_info,
+                R.string.info_user_phone
+            ),
+            binding.inputLayoutGroupName to Pair(
+                R.string.title_user_group_info,
+                R.string.info_user_group
+            )
+        )
+
+        infoFields.forEach { (view, data) ->
+            view.setInfoDialog(data.first, data.second)
         }
     }
 
@@ -328,7 +399,7 @@ class RegisterFragment : Fragment() {
         }
         // Password strength
         val strength = assessPasswordStrength(password)
-        if (password.isNotEmpty() && strength.name == "WEAK") {
+        if (password.isNotEmpty() && strength.name == ApnaBankConstants.TEXT_WEAK) {
             binding.editTextPassword.error =
                 getString(R.string.error_password_weak)
             return false

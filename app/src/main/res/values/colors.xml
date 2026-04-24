@@ -25,6 +25,7 @@
     <color name="status_rejected">#F44336</color>
     <color name="status_active_bg">#6EF294</color>   <!-- soft green -->
     <color name="status_active_text">#1E7D3A</color>
+    <color name="status_bg_neutral">#E0E0E0</color>
 
     <color name="status_closed_bg">#F66A5A</color>   <!-- soft red -->
     <color name="status_closed_text">#B3261E</color>

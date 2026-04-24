@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 055-fix-updsate-loan-close-status
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/055-fix-updsate-loan-close-status.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false
