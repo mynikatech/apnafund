@@ -2,8 +2,12 @@ package com.mynikatech.apnafund.ui.user
 
 import android.app.AlertDialog
 import android.content.Context
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -23,6 +27,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.mynikatech.apnafund.Exception.InvalidSessionException
 import com.mynikatech.apnafund.R
@@ -421,8 +426,10 @@ class UserSummaryFragment : Fragment() {
                     borrowerName = SessionManager.getFormattedUserName()
                 )
             } else {
-                Toast.makeText(requireContext(),
-                    getString(R.string.message_select_valid_fund), Toast.LENGTH_SHORT)
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.message_select_valid_fund), Toast.LENGTH_SHORT
+                )
                     .show()
             }
         }
@@ -661,6 +668,60 @@ class UserSummaryFragment : Fragment() {
         }
     }
 
+    fun TextInputLayout.setInfoDialog(
+        titleRes: Int,
+        messageRes: Int
+    ) {
+        setEndIconOnClickListener {
+            AlertDialog.Builder(context)
+                .setTitle(context.getString(titleRes))
+                .setMessage(context.getString(messageRes))
+                .setPositiveButton(context.getString(R.string.text_button_ok), null)
+                .show()
+        }
+    }
+
+    fun TextInputLayout.markRequired() {
+        val label = this.hint?.toString() ?: ""
+        val spannable = SpannableString("$label *")
+        spannable.setSpan(
+            ForegroundColorSpan(Color.RED),
+            spannable.length - 1,
+            spannable.length,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        this.hint = spannable
+    }
+
+    fun DialogAddGroupBinding.setupForm() {
+
+        // Required fields
+        listOf(
+            textInputGroupName,
+            textInputAutoModerator,
+        ).forEach { it.markRequired() }
+
+        // Info dialogs
+        val infoFields = mapOf(
+            textInputGroupName to Pair(
+                R.string.title_user_group_info,
+                R.string.info_user_group
+            ),
+            textInputAutoModerator to Pair(
+                R.string.title_group_moderator_info,
+                R.string.info_group_moderator
+            ),
+            textInputGroupDesc to Pair(
+                R.string.title_group_desc_info,
+                R.string.info_group_desc
+            )
+        )
+
+        infoFields.forEach { (view, data) ->
+            view.setInfoDialog(data.first, data.second)
+        }
+    }
+
     private fun showAddGroupDialog(
         context: Context,
         addOrEditFlag: Int,
@@ -672,6 +733,7 @@ class UserSummaryFragment : Fragment() {
         dialog.show()
         val isAdmin = SessionManager.isAdmin()
         var userId = 0
+        dialogBinding.setupForm()
         dialogBinding.buttonSaveGrp.text =
             if (addOrEditFlag == 1)
                 getString(R.string.text_update_group)

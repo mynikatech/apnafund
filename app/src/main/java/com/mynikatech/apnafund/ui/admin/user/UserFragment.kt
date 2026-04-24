@@ -2,11 +2,15 @@ package com.mynikatech.apnafund.ui.admin.user
 
 import android.app.AlertDialog
 import android.content.Context
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.InputFilter
 import android.text.InputType
+import android.text.Spannable
+import android.text.SpannableString
 import android.text.TextUtils
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -28,6 +32,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.textfield.TextInputLayout
 import com.mynikatech.apnafund.BuildConfig
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
@@ -174,6 +179,63 @@ class UserFragment : Fragment() {
 
     }
 
+    fun TextInputLayout.setInfoDialog(
+        titleRes: Int,
+        messageRes: Int
+    ) {
+        setEndIconOnClickListener {
+            AlertDialog.Builder(context)
+                .setTitle(context.getString(titleRes))
+                .setMessage(context.getString(messageRes))
+                .setPositiveButton(context.getString(R.string.text_button_ok), null)
+                .show()
+        }
+    }
+
+    fun TextInputLayout.markRequired() {
+        val label = this.hint?.toString() ?: ""
+        val spannable = SpannableString("$label *")
+        spannable.setSpan(
+            ForegroundColorSpan(Color.RED),
+            spannable.length - 1,
+            spannable.length,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        this.hint = spannable
+    }
+
+    fun DialogAddUserBinding.setupForm() {
+
+        // Required fields
+        listOf(
+            inputLayoutFirstName,
+            inputLayoutEmail,
+            inputLayoutPhone,
+            textInputGroup
+
+        ).forEach { it.markRequired() }
+
+        // Info dialogs
+        val infoFields = mapOf(
+            inputLayoutEmail to Pair(
+                R.string.title_user_email_info,
+                R.string.info_user_email
+            ),
+            inputLayoutPhone to Pair(
+                R.string.title_user_phone_info,
+                R.string.info_user_phone
+            ),
+            textInputGroup to Pair(
+                R.string.title_user_creation_group_info,
+                R.string.info_user_creation_group
+            )
+        )
+
+        infoFields.forEach { (view, data) ->
+            view.setInfoDialog(data.first, data.second)
+        }
+    }
+
     private fun showConfirmToggleUserStatus(user: UserWithGroup) {
         val action =
             if (user.status == ApnaBankConstants.STATUS_ACTIVE) ApnaBankConstants.DEACTIVATE_TEXT else ApnaBankConstants.ACTIVATE_TEXT
@@ -242,6 +304,7 @@ class UserFragment : Fragment() {
         val dialog = BottomSheetDialog(context)
         dialog.setContentView(dialogBinding.root)
         dialog.show()
+        dialogBinding.setupForm()
         val groupMap = mutableMapOf<String, Int>()
         if (isAdmin) {
             lifecycleScope.launch {

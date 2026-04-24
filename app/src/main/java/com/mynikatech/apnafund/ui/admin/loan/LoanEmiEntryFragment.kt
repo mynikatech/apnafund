@@ -291,6 +291,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
         val fullName = "${loanEmis.firstName} ${loanEmis.lastName}"
         val loanNumber = "(${loanEmis.loanNumber})"
         val combinedText = "$fullName\n$loanNumber"
+        val ctx = requireContext()
         val spannable = SpannableString(combinedText).apply {
             val loanStart = fullName.length + 1
             val loanEnd = length
@@ -308,14 +309,13 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
             setSpan(object : ClickableSpan() {
                 override fun onClick(widget: View) {
                     // Navigate to Loan Details to do
-                    //navigateToLoanDetails(loanEmis.loanId)
+                    widget.context.showLoanDetailsDialog(loanEmis)
                 }
 
                 override fun updateDrawState(ds: TextPaint) {
-                    super.updateDrawState(ds)
                     ds.isUnderlineText = false
                     ds.color = MaterialColors.getColor(
-                        requireContext(),
+                        ctx,
                         com.google.android.material.R.attr.colorOnSurface,
                         Color.BLUE // fallback
                     )
@@ -333,9 +333,6 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
             resources.getDimensionPixelSize(R.dimen.loan_number_col_width),
             TableRow.LayoutParams.WRAP_CONTENT
         )
-        tvBorrowerName.setOnClickListener {
-            context?.showLoanDetailsDialog(loanEmis)
-        }
         val etEmiAmount = EditText(requireContext()).apply {
 
             inputType = InputType.TYPE_CLASS_NUMBER

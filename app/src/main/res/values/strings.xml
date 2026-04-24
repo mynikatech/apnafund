@@ -437,11 +437,11 @@
     <string name="info_fund_dep_frequency">Fequency of deposit. Currently it is fixed as monthly. We can change it later, for now you can ignore this field</string>
     <string name="title_fund_dep_frequency_info">Fund Deposit Frequency Info</string>
     <string name="info_user_email">Email Id where you would receive notifications, verification otps and all other notifications. It is unique per account</string>
-    <string name="title_user_email_info">User Email Info</string>
-    <string name="info_user_phone">Phone Number where you would receive Otps for login and all other notifications. It is unique per account. Just provide the 10 number Phone number without any space</string>
-    <string name="title_user_phone_info">User Phone Number Info</string>
-    <string name="info_user_group"> This is the name of your group to create and manage funds</string>
-    <string name="title_user_group_info">User Group Name Info</string>
+    <string name="title_user_email_info">Email Info</string>
+    <string name="info_user_phone">Phone Number where you would receive Otps for login and all other notifications. It is unique per account. Just provide the 10 digit Phone number without any space</string>
+    <string name="title_user_phone_info">Phone Number Info</string>
+    <string name="info_user_group"> This is the name which identifies your group</string>
+    <string name="title_user_group_info">Group Name Info</string>
     <string name="text_button_ok">OK</string>
     <string name="text_registering">Registering...</string>
     <string name="heading_pending">Pending</string>
@@ -453,4 +453,21 @@
     <string name="label_borrower">Borrower:</string>
     <string name="label_loan_no">Loan No:</string>
     <string name="label_amount">Amount:</string>
+    <string name="info_group_moderator">Select the moderator for your group who will manage the group, add members to the group, add funds. Anyone from the group could be a moderator.</string>
+    <string name="title_group_moderator_info">Group Moderator Info</string>
+    <string name="info_group_desc">Describe your group. This is not mandatory field</string>
+    <string name="title_group_desc_info">Group Description Info</string>
+    <string name="info_loan_borrower">Person to whom the loan is going to be Issued</string>
+    <string name="title_loan_borrower_info">Loan Borrower Info</string>
+    <string name="info_loan_issue_date">The date from which the Loan is dispersed and EMI begins</string>
+    <string name="title_loan_issue_date_info">Loan Issue Date Info</string>
+    <string name="info_loan_amount">The amount you want to take the Loan</string>
+    <string name="title_loan_amount">Loan Amount Info</string>
+    <string name="info_loan_rate_interest">The rate of Interest applied for the Loan. Fixed at Fund Level</string>
+    <string name="title_loan_rate_interest">Loan Rate Of Interest Info</string>
+    <string name="info_loan_period">The period for which we want to take Loan for in months. Cannot be greater than the remaining fund period. If not provided defaulted to rest of the Fund duration.</string>
+    <string name="title_loan_period">Loan Period Info</string>
+    <string name="info_user_creation_group"> This is the group you want the add the user.</string>
+    <string name="title_user_creation_group_info">User Creation Group Name Info</string>
+
 </resources>

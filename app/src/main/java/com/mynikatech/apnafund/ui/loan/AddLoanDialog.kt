@@ -1,7 +1,12 @@
 package com.mynikatech.apnafund.ui.loan
 
+import android.app.AlertDialog
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +17,7 @@ import androidx.annotation.RequiresApi
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.textfield.TextInputLayout
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.data.model.LoanDetailsWithMemberNames
 import com.mynikatech.apnafund.databinding.DialogAddLoanBinding
@@ -59,7 +65,7 @@ class AddLoanDialog(
         binding.textPending.text = getString(R.string.text_pending, totalPending)
         val borrowerDropdown = binding.editTextBorrower
         var selectedUserId: Int? = null
-
+        binding.setupForm()
         binding.editTextRate.setText("$rateOfInterest")
         if (borrowerList != null) {
             val namesOnly = borrowerList.map { it.second }
@@ -127,9 +133,9 @@ class AddLoanDialog(
                     binding.buttonSaveLoan.text = getString(R.string.text_save)
                     return@setOnClickListener
                 }
-                val isIssueDateBeforeFundStart = ApnaBankDate.compareDates(issueDate, fundStartDate, "dd/mm/yyyy" )
-                if(isIssueDateBeforeFundStart <=0)
-                {
+                val isIssueDateBeforeFundStart =
+                    ApnaBankDate.compareDates(issueDate, fundStartDate, "dd/mm/yyyy")
+                if (isIssueDateBeforeFundStart <= 0) {
                     Snackbar.make(
                         binding.root,
                         "Issue Date cannot be before Fund Start Date",
@@ -182,6 +188,72 @@ class AddLoanDialog(
         }
         binding.buttonCancelLoan.setOnClickListener {
             dismiss()
+        }
+    }
+
+    fun TextInputLayout.setInfoDialog(
+        titleRes: Int,
+        messageRes: Int
+    ) {
+        setEndIconOnClickListener {
+            AlertDialog.Builder(context)
+                .setTitle(context.getString(titleRes))
+                .setMessage(context.getString(messageRes))
+                .setPositiveButton(context.getString(R.string.text_button_ok), null)
+                .show()
+        }
+    }
+
+    fun TextInputLayout.markRequired() {
+        val label = this.hint?.toString() ?: ""
+        val spannable = SpannableString("$label *")
+        spannable.setSpan(
+            ForegroundColorSpan(Color.RED),
+            spannable.length - 1,
+            spannable.length,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        this.hint = spannable
+    }
+
+    fun DialogAddLoanBinding.setupForm() {
+
+        // Required fields
+        listOf(
+            textInputBorrower,
+            textInputRate,
+            textInputPeriod,
+            textInputLoanAmount,
+            textInputIssueDate
+        ).forEach { it.markRequired() }
+
+        // Info dialogs
+        val infoFields = mapOf(
+            textInputBorrower to Pair(
+                R.string.title_loan_borrower_info,
+                R.string.info_loan_borrower
+            ),
+            textInputRate to Pair(
+                R.string.title_loan_rate_interest,
+                R.string.info_loan_rate_interest
+            ),
+            textInputPeriod to Pair(
+                R.string.title_loan_period,
+                R.string.info_loan_period
+            ),
+            textInputLoanAmount to Pair(
+                R.string.title_loan_amount,
+                R.string.info_loan_amount
+            ),
+            textInputIssueDate to Pair(
+                R.string.title_loan_issue_date_info,
+                R.string.info_loan_issue_date
+            )
+
+        )
+
+        infoFields.forEach { (view, data) ->
+            view.setInfoDialog(data.first, data.second)
         }
     }
 
