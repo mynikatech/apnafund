@@ -154,7 +154,7 @@
     <string name="text_outstanding_amount">OutStanding Amount:</string>
     <string name="text_original_emi">Original EMI:</string>
     <string name="text_current_emi">Current EMI:</string>
-    <string name="text_interest_paid">Interest Paid::</string>
+    <string name="text_interest_paid">Interest Paid:</string>
     <string name="text_view_loan_emis">View Loan Emis</string>
     <string name="text_type_message">Type Message</string>
     <string name="text_ai_assistant">AI Assistant</string>
@@ -471,4 +471,14 @@
     <string name="title_loan_period">Loan Period Info</string>
     <string name="info_user_creation_group"> This is the group you want the add the user.</string>
     <string name="title_user_creation_group_info">User Creation Group Name Info</string>
+    <string name="label_loan_menu">Loan Menu</string>
+    <string name="text_edit_loan">Edit Loan</string>
+    <string name="text_close_loan">Close Loan</string>
+    <string name="message_confirm_loan_close">Do you really want to close the Loan?</string>
+    <string name="text_closed_date">Closed Date:</string>
+    <string name="text_closure_type">Closure Type:</string>
+    <string name="text_closure_source">Closure Source:</string>
+    <string name="text_original_period">Original Period:</string>
+    <string name="text_actual_duration">Actual Duration:</string>
+    <string name="label_close_loan_request">Close Loan Request</string>
 </resources>

@@ -15,7 +15,11 @@ fun LoansDto.toEntity(): Loans = Loans(
     rateOfInterest = rateOfInterest,
     status         = status,
     fundId         = fundId,
-    workflowStatus = workflowStatus
+    workflowStatus = workflowStatus,
+    closedDate     = closedDate,
+    closureType    = closureType,
+    closureSource  = closureSource
+
 )
 
 fun Loans.toDto(): LoansDto = LoansDto(
@@ -29,7 +33,10 @@ fun Loans.toDto(): LoansDto = LoansDto(
     maturityDate   = maturityDate,
     rateOfInterest = rateOfInterest,
     status         = status,
-    workflowStatus = workflowStatus
+    workflowStatus = workflowStatus,
+    closedDate     = closedDate,
+    closureType    = closureType,
+    closureSource  = closureSource
 )
 
 fun List<LoansDto>.toEntity(): List<Loans> = map { it.toEntity() }

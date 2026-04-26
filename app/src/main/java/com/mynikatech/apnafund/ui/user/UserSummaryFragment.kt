@@ -25,6 +25,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.textfield.TextInputLayout
@@ -281,6 +282,10 @@ class UserSummaryFragment : Fragment() {
                         ).show()
                         Log.w("UserSummary", "Loan EMI click attempted with null loanId")
                     }
+                },
+                onCloseLoanClick = { loan ->
+                    // 👇 implement this
+                    showCloseLoanConfirmation(loan)
                 }
             )
             binding.recyclerViewLoans.adapter = adapter
@@ -398,6 +403,16 @@ class UserSummaryFragment : Fragment() {
             }
 
         }
+        binding.recyclerViewLoans.apply {
+            isNestedScrollingEnabled = false
+            layoutManager = LinearLayoutManager(context).apply {
+                isItemPrefetchEnabled = false
+            }
+            setHasFixedSize(false)
+        }
+        binding.recyclerViewLoans.post {
+            binding.recyclerViewLoans.requestLayout()
+        }
         userSummaryViewModel.userLoans.observe(viewLifecycleOwner) { loans ->
             val hasLoans = !loans.isNullOrEmpty()
             val selectedFund = fundSharedViewModel.selectedFund.value
@@ -415,6 +430,16 @@ class UserSummaryFragment : Fragment() {
         binding.imageFundExpandCollapse.setOnClickListener {
             isFundExpanded = !isFundExpanded
             updateFundExpandUI()
+            if (isFundExpanded) {
+                binding.recyclerViewLoans.post {
+                    // Key fix
+                    binding.recyclerViewLoans.layoutParams.height =
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+
+                    binding.recyclerViewLoans.requestLayout()
+                    binding.recyclerViewLoans.invalidate()
+                }
+            }
         }
         binding.loanAddGroup.setOnClickListener {
             val fundId = fundSharedViewModel.selectedFundId.value
@@ -446,6 +471,18 @@ class UserSummaryFragment : Fragment() {
             if (isFundExpanded) R.drawable.ic_up_arrow
             else R.drawable.ic_down_arrow
         )
+    }
+
+    private fun showCloseLoanConfirmation(loan: LoanDetailsWithMemberNames) {
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.text_close_loan))
+            .setMessage(getString(R.string.message_confirm_loan_close))
+            .setPositiveButton(getString(R.string.text_button_ok)) { _, _ ->
+                // call ViewModel to close loan
+                //loansViewModel.closeLoan(loan.loanId)
+            }
+            .setNegativeButton(getString(R.string.text_cancel_button), null)
+            .show()
     }
 
     private fun updateUserSummary() {

@@ -209,7 +209,11 @@ val LoansRowMapper = RowMapper<LoansDto> { rs, _ ->
         maturityDate = rs.getString("maturityDate"),
         rateOfInterest = rs.getDouble("rateOfInterest"),
         status = rs.getString("status"),
-        workflowStatus = rs.getString("workflowStatus")
+        workflowStatus = rs.getString("workflowStatus"),
+        closedDate     = rs.getString("closedDate"),
+        closureType    = rs.getString("closureType"),
+        closureSource  = rs.getString("closureSource")
+
     )
 }
 

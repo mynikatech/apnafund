@@ -731,4 +731,14 @@
 
     <string name="info_user_creation_group">वह समूह चुनें जिसमें आप उपयोगकर्ता को जोड़ना चाहते हैं।</string>
     <string name="title_user_creation_group_info">उपयोगकर्ता समूह जानकारी</string>
+    <string name="label_loan_menu">Loan Menu</string>
+    <string name="text_edit_loan">Edit Loan</string>
+    <string name="text_close_loan">Close Loan</string>
+    <string name="message_confirm_loan_close">Do you really want to close the Loan?</string>
+    <string name="text_closed_date">Closed Date:</string>
+    <string name="text_closure_type">Closure Type:</string>
+    <string name="text_closure_source">Closure Source:</string>
+    <string name="text_original_period">Original Period:</string>
+    <string name="text_actual_duration">Actual Duration:</string>
+    <string name="label_close_loan_request">Close Loan Request</string>
 </resources>

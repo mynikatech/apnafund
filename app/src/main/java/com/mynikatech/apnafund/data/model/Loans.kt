@@ -28,5 +28,8 @@ data class Loans(
     val rateOfInterest: Double,
     val status: String = ApnaBankConstants.STATUS_ACTIVE,
     val fundId: Int,
-    val workflowStatus: String
+    val workflowStatus: String,
+    val closedDate: String? = null,
+    val closureType: String? = null,
+    val closureSource: String? = null
 )

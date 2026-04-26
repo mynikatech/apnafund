@@ -12,6 +12,7 @@ import com.mynikatech.apnafund.data.model.LoanDetails
 import com.mynikatech.apnafund.data.model.LoanEmiWithMemberNames
 import com.mynikatech.apnafund.data.model.LoanEmis
 import com.mynikatech.apnafund.data.model.Loans
+import com.mynikatech.apnafund.util.ApnaBankDate
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -199,9 +200,13 @@ interface LoanEmisDao {
                     loanAmount = loanDetls.loanAmount,
                     maturityDate = loanDetls.maturityDate,
                     rateOfInterest = loanDetls.rateOfInterest,
-                    status = "Closed",
+                    status = "CLOSED",
                     fundId = loanDetls.fundId,
-                    workflowStatus = loanDetls.workflowStatus
+                    workflowStatus = loanDetls.workflowStatus,
+                    closedDate = ApnaBankDate.getCurrentDate(),
+                    closureType = "UNKNOWN",
+                    closureSource = "EMI"
+
                 )
                 updateLoan(updatedLoan)
             }

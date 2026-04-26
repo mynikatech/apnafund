@@ -27,7 +27,10 @@ data class LoanEmiWithMemberNames(
     val currTotalIntPaid: Double,
     val firstName: String,
     val lastName: String,
-    val userId: Int
+    val userId: Int,
+    val closedDate: String?,
+    val closureType: String?,
+    val closureSource: String?
 ) {
     @Ignore
     var isEdited: Boolean = false

@@ -75,8 +75,7 @@ class NotificationService(
             val fundMemberNames =
                 if (fundMembers.isEmpty()) {
                     "No members added yet"
-                }
-                else
+                } else
                     fundMembers.joinToString(", ") { it.fullName }
             logger.info("The fund Member Names are $fundMemberNames")
 
@@ -503,7 +502,7 @@ class NotificationService(
                 groupsSql.getGroup(groupId).firstOrNull()
                     ?: error("Group required")
 
-            val moderatorId = group.moderator?: error("Moderator required")
+            val moderatorId = group.moderator ?: error("Moderator required")
             val moderatorUser = usersSql.getUserById(moderatorId)
 
             logger.info("Sending GROUP_APPROVED notification")
@@ -562,7 +561,7 @@ class NotificationService(
                 groupsSql.getGroup(groupId).firstOrNull()
                     ?: error("Group required")
 
-            val moderatorId = group.moderator?: error("Moderator required")
+            val moderatorId = group.moderator ?: error("Moderator required")
             val moderatorUser = usersSql.getUserById(moderatorId)
 
             logger.info("Sending GROUP_REJECTED notification")
@@ -608,6 +607,91 @@ class NotificationService(
 
         } catch (e: Exception) {
             logger.error("ERROR inside notifyGroupRejected", e)
+        }
+
+
+    }
+
+    fun notifyLoanClosed(
+        loanId: Int,
+        fundId: Int,
+        fundName: String,
+        borrower: UsersDto,
+        closureType: String,
+        closedByName: String
+    ) {
+
+        try {
+
+            val fundMembers =
+                fundsSql.getFundMembersWithNamesForFund(fundId)
+
+            if (fundMembers.isEmpty()) {
+                logger.info("No fund members found for loan closure notification")
+                return
+            }
+
+            val loan = loansSql.getLoanById(loanId)
+            if (loan == null) {
+                logger.error("Loan not found for loanId=$loanId")
+                return
+            }
+
+            logger.info("Sending LOAN_CLOSED to ${fundMembers.size} members")
+
+            fundMembers.forEach { member ->
+
+                val message =
+                    if (member.userId == borrower.userId)
+                        "Your loan (₹${loan.loanAmount}) in fund \"$fundName\" has been closed."
+                    else
+                        "${borrower.fullName}'s loan (₹${loan.loanAmount}) in fund \"$fundName\" has been closed."
+
+                // ---------- IN APP ----------
+                sql.addUserNotification(
+                    UserNotificationsDto(
+                        notificationType = "LOAN_CLOSED",
+                        userId = member.userId,
+                        message = message,
+                        publishedFlag = true,
+                        readFlag = false,
+                        isExpiredFlag = false,
+                        status = "ACTIVE"
+                    )
+                )
+
+                // ---------- EMAIL ----------
+                val event = NotificationEvent(
+                    eventType = "LOAN_CLOSED",
+                    userId = member.userId.toString(),
+                    channels = setOf(Channel.EMAIL),
+
+                    email = EmailPayload(
+                        to = member.emailId,
+                        userName = member.fullName,
+                        data = mapOf(
+                            "fundName" to fundName,
+                            "borrowerName" to borrower.fullName,
+                            "loanAmount" to loan.loanAmount.toString(),
+                            "closureType" to closureType,
+                            "closedBy" to closedByName,
+                            "loanId" to loanId.toString()
+                        )
+                    ),
+
+                    eventData = mapOf(
+                        "loanId" to loanId.toString(),
+                        "fundId" to fundId.toString()
+                    )
+                )
+
+                eventDispatchService.dispatchUser(event)
+            }
+
+            logger.info("notifyLoanClosed completed")
+
+        } catch (e: Exception) {
+            logger.error("ERROR inside notifyLoanClosed", e)
         }
     }
 }

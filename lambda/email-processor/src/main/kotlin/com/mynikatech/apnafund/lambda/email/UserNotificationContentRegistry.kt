@@ -222,6 +222,40 @@ object UserNotificationContentRegistry {
                 )
             }
         ),
+        "LOAN_CLOSED" to Content(
+
+            subject = "Loan Closed",
+
+            message = { event ->
+
+                val fundName =
+                    event.eventData["fundName"] ?: "your fund"
+
+                val borrowerName =
+                    event.email?.data?.get("borrowerName") ?: "Borrower"
+
+                val loanAmount =
+                    event.email?.data?.get("loanAmount") ?: ""
+
+                val closureType =
+                    event.email?.data?.get("closureType") ?: "Closure"
+
+                val closedBy =
+                    event.email?.data?.get("closedBy") ?: "Moderator"
+
+                val userName =
+                    event.email?.userName ?: "User"
+
+                LoanClosureEmail.body(
+                    userName = userName,
+                    fundName = fundName,
+                    borrowerName = borrowerName,
+                    loanAmount = loanAmount,
+                    closureType = closureType,
+                    closedByName = closedBy
+                )
+            }
+        ),
         "GROUP_REQUESTED" to Content(
             subject = AdminGroupPendingApprovalEmail.subject(),
             message = { event ->

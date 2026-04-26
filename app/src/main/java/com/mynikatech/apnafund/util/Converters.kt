@@ -104,4 +104,17 @@ object Converters {
         //add braces
         return "($name)"
     }
+
+    fun formatLoanPeriod(totalMonths: Int): String {
+        if (totalMonths <= 0) return "0 m"
+
+        val years = totalMonths / 12
+        val months = totalMonths % 12
+
+        return when {
+            years >= 1 && months > 0 -> "$years y $months m"
+            years >= 1 -> "$years y"
+            else -> "$months m"
+        }
+    }
 }

@@ -29,5 +29,8 @@ data class LoanEmiWithMemberNamesDto(
     val firstName: String,
     val lastName: String,
     val userId: Int,
+    val closedDate: String?,
+    val closureType: String?,
+    val closureSource: String?,
     @Transient val isEdited: Boolean = false // UI-only flag, not serialized
 )

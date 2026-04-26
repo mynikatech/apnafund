@@ -23,7 +23,10 @@ fun LoanDetailsWithMemberNamesDto.toEntity(): LoanDetailsWithMemberNames =
         loanDetailsId = loanDetailsId,
         currTotalIntPaid = currTotalIntPaid,
         totalInterest = totalInterest,
-        workflowStatus = workflowStatus
+        workflowStatus = workflowStatus,
+        closedDate = closedDate,
+        closureType = closureType,
+        closureSource = closureSource
     )
 
 fun LoanDetailsWithMemberNames.toDto(): LoanDetailsWithMemberNamesDto =
@@ -46,7 +49,10 @@ fun LoanDetailsWithMemberNames.toDto(): LoanDetailsWithMemberNamesDto =
         loanDetailsId = loanDetailsId,
         currTotalIntPaid = currTotalIntPaid,
         totalInterest = totalInterest,
-        workflowStatus = workflowStatus
+        workflowStatus = workflowStatus,
+        closedDate = closedDate,
+        closureType = closureType,
+        closureSource = closureSource
     )
 
 fun List<LoanDetailsWithMemberNamesDto>.toEntity(): List<LoanDetailsWithMemberNames> = map { it.toEntity() }

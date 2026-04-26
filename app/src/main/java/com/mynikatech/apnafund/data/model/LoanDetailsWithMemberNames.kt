@@ -20,7 +20,11 @@ data class LoanDetailsWithMemberNames(
     val loanDetailsId: Int?,
     val currTotalIntPaid: Double,
     val totalInterest: Double,
-    val workflowStatus: String
+    val workflowStatus: String,
+    val closedDate: String?,
+    val closureType: String?,
+    val closureSource: String?
+
 ){
     val borrowerName: String
         get() = "$firstName ${lastName}".trim()

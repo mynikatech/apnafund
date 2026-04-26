@@ -28,7 +28,10 @@ fun LoanEmiWithMemberNamesDto.toEntity(): LoanEmiWithMemberNames =
         currTotalIntPaid = currTotalIntPaid,
         firstName = firstName,
         lastName = lastName,
-        userId = userId
+        userId = userId,
+        closedDate = closedDate,
+        closureType = closureType,
+        closureSource = closureSource
     ).also {
         // UI-only: keep default isEdited=false on the projection object
         it.isEdited = false
@@ -59,7 +62,10 @@ fun LoanEmiWithMemberNames.toDto(): LoanEmiWithMemberNamesDto =
         currTotalIntPaid = currTotalIntPaid,
         firstName = firstName,
         lastName = lastName,
-        userId = userId
+        userId = userId,
+        closedDate = closedDate,
+        closureType = closureType,
+        closureSource = closureSource
         // isEdited stays client-only
     )
 

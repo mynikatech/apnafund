@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 057-loan-closure-approval-support
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/057-loan-closure-approval-support.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

@@ -474,8 +474,43 @@ fun Route.loansRoutes(
                 val json = Json { explicitNulls = false }
                 val loanEmis: String =
                     json.encodeToString(ListSerializer(LoanEmisDto.serializer()), req.loanEmis)
+                val prevStatusMap = mutableMapOf<Int, LoansDto?>()
+                req.loanEmis
+                    .map { it.loanId }
+                    .distinct()
+                    .forEach { loanId ->
+                        prevStatusMap[loanId] = sql.getLoanById(loanId)
+                    }
                 val rows =
                     sql.saveOrUpdateAllLoanEmisAndFetch(req.fundId, req.month, req.year, loanEmis)
+
+                val newlyClosedLoans = rows
+                    .distinctBy { it.loanId }
+                    .filter { row ->
+                        val prev = prevStatusMap[row.loanId]
+                        prev != null &&
+                                prev.status != "CLOSED" &&
+                                row.status == "CLOSED"
+                    }
+                newlyClosedLoans.forEach { loan ->
+                    val loanId = loan.loanId ?: return@forEach
+                    val borrowerUser = users.getUserById(loan.borrowerId)
+                    val fund = fundSql.getFund(loan.fundId).firstOrNull()
+                    val fundName = fund?.fundName ?: "Fund"
+                    val moderatorUser = fund?.moderator
+                        ?.let { users.getUserById(it) }
+
+                    val closedByName = moderatorUser?.fullName ?: "System"
+
+                    notificationService.notifyLoanClosed(
+                        loanId = loanId,
+                        fundId = loan.fundId,
+                        fundName = fundName,
+                        borrower = borrowerUser,
+                        closureType = loan.closureType ?: "UNKNOWN",
+                        closedByName = closedByName
+                    )
+                }
                 call.respondOk(rows)
             }
         }

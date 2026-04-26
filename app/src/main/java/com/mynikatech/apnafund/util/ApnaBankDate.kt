@@ -203,7 +203,63 @@ class ApnaBankDate {
 
             return d1.compareTo(d2)
         }
+
+        fun getLoanDurationInMonths(
+            issuedDate: String?,
+            closedDate: String?,
+            pattern: String = DATE_PATTERN
+        ): Int {
+
+            if (issuedDate.isNullOrBlank()) return 0
+
+            val endDateStr = if (!closedDate.isNullOrBlank()) {
+                closedDate
+            } else {
+                SimpleDateFormat(pattern, Locale.US).format(Date())
+            }
+
+            return try {
+                monthsBetweenRoundedUp(issuedDate, endDateStr, pattern)
+            } catch (e: Exception) {
+                0
+            }
+        }
+
+        fun monthsBetweenRoundedUp(
+            startDateStr: String,
+            endDateStr: String,
+            pattern: String = DATE_PATTERN
+        ): Int {
+            val sdf = SimpleDateFormat(pattern, Locale.US)
+
+            val startDate = sdf.parse(startDateStr) ?: return 0
+            val endDate = sdf.parse(endDateStr) ?: return 0
+
+            return monthsBetweenRoundedUp(startDate, endDate)
+        }
+
+        fun monthsBetweenRoundedUp(start: Date, end: Date): Int {
+            if (end.before(start)) return 0
+
+            val startCal = Calendar.getInstance().apply { time = start }
+            val endCal = Calendar.getInstance().apply { time = end }
+
+            val baseMonths =
+                (endCal.get(Calendar.YEAR) - startCal.get(Calendar.YEAR)) * 12 +
+                        (endCal.get(Calendar.MONTH) - startCal.get(Calendar.MONTH))
+
+            val startDay = startCal.get(Calendar.DAY_OF_MONTH)
+            val endDay = endCal.get(Calendar.DAY_OF_MONTH)
+
+            return when {
+                baseMonths == 0 -> 1
+                endDay > startDay -> baseMonths + 1
+                else -> baseMonths
+            }
+        }
     }
+
+
 
 
 }

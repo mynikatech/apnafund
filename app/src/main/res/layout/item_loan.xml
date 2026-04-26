@@ -9,9 +9,9 @@
         style="@style/ApnaFundCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="0dp"
-        app:cardCornerRadius="14dp"
-        app:cardElevation="4dp">
+        android:layout_marginBottom="4dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="2dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -19,84 +19,98 @@
             android:orientation="vertical"
             android:padding="12dp">
 
-
-            <!-- Header Section -->
+            <!-- ================= HEADER ================= -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="1dp">
+                android:layout_height="wrap_content">
 
-                <TextView
-                    android:id="@+id/text_view_loan_number_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/blue_dark"
-                    android:textSize="16sp"
-                    android:textStyle="bold|italic"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:text="LN010120251" />
-
-                <ImageButton
-                    android:id="@+id/image_edit_loan"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/text_edit_fund"
-                    android:paddingStart="4dp"
-                    android:paddingEnd="2dp"
-                    android:src="@drawable/ic_edit"
-                    app:layout_constraintBottom_toBottomOf="@id/text_view_loan_number_value"
-                    app:layout_constraintStart_toEndOf="@id/text_view_loan_number_value"
-                    app:layout_constraintTop_toTopOf="@id/text_view_loan_number_value"
-                    app:tint="?attr/colorOnSurface" />
-
-                <TextView
-                    android:id="@+id/text_view_loan_amount_value"
-                    style="@style/TextAppearance.MaterialComponents.Body2"
+                <!-- LEFT GROUP: Loan Number + Amount -->
+                <LinearLayout
+                    android:id="@+id/layout_left_group"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="4dp"
-                    android:textAlignment="viewEnd"
-                    android:textColor="?attr/colorOnSurface"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    app:layout_constraintBottom_toBottomOf="@id/text_view_loan_number_value"
-                    app:layout_constraintEnd_toStartOf="@id/text_view_loan_status_value"
-                    app:layout_constraintStart_toEndOf="@id/image_edit_loan"
-                    app:layout_constraintTop_toTopOf="@id/text_view_loan_number_value"
-                    tools:text="₹ 5000" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    app:layout_constraintEnd_toStartOf="@id/layout_right_group"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
 
-                <TextView
-                    android:id="@+id/text_view_loan_status_value"
+                    <!-- Loan Number -->
+                    <TextView
+                        android:id="@+id/text_view_loan_number_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textColor="@color/blue_dark"
+                        android:textSize="15sp"
+                        android:textStyle="bold|italic"
+                        tools:text="LN010120251" />
+
+                    <!-- Amount -->
+                    <TextView
+                        android:id="@+id/text_view_loan_amount_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        tools:text="₹5000" />
+
+                </LinearLayout>
+
+                <!-- RIGHT GROUP: Status + More -->
+                <LinearLayout
+                    android:id="@+id/layout_right_group"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="4dp"
-                    android:textColor="@color/green"
-                    android:textSize="16sp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintBottom_toBottomOf="@id/text_view_loan_number_value"
-                    app:layout_constraintTop_toTopOf="@id/text_view_loan_number_value"
-                    tools:text="[Active]" />
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <!-- Status -->
+                    <TextView
+                        android:id="@+id/text_view_loan_status_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
+                        android:textColor="@color/green"
+                        android:textSize="13sp"
+                        tools:text="Active" />
+
+                    <!-- More Options -->
+                    <ImageView
+                        android:id="@+id/image_more_options"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginStart="6dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/label_loan_menu"
+                        android:padding="2dp"
+                        android:src="@drawable/ic_more_vert"
+                        app:tint="?attr/colorOnSurface" />
+
+                </LinearLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
+            <!-- ================= DETAILS HEADER ================= -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="1dp">
+                android:layout_marginTop="4dp">
 
                 <TextView
-                    android:id="@+id/text_view_loan_details_header"
+                    android:id="@+id/text_view_loan_emi_details"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/text_view_details"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textStyle="bold"
+                    android:text="@string/text_view_loan_emis"
+                    android:textAppearance="?attr/textAppearanceBody2"
+                    android:textColor="@color/link_colour"
+                    android:textStyle="italic"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -106,17 +120,18 @@
                     style="@style/AppIcon"
                     android:contentDescription="@string/expand_or_collapse"
                     android:src="@drawable/ic_down_arrow"
-                    app:layout_constraintBottom_toBottomOf="@+id/text_view_loan_details_header"
-                    app:layout_constraintStart_toEndOf="@+id/text_view_loan_details_header"
-                    app:layout_constraintTop_toTopOf="@+id/text_view_loan_details_header" />
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
+
             <!-- Divider -->
             <View
                 android:id="@+id/line_loan_details"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp"
+                android:layout_marginVertical="4dp"
                 android:background="@android:color/darker_gray"
                 android:visibility="gone" />
 
@@ -127,159 +142,358 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <GridLayout
+                <!-- ROW 1 -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:columnCount="2"
-                    android:rowCount="8">
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
 
-                    <!-- Column 1: Start Date -->
-                    <TextView
-                        android:id="@+id/text_view_loan_issue_date_header"
-                        style="@style/FundLabel"
+                    <!-- LEFT -->
+                    <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        android:text="@string/text_issued_date" />
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/text_view_loan_maturity_date_header"
-                        style="@style/FundLabel"
+                        <TextView
+                            android:id="@+id/text_view_loan_issue_date_header"
+                            style="@style/FundLabel"
+                            android:text="@string/text_issued_date" />
+
+                        <TextView
+                            android:id="@+id/text_view_loan_issue_date_value"
+                            style="@style/FundValue"
+                            tools:text="02/05/2025" />
+                    </LinearLayout>
+
+                    <!-- RIGHT -->
+                    <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        android:text="@string/text_fund_maturity_date" />
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/text_view_loan_issue_date_value"
-                        style="@style/FundValue"
-                        android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        tools:text="02/05/2025" />
+                        <TextView
+                            android:id="@+id/text_view_loan_maturity_date_header"
+                            style="@style/FundLabel"
+                            android:text="@string/text_fund_maturity_date" />
 
-                    <TextView
-                        android:id="@+id/text_view_loan_maturity_date_value"
-                        style="@style/FundValue"
-                        android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        tools:text="02/05/2027" />
+                        <TextView
+                            android:id="@+id/text_view_loan_maturity_date_value"
+                            style="@style/FundValue"
+                            tools:text="02/05/2027" />
+                    </LinearLayout>
 
-                    <!-- Column 3: Frequency -->
-                    <TextView
-                        android:id="@+id/text_view_loan_interest_rate_header"
-                        style="@style/FundLabel"
-                        android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        android:text="@string/text_interest_rate" />
-
-                    <TextView
-                        android:id="@+id/text_view_loan_period_header"
-                        style="@style/FundLabel"
-                        android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        android:text="@string/text_loan_period" />
-
-                    <TextView
-                        android:id="@+id/text_view_loan_interest_rate_value"
-                        style="@style/FundValue"
-                        android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        tools:text="Monthly" />
-
-                    <!-- Column 4: Period -->
-
-
-                    <TextView
-                        android:id="@+id/text_view_loan_period_value"
-                        style="@style/FundValue"
-                        android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        tools:text="24 Months" />
-
-
-                    <TextView
-                        style="@style/FundLabel"
-                        android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        android:text="@string/text_outstanding_amount" />
-
-                    <TextView
-                        android:id="@+id/text_view_loan_outstanding_amount_value"
-                        style="@style/FundValue"
-                        android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        tools:text="2000" />
-
-                    <TextView
-                        style="@style/FundLabel"
-                        android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        android:text="@string/text_original_emi" />
-
-                    <TextView
-                        android:id="@+id/text_view_loan_orig_emi_value"
-                        style="@style/FundValue"
-                        android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        tools:text="20000" />
-
-                    <TextView
-                        style="@style/FundLabel"
-                        android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        android:text="@string/text_current_emi" />
-
-                    <TextView
-                        android:id="@+id/text_view_loan_curr_emi_value"
-                        style="@style/FundValue"
-                        android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        tools:text="12000" />
-
-                    <TextView
-                        style="@style/FundLabel"
-                        android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        android:text="@string/text_interest_paid" />
-
-                    <TextView
-                        android:id="@+id/text_view_loan_curr_intpaid_value"
-                        style="@style/FundValue"
-                        android:layout_width="0dp"
-                        android:layout_columnWeight="1"
-                        android:layout_gravity="fill"
-                        tools:text="22000" />
-                </GridLayout>
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="8dp">
+                    android:layout_marginTop="3dp"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
 
-                    <TextView
-                        android:id="@+id/text_view_loan_emi_details"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:paddingEnd="16dp"
-                        android:paddingStart="2dp"
-                        android:text="@string/text_view_loan_emis"
-                        android:textAppearance="?attr/textAppearanceBody2"
-                        android:textColor="@color/link_colour" />
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/text_view_loan_interest_rate_header"
+                            style="@style/FundLabel"
+                            android:text="@string/text_interest_rate" />
+
+                        <TextView
+                            android:id="@+id/text_view_loan_interest_rate_value"
+                            style="@style/FundValue"
+                            tools:text="12%" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/text_view_loan_period_header"
+                            style="@style/FundLabel"
+                            android:text="@string/text_loan_period" />
+
+                        <TextView
+                            android:id="@+id/text_view_loan_period_value"
+                            style="@style/FundValue"
+                            tools:text="24 Months" />
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- Active section -->
+                <LinearLayout
+                    android:id="@+id/layout_active_section"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="2dp"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <!-- LEFT COLUMN -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_view_interest_paid_label"
+                                style="@style/FundLabel"
+                                android:layout_width="wrap_content"
+                                android:text="@string/text_interest_paid" />
+
+                            <TextView
+                                android:id="@+id/text_view_interest_paid_value"
+                                style="@style/FundValue"
+                                android:layout_width="wrap_content"
+                                android:layout_marginStart="6dp"
+                                tools:text="₹500" />
+                        </LinearLayout>
+
+                        <!-- RIGHT COLUMN -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_view_current_emi_label"
+                                style="@style/FundLabel"
+                                android:layout_width="wrap_content"
+                                android:text="@string/text_current_emi" />
+
+                            <TextView
+                                android:id="@+id/text_view_current_emi_value"
+                                style="@style/FundValue"
+                                android:layout_width="wrap_content"
+                                android:layout_marginStart="6dp"
+                                tools:text="₹1800" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <!-- LEFT COLUMN -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_view_loan_outstanding_amount_label"
+                                style="@style/FundLabel"
+                                android:layout_width="wrap_content"
+                                android:text="@string/text_outstanding_amount" />
+
+                            <TextView
+                                android:id="@+id/text_view_loan_outstanding_amount_value"
+                                style="@style/FundValue"
+                                android:layout_width="wrap_content"
+                                android:layout_marginStart="6dp"
+                                tools:text="₹500" />
+                        </LinearLayout>
+
+                        <!-- RIGHT COLUMN -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_view_loan_orig_emi_label"
+                                style="@style/FundLabel"
+                                android:layout_width="wrap_content"
+                                android:text="@string/text_original_emi" />
+
+                            <TextView
+                                android:id="@+id/text_view_loan_orig_emi_value"
+                                style="@style/FundValue"
+                                android:layout_width="wrap_content"
+                                android:layout_marginStart="6dp"
+                                tools:text="₹1800" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layout_closed_section"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <!-- Row 1 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <!-- LEFT -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_view_closed_date_label"
+                                style="@style/FundLabel"
+                                android:text="@string/text_closed_date" />
+
+                            <TextView
+                                android:id="@+id/text_view_closed_date_value"
+                                style="@style/FundValue"
+                                android:layout_marginStart="6dp"
+                                tools:text="02/10/2025" />
+                        </LinearLayout>
+
+                        <!-- RIGHT -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_view_closure_type_label"
+                                style="@style/FundLabel"
+                                android:text="@string/text_closure_type" />
+
+                            <TextView
+                                android:id="@+id/text_view_closure_type_value"
+                                style="@style/FundValue"
+                                android:layout_marginStart="6dp"
+                                tools:text="Foreclosure" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Row 2 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <!-- LEFT -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_view_closure_source_label"
+                                style="@style/FundLabel"
+                                android:text="@string/text_closure_source" />
+
+                            <TextView
+                                android:id="@+id/text_view_closure_source_value"
+                                style="@style/FundValue"
+                                android:layout_marginStart="6dp"
+                                tools:text="EMI" />
+                        </LinearLayout>
+
+                        <!-- RIGHT -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_view_tot_interest_paid_label"
+                                style="@style/FundLabel"
+                                android:text="@string/text_interest_paid" />
+
+                            <TextView
+                                android:id="@+id/text_view_tot_interest_paid_value"
+                                style="@style/FundValue"
+                                android:layout_marginStart="6dp"
+                                tools:text="₹500" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Row 3 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <!-- LEFT -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_view_original_period_label"
+                                style="@style/FundLabel"
+                                android:text="@string/text_original_period" />
+
+                            <TextView
+                                android:id="@+id/text_view_original_period_value"
+                                style="@style/FundValue"
+                                android:layout_marginStart="6dp"
+                                tools:text="24 Months" />
+                        </LinearLayout>
+
+                        <!-- RIGHT -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_view_actual_duration_label"
+                                style="@style/FundLabel"
+                                android:text="@string/text_actual_duration" />
+
+                            <TextView
+                                android:id="@+id/text_view_actual_duration_value"
+                                style="@style/FundValue"
+                                android:layout_marginStart="6dp"
+                                tools:text="9 Months" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+
 
                 </LinearLayout>
             </LinearLayout>
