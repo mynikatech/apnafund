@@ -184,4 +184,20 @@ class LoansApiKtor(
         client.get("/loans/user-details") {
             parameter("userId", userId); parameter("fundId", fundId)
         }.unwrap<UserLoanDetailsDto>()
+
+    override suspend fun requestLoanClosure(loanClosureRequest: LoanClosureRequestDto) =
+        client.post("/loans/closure/request") {
+            contentType(ContentType.Application.Json)
+            setBody(loanClosureRequest)
+        }.body<Unit>()
+
+    override suspend fun hasPendingClosureRequest(loanId: Int): Boolean =
+        client.get("/loans/hasPendingReq/$loanId")
+            .unwrap<Boolean>()
+
+    override suspend fun closeLoanDirect(loanId: Int, userId: Int) {
+        client.post("/loans/close/direct") {
+            setBody(mapOf("loanId" to loanId, "userId" to userId))
+        }
+    }
 }

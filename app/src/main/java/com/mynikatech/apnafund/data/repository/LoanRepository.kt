@@ -13,6 +13,8 @@ import com.mynikatech.apnafund.data.model.LoanEmis
 import com.mynikatech.apnafund.data.model.Loans
 import com.mynikatech.apnafund.data.model.UserLoanDetails
 import com.mynikatech.apnafund.net.LoansApi
+import com.mynikatech.apnafund.net.dto.LoanClosureRequestDto
+import com.mynikatech.apnafund.net.dto.LoanCmplDetailsDto
 import com.mynikatech.apnafund.net.dto.LoanDetailsWithMemberNamesDto
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -28,6 +30,10 @@ class LoanRepository(
 
     suspend fun updateLoanAndDetails(loan: Loans, loanDetails: LoanDetails) {
         loansApi.updateLoanWithDetails(loan, loanDetails)
+    }
+
+    suspend fun getLoanById(loanId: Int): LoanCmplDetailsDto? {
+        return loansApi.get(loanId)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -66,7 +72,8 @@ class LoanRepository(
         year: String
     ): List<LoanEmiWithMemberNames> {
 
-        return loansApi.saveOrUpdateAllLoanEmisAndFetch(loanEmis.toDto(), fundId, month, year).toEntity()
+        return loansApi.saveOrUpdateAllLoanEmisAndFetch(loanEmis.toDto(), fundId, month, year)
+            .toEntity()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -104,6 +111,28 @@ class LoanRepository(
     ): List<LoanDetailsWithMemberNamesDto> {
 
         return loansApi.listByFund(fundId)
+    }
+
+    suspend fun requestLoanClosure(
+        loanId: Int,
+        requestedAmount: Double?,
+        remarks: String?
+    ) {
+        loansApi.requestLoanClosure(
+            LoanClosureRequestDto(
+                loanId = loanId,
+                requestedAmount = requestedAmount,
+                remarks = remarks
+            )
+        )
+    }
+
+    suspend fun hasPendingClosureRequest(loanId: Int): Boolean {
+        return loansApi.hasPendingClosureRequest(loanId)
+    }
+
+    suspend fun closeLoanDirect(loanId: Int, userId: Int) {
+        loansApi.closeLoanDirect(loanId, userId)
     }
 
 }

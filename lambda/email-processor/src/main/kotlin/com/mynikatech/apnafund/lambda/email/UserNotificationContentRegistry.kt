@@ -222,6 +222,44 @@ object UserNotificationContentRegistry {
                 )
             }
         ),
+        "LOAN_CLOSURE_REQUESTED" to Content(
+            subject = "Loan Closure Request Pending",
+            message = { event ->
+
+                val email = event.email
+                    ?: error("Email payload missing for LOAN_CLOSURE_REQUESTED")
+
+                val fundName = event.eventData["fundName"] ?: "Fund"
+
+                LoanClosureRequestEmail.body(
+                    userName = email.userName,
+                    fundName = fundName,
+                    borrowerName = email.data["borrowerName"] ?: "",
+                    loanAmount = email.data["loanAmount"] ?: "",
+                    loanNumber = email.data["loanNumber"],
+                    issuedDate = email.data["issuedDate"],
+                    maturityDate = email.data["maturityDate"],
+                    requestedAmount = email.data["requestedAmount"],
+                    remarks = email.data["remarks"]
+                )
+            }
+        ),
+        "LOAN_CLOSURE_REJECTED" to Content(
+            subject = "Loan Closure Request Rejected",
+            message = { event ->
+
+                val email = event.email
+                    ?: error("Email payload missing for LOAN_CLOSURE_REJECTED")
+
+                LoanClosureRejectedEmail.body(
+                    userName = email.userName,
+                    fundName = email.data["fundName"] ?: "",
+                    loanAmount = email.data["loanAmount"] ?: "",
+                    rejectedBy = email.data["rejectedBy"] ?: "Moderator",
+                    reason = email.data["reason"] ?: "No reason provided"
+                )
+            }
+        ),
         "LOAN_CLOSED" to Content(
 
             subject = "Loan Closed",

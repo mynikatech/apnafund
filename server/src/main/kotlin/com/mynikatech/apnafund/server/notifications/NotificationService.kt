@@ -694,4 +694,141 @@ class NotificationService(
             logger.error("ERROR inside notifyLoanClosed", e)
         }
     }
+
+    fun notifyLoanClosureRequested(
+        loanId: Int,
+        fundId: Int,
+        fundName: String,
+        borrowerName: String,
+        moderator: UsersDto,
+        requestedAmount: Double?,
+        remarks: String?
+    ) {
+
+        try {
+
+            val loan = loansSql.getLoanById(loanId) ?: run {
+                logger.error("Loan not found for loanId=$loanId")
+                return
+            }
+
+            logger.info("Sending LOAN_CLOSURE_REQUESTED to moderator ${moderator.userId}")
+
+            // ---------- IN APP ----------
+            sql.addUserNotification(
+                UserNotificationsDto(
+                    notificationType = "LOAN_CLOSURE_REQUESTED",
+                    userId = moderator.userId!!,
+                    message =
+                        "$borrowerName has requested closure of loan (₹${loan.loanAmount}) in fund \"$fundName\".",
+                    publishedFlag = true,
+                    readFlag = false,
+                    isExpiredFlag = false,
+                    status = "ACTIVE"
+                )
+            )
+
+            // ---------- EMAIL ----------
+            val event = NotificationEvent(
+                eventType = "LOAN_CLOSURE_REQUESTED",
+                userId = moderator.userId.toString(),
+                channels = setOf(Channel.EMAIL),
+
+                email = EmailPayload(
+                    to = moderator.emailId,
+                    userName = moderator.fullName,
+                    data = mapOf(
+                        "borrowerName" to borrowerName,
+                        "fundName" to fundName,
+                        "loanId" to loanId.toString(),
+                        "loanAmount" to loan.loanAmount.toString(),
+                        "loanNumber" to loan.loanNumber,
+                        "issuedDate" to loan.issuedDate,
+                        "maturityDate" to loan.maturityDate,
+                        "requestedAmount" to (requestedAmount?.toString() ?: ""),
+                        "remarks" to (remarks ?: "")
+                    )
+                ),
+
+                eventData = mapOf(
+                    "loanId" to loanId.toString(),
+                    "fundId" to fundId.toString(),
+                    "fundName" to fundName
+                )
+            )
+
+            eventDispatchService.dispatchUser(event)
+
+            logger.info("notifyLoanClosureRequested completed")
+
+        } catch (e: Exception) {
+            logger.error("ERROR inside notifyLoanClosureRequested", e)
+        }
+    }
+
+    fun notifyLoanClosureRejected(
+        loanId: Int,
+        fundName: String,
+        borrower: UsersDto,
+        rejectedByName: String,
+        reason: String
+    ) {
+
+        try {
+
+            val loan = loansSql.getLoanById(loanId)
+            if (loan == null) {
+                logger.error("Loan not found for loanId=$loanId")
+                return
+            }
+
+            logger.info("Sending LOAN_CLOSURE_REJECTED to borrower ${borrower.userId}")
+
+            val message =
+                "Your loan closure request for ₹${loan.loanAmount} in fund \"$fundName\" was rejected."
+
+            // ---------- IN APP ----------
+            sql.addUserNotification(
+                UserNotificationsDto(
+                    notificationType = "LOAN_CLOSURE_REJECTED",
+                    userId = borrower.userId!!,
+                    message = message,
+                    publishedFlag = true,
+                    readFlag = false,
+                    isExpiredFlag = false,
+                    status = "ACTIVE"
+                )
+            )
+
+            // ---------- EMAIL ----------
+            val event = NotificationEvent(
+                eventType = "LOAN_CLOSURE_REJECTED",
+                userId = borrower.userId.toString(),
+                channels = setOf(Channel.EMAIL),
+
+                email = EmailPayload(
+                    to = borrower.emailId,
+                    userName = borrower.fullName,
+                    data = mapOf(
+                        "fundName" to fundName,
+                        "loanId" to loanId.toString(),
+                        "loanAmount" to loan.loanAmount.toString(),
+                        "rejectedBy" to rejectedByName,
+                        "reason" to reason
+                    )
+                ),
+
+                eventData = mapOf(
+                    "loanId" to loanId.toString()
+                )
+            )
+
+            eventDispatchService.dispatchUser(event)
+
+            logger.info("notifyLoanClosureRejected completed")
+
+        } catch (e: Exception) {
+            logger.error("ERROR inside notifyLoanClosureRejected", e)
+        }
+    }
 }

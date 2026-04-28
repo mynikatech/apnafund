@@ -15,6 +15,12 @@ class ApprovalRepository(
     suspend fun rejectLoan(id: Int, rejectorId: Int, reason: String?) =
         api.rejectLoan(id,rejectorId, reason)
 
+    suspend fun approveLoanClosure(id: Int, approverId: Int) =
+        api.approveLoanClosure(id,approverId )
+
+    suspend fun rejectLoanClosure(id: Int, rejectorId: Int, reason: String?) =
+        api.rejectLoanClosure(id,rejectorId, reason)
+
     suspend fun approveGroup(id: Int, approverId: Int) =
         api.approveGroup(id, approverId)
 

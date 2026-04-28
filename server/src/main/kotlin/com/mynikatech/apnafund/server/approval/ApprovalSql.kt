@@ -24,6 +24,27 @@ interface ApprovalSql {
 
     @SqlQuery(
         """
+    SELECT create_loan_closure_approval(
+        :loanId,
+        :requestedBy,
+        :approver,
+        :closureType,
+        :requestedAmount,
+        :remarks
+    )
+    """
+    )
+    fun createLoanClosureApproval(
+        @Bind("loanId") loanId: Int,
+        @Bind("requestedBy") requestedBy: Int,
+        @Bind("approver") approver: Int,
+        @Bind("closureType") closureType: String,
+        @Bind("requestedAmount") requestedAmount: Double?,
+        @Bind("remarks") remarks: String?
+    ): Boolean
+
+    @SqlQuery(
+        """
         SELECT create_group_approval(
             :groupId,
             :requestedBy,
@@ -85,4 +106,13 @@ interface ApprovalSql {
     fun getApprovalById(
         @Bind("approvalId") approvalId: Int
     ): ApprovalInfoDto?
+
+    @SqlQuery("""
+    SELECT create_auto_approved_loan_closure(:loanId, :approvedBy)
+    """)
+    fun createAutoApprovedClosure(
+        @Bind("loanId") loanId: Int,
+        @Bind("approvedBy") approvedBy: Int
+    ): Boolean
+
 }

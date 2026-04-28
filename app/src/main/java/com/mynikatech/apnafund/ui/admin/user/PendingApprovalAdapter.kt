@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund.ui.admin.user
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.mynikatech.apnafund.databinding.ItemPendingApprovalBinding
@@ -25,14 +26,14 @@ class PendingApprovalAdapter(
 
         fun bind(item: PendingApprovalDto) {
 
-            binding.textModeratorName.text =
-                "${item.subtitle}: ${item.requesterName}"
+            when (item.entityType) {
 
-            binding.textGroupName.text =
-                item.title
+                "GROUP" -> bindGroup(item)
 
-            binding.textGroupDescription.text =
-                item.description ?: "N/A"
+                "LOAN" -> bindLoan(item)
+
+                "LOAN_CLOSURE" -> bindLoanClosure(item)
+            }
 
             binding.buttonApprove.setOnClickListener {
                 binding.buttonApprove.isEnabled = false
@@ -46,7 +47,37 @@ class PendingApprovalAdapter(
                 listener.onRejectClicked(item, bindingAdapterPosition)
             }
         }
+
+        private fun bindGroup(item: PendingApprovalDto) {
+            binding.layoutGroup.visibility = View.VISIBLE
+            binding.textModerator.text =
+                "${item.subtitle}: ${item.requesterName}"
+
+            binding.textGroupName.text = item.title
+            binding.textGroupDescription.text = item.description ?: "N/A"
+        }
+
+        private fun bindLoan(item: PendingApprovalDto) {
+            binding.layoutLoan.visibility = View.VISIBLE
+
+            binding.textLoanBorrower.text = item.requesterName
+            binding.textLoanAmount.text = item.loanAmount.toString()
+            binding.textLoanPeriod.text = item.loanPeriod
+            binding.textLoanInterest.text = item.LoanIntRate
+        }
+
+        private fun bindLoanClosure(item: PendingApprovalDto) {
+            binding.layoutLoanClosure.visibility = View.VISIBLE
+
+            binding.textClosureBorrower.text = item.requesterName
+
+            binding.textClosureLoanNumber.text =item.loanNumber ?: "-"
+            binding.textRequestedAmount.text =  item.requestedAmount
+            binding.textOutstanding.text = item.loamOutstandingAmount
+        }
     }
+
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PendingViewHolder {
         val binding = ItemPendingApprovalBinding.inflate(

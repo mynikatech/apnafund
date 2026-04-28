@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 063-has-pending-loan-request
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/063-has-pending-loan-request.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

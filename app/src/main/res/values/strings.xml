@@ -479,5 +479,34 @@
     <string name="text_original_period">Original Period:</string>
     <string name="text_actual_duration">Actual Duration:</string>
     <string name="label_close_loan_request">Close Loan Request</string>
+    <string name="label_group_req_pending_approval">Group request pending for your approval</string>
+    <string name="label_loan_req_pending_approval">Loan request pending for your approval</string>
+    <string name="label_loan_closure_req_pending_approval">Loan closure request pending for your approval</string>
+    <string name="label_requested">Requested:</string>
+    <string name="title_request_pending">Request Pending</string>
+    <string name="message_loan_closure_request_pending">A loan closure request is already pending approval.\n\n Please wait for the moderator to review it.</string>
+    <string name="label_action">Action</string>
+    <string name="title_close_loan_moderator">Close Loan (Moderator)</string>
+    <string name="error_loan_already_closed">Loan already closed</string>
+    <string name="error_invalid_loan">Invalid loan</string>
+    <string name="message_close_loan_direct" formatted="true">
+        You are closing this loan directly.\n
+
+    Loan: %1$s\n
+    Outstanding: %2$s\n
+
+    This will immediately close the loan.\n
+
+    Do you want to proceed?
+    </string>
+    <string name="message_close_loan_request">
+    Loan: %1$s\n\n
+    Loan Amount: %2$s\n
+    Outstanding: %3$s\n
+    Current EMI: %4$s\n
+    Tentative Closure: %5$s\n\n
+    Note: Final closure amount will be calculated by moderator.\n\n
+    Do you want to request loan closure?
+</string>
 
 </resources>

@@ -34,6 +34,9 @@ class ApprovalService(
             "LOAN" ->
                 approveLoan(approval, approvedBy, reason)
 
+            "LOAN_CLOSURE" ->
+                approveLoanClosure(approval, approvedBy, reason)   // ✅ ADD
+
             "GROUP" ->
                 approveGroup(approval, approvedBy, reason)
 
@@ -56,6 +59,9 @@ class ApprovalService(
 
             "LOAN" ->
                 rejectLoan(approval, rejectedBy, reason)
+
+            "LOAN_CLOSURE" ->
+                rejectLoanClosure(approval, rejectedBy, reason)
 
             "GROUP" ->
                 rejectGroup(approval, rejectedBy, reason)
@@ -199,6 +205,77 @@ class ApprovalService(
         notificationService.notifyGroupRejected(
             groupId,
             reason
+        )
+    }
+
+    private fun approveLoanClosure(
+        approval: ApprovalInfoDto,
+        approvedBy: Int,
+        reason: String?
+    ) {
+
+        val loanId = approval.entityId
+
+        // Approve request
+        approvalSql.approveApproval(
+            approval.approvalId,
+            approvedBy,
+            reason
+        )
+
+        // Trigger actual closure (IMPORTANT)
+        loansSql.closeLoanByApproval(loanId, approvedBy)
+
+        // Fetch details
+        val loan = loansSql.getLoanById(loanId) ?: error("Loan not found")
+
+        val fund = fundSql.getFund(loan.fundId).firstOrNull()
+            ?: error("Fund not found")
+
+        val borrowerUser = usersSql.getUserById(loan.borrowerId)
+        val moderatorUser = usersSql.getUserById(approvedBy)
+
+        // Notify all users (already implemented)
+        notificationService.notifyLoanClosed(
+            loanId = loanId,
+            fundId = loan.fundId,
+            fundName = fund.fundName,
+            borrower = borrowerUser,
+            closureType = loan.closureType ?: "UNKNOWN",
+            closedByName = moderatorUser.fullName
+        )
+    }
+
+    private fun rejectLoanClosure(
+        approval: ApprovalInfoDto,
+        rejectedBy: Int,
+        reason: String
+    ) {
+
+        val loanId = approval.entityId
+
+        // Reject approval
+        approvalSql.rejectApproval(
+            approval.approvalId,
+            rejectedBy,
+            reason
+        )
+
+        val loan = loansSql.getLoanById(loanId) ?: error("Loan not found")
+
+        val fund = fundSql.getFund(loan.fundId).firstOrNull()
+            ?: error("Fund not found")
+
+        val borrowerUser = usersSql.getUserById(loan.borrowerId)
+        val rejectedByUser = usersSql.getUserById(rejectedBy)
+
+        // Notify borrower
+        notificationService.notifyLoanClosureRejected(
+            loanId = loanId,
+            fundName = fund.fundName,
+            borrower = borrowerUser,
+            rejectedByName = rejectedByUser.fullName,
+            reason = reason
         )
     }
 }

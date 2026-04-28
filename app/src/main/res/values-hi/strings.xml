@@ -731,14 +731,70 @@
 
     <string name="info_user_creation_group">वह समूह चुनें जिसमें आप उपयोगकर्ता को जोड़ना चाहते हैं।</string>
     <string name="title_user_creation_group_info">उपयोगकर्ता समूह जानकारी</string>
-    <string name="label_loan_menu">Loan Menu</string>
-    <string name="text_edit_loan">Edit Loan</string>
-    <string name="text_close_loan">Close Loan</string>
-    <string name="message_confirm_loan_close">Do you really want to close the Loan?</string>
-    <string name="text_closed_date">Closed Date:</string>
-    <string name="text_closure_type">Closure Type:</string>
-    <string name="text_closure_source">Closure Source:</string>
-    <string name="text_original_period">Original Period:</string>
-    <string name="text_actual_duration">Actual Duration:</string>
-    <string name="label_close_loan_request">Close Loan Request</string>
+    <string name="label_loan_menu">ऋण मेनू</string>
+
+    <string name="text_edit_loan">ऋण संपादित करें</string>
+
+    <string name="text_close_loan">ऋण बंद करें</string>
+
+    <string name="message_confirm_loan_close">क्या आप वास्तव में इस ऋण को बंद करना चाहते हैं?</string>
+
+    <string name="text_closed_date">बंद करने की तिथि:</string>
+
+    <string name="text_closure_type">बंद करने का प्रकार:</string>
+
+    <string name="text_closure_source">बंद करने का स्रोत:</string>
+
+    <string name="text_original_period">मूल अवधि:</string>
+
+    <string name="text_actual_duration">वास्तविक अवधि:</string>
+
+    <string name="label_close_loan_request">ऋण बंद करने का अनुरोध</string>
+
+    <string name="label_group_req_pending_approval">समूह अनुरोध आपकी स्वीकृति के लिए लंबित है</string>
+
+    <string name="label_loan_req_pending_approval">ऋण अनुरोध आपकी स्वीकृति के लिए लंबित है</string>
+
+    <string name="label_loan_closure_req_pending_approval">ऋण बंद करने का अनुरोध आपकी स्वीकृति के लिए लंबित है</string>
+
+    <string name="label_requested">अनुरोधित:</string>
+
+    <string name="title_request_pending">अनुरोध लंबित</string>
+
+    <string name="message_loan_closure_request_pending">
+    एक ऋण बंद करने का अनुरोध पहले से ही स्वीकृति के लिए लंबित है।
+
+    कृपया मॉडरेटर द्वारा समीक्षा का इंतजार करें।
+    </string>
+    <string name="label_action">कार्य</string>
+
+    <string name="title_close_loan_moderator">ऋण बंद करें (मॉडरेटर)</string>
+
+    <string name="error_loan_already_closed">ऋण पहले ही बंद किया जा चुका है</string>
+
+    <string name="error_invalid_loan">अमान्य ऋण</string>
+
+    <string name="message_close_loan_direct" formatted="true">
+    आप इस ऋण को सीधे बंद कर रहे हैं।\n
+
+    ऋण: %1$s\n
+    बकाया राशि: %2$s\n
+
+    यह तुरंत ऋण को बंद कर देगा।\n
+
+    क्या आप आगे बढ़ना चाहते हैं?\n
+    </string>
+
+    <string name="message_close_loan_request">
+    ऋण: %1$s\n
+
+    ऋण राशि: %2$s\n
+    बकाया: %3$s\n
+    वर्तमान ईएमआई: %4$s\n
+    संभावित समापन राशि: %5$s\n
+
+    नोट: अंतिम समापन राशि मॉडरेटर द्वारा निर्धारित की जाएगी।\n
+
+    क्या आप ऋण बंद करने का अनुरोध करना चाहते हैं?
+    </string>
 </resources>

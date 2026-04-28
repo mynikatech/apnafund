@@ -47,7 +47,7 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
 
     private fun observePendingRequests() {
         lifecycleScope.launch {
-            val requests = approvalViewModel.getPendingApprovals(SessionManager.userId)
+            val requests = approvalViewModel.getPendingApprovalsWithDetails(SessionManager.userId)
             updateUI(requests)
         }
     }
@@ -65,6 +65,9 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
 
                     ApnaBankConstants.TEXT_LOAN ->
                         approvalViewModel.approveLoan(item.approvalId, SessionManager.userId)
+
+                    ApnaBankConstants.TEXT_LOAN_CLOSURE ->
+                        approvalViewModel.approveLoanClosure(item.approvalId, SessionManager.userId)
                 }
                 val currentList = adapter.getItems().toMutableList()
                 currentList.removeAt(position)
@@ -110,6 +113,9 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
 
                     ApnaBankConstants.TEXT_LOAN ->
                         approvalViewModel.rejectLoan(item.approvalId, SessionManager.userId)
+
+                    ApnaBankConstants.TEXT_LOAN_CLOSURE ->
+                        approvalViewModel.rejectLoanClosure(item.approvalId, SessionManager.userId)
                 }
                 val currentList = adapter.getItems().toMutableList()
                 currentList.removeAt(position)

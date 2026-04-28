@@ -35,6 +35,7 @@ object ApnaBankConstants {
     const val MESSAGE_NOT_PART_OF_ANY_GROUP = "Group: Not part of any Group yet"
     const val TEXT_GROUP = "GROUP"
     const val TEXT_LOAN = "LOAN"
+    const val TEXT_LOAN_CLOSURE = "LOAN_CLOSURE"
     const val TEXT_EMAIL_VERIFY = "EMAIL_VERIFY"
     const val TEXT_WEAK = "WEAK"
     const val TEXT_ADD_LOAN_DIALOG = "AddLoanDialog"

@@ -52,6 +52,39 @@ class ApprovalApiKtor(
         }.unwrap<Boolean>()
     }
 
+    override suspend fun approveLoanClosure(approvalId: Int, approverId: Int): Boolean {
+        return client.post("/approvals/$approvalId/approve")
+        {
+            contentType(ContentType.Application.Json)
+            setBody(
+                ApproveApprovalWorkflowDto(
+                    approvalId = approvalId,
+                    approverId = approverId,
+                    reason = "Approved"
+                )
+            )
+        }.unwrap<Boolean>()
+
+    }
+
+    override suspend fun rejectLoanClosure(
+        approvalId: Int,
+        rejectorId: Int,
+        reason: String?
+    ): Boolean {
+
+        return client.post("/approvals/$approvalId/reject") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                RejectApprovalWorkflowDto(
+                    approvalId = approvalId,
+                    rejectorId = rejectorId,
+                    reason = reason
+                )
+            )
+        }.unwrap<Boolean>()
+    }
+
     override suspend fun approveGroup(approvalId: Int, approverId: Int): Boolean {
         return client.post("/approvals/$approvalId/approve")
         {

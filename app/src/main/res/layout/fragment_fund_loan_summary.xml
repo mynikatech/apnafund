@@ -278,6 +278,18 @@
                     android:textStyle="bold"
                     android:padding="8dp"/>
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="140dp"
+                    android:background="@drawable/table_cell_shape"
+                    android:textColor="?attr/colorOnPrimary"
+                    android:backgroundTint="?attr/colorPrimary"
+                    android:text="@string/label_action"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:padding="8dp"/>
+
             </TableRow>
 
         </TableLayout>

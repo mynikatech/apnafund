@@ -11,60 +11,282 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="12dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="12dp">
 
-        <!-- Moderator Name -->
-        <TextView
-            android:id="@+id/text_moderator_name"
+        <LinearLayout
+            android:id="@+id/layout_group"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Moderator: Sunil Agarwal"
-            android:textAppearance="?attr/textAppearanceSubtitle1"
-            android:textStyle="bold" />
+            android:visibility="gone"
+            android:orientation="vertical">
 
-        <!-- Group Name -->
-        <TextView
-            android:id="@+id/text_group_name"
+            <TextView
+                android:id="@+id/text_context_group"
+                style="@style/FundLabel"
+                android:text="@string/label_group_req_pending_approval"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+
+            <!-- Row 1 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <!-- Moderator -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView style="@style/FundLabel" android:text="@string/text_moderator"/>
+                    <TextView
+                        android:id="@+id/text_moderator"
+                        style="@style/FundValue"
+                        android:layout_marginStart="6dp"/>
+                </LinearLayout>
+
+                <!-- Group -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView style="@style/FundLabel" android:text="@string/header_single_group"/>
+                    <TextView
+                        android:id="@+id/text_group_name"
+                        style="@style/FundValue"
+                        android:layout_marginStart="6dp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Row 2 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView style="@style/FundLabel" android:text="@string/text_description"/>
+                <TextView
+                    android:id="@+id/text_group_description"
+                    style="@style/FundValue"
+                    android:layout_width="wrap_content"
+                    android:layout_marginTop="3dp"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ================= LOAN SECTION ================= -->
+
+        <LinearLayout
+            android:id="@+id/layout_loan"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Group: Powai Residents Group"
-            android:textAppearance="?attr/textAppearanceBody2"
-            android:layout_marginTop="2dp" />
+            android:orientation="vertical"
+            android:visibility="gone">
 
-        <!-- Description (optional) -->
-        <TextView
-            android:id="@+id/text_group_description"
+            <TextView
+                android:id="@+id/text_context_loan"
+                style="@style/FundLabel"
+                android:text="@string/label_loan_req_pending_approval"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+
+            <!-- Row 1 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <!-- Borrower -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView style="@style/FundLabel" android:text="@string/text_borrower"/>
+                    <TextView
+                        android:id="@+id/text_loan_borrower"
+                        style="@style/FundValue"
+                        android:layout_marginStart="6dp"/>
+                </LinearLayout>
+
+                <!-- Amount -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView style="@style/FundLabel" android:text="@string/text_amount"/>
+                    <TextView
+                        android:id="@+id/text_loan_amount"
+                        style="@style/FundValue"
+                        android:layout_marginStart="6dp"/>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Row 2 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <!-- Period -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView style="@style/FundLabel" android:text="@string/text_loan_period"/>
+                    <TextView
+                        android:id="@+id/text_loan_period"
+                        style="@style/FundValue"
+                        android:layout_marginStart="6dp"/>
+                </LinearLayout>
+
+                <!-- Interest -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView style="@style/FundLabel" android:text="@string/text_interest_rate"/>
+                    <TextView
+                        android:id="@+id/text_loan_interest"
+                        style="@style/FundValue"
+                        android:layout_marginStart="6dp"/>
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ================= LOAN CLOSURE SECTION ================= -->
+
+        <LinearLayout
+            android:id="@+id/layout_loan_closure"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Description: Fund for community welfare."
-            android:textAppearance="?attr/textAppearanceCaption"
-            android:layout_marginTop="2dp" />
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/text_context_closure"
+                style="@style/FundLabel"
+                android:text="@string/label_loan_closure_req_pending_approval"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+
+            <!-- Row 1 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <!-- Borrower -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView style="@style/FundLabel" android:text="@string/text_borrower"/>
+                    <TextView
+                        android:id="@+id/text_closure_borrower"
+                        style="@style/FundValue"
+                        android:layout_marginStart="6dp"/>
+                </LinearLayout>
+
+                <!-- Loan No -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView style="@style/FundLabel" android:text="@string/text_loan_num"/>
+                    <TextView
+                        android:id="@+id/text_closure_loan_number"
+                        style="@style/FundValue"
+                        android:layout_marginStart="6dp"/>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Row 2 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <!-- Requested -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView style="@style/FundLabel" android:text="@string/label_requested"/>
+                    <TextView
+                        android:id="@+id/text_requested_amount"
+                        style="@style/FundValue"
+                        android:layout_marginStart="6dp"/>
+                </LinearLayout>
+
+                <!-- Outstanding -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView style="@style/FundLabel" android:text="@string/text_outstanding"/>
+                    <TextView
+                        android:id="@+id/text_outstanding"
+                        style="@style/FundValue"
+                        android:layout_marginStart="6dp"/>
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
 
         <!-- Action Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:orientation="horizontal"
-            android:gravity="end">
+            android:gravity="end"
+            android:orientation="horizontal">
 
             <Button
                 android:id="@+id/button_reject"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/button_reject"
-                android:textColor="@android:color/white"
+                android:layout_marginEnd="8dp"
                 android:backgroundTint="@android:color/holo_red_light"
-                android:layout_marginEnd="8dp" />
+                android:text="@string/button_reject"
+                android:textColor="@android:color/white" />
 
             <Button
                 android:id="@+id/button_approve"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:backgroundTint="@android:color/holo_green_dark"
                 android:text="@string/button_approve"
-                android:textColor="@android:color/white"
-                android:backgroundTint="@android:color/holo_green_dark" />
+                android:textColor="@android:color/white" />
         </LinearLayout>
 
     </LinearLayout>

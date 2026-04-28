@@ -3,6 +3,7 @@ package com.mynikatech.apnafund.net
 import com.mynikatech.apnafund.data.model.LoanDetails
 import com.mynikatech.apnafund.data.model.LoanEmis
 import com.mynikatech.apnafund.data.model.Loans
+import com.mynikatech.apnafund.net.dto.LoanClosureRequestDto
 import com.mynikatech.apnafund.net.dto.LoanCmplDetailsDto
 import com.mynikatech.apnafund.net.dto.LoanDetailsDto
 import com.mynikatech.apnafund.net.dto.LoanDetailsWithMemberNamesDto
@@ -64,5 +65,8 @@ interface LoansApi {
     suspend fun getTotalCurrIntPaid(userId: Int, fundId: Int): Double
     suspend fun getUserLoanDetails(userId: Int, fundId: Int): UserLoanDetailsDto
 
+    suspend fun requestLoanClosure(loanClosureRequest: LoanClosureRequestDto)
+    suspend fun hasPendingClosureRequest(loanId: Int): Boolean
+    suspend fun closeLoanDirect(loanId: Int, userId: Int)
 
 }

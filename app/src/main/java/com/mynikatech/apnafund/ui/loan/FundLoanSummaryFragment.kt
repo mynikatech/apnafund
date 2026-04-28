@@ -1,15 +1,20 @@
 package com.mynikatech.apnafund.ui.loan
 
+import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.TextUtils
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -18,13 +23,16 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.color.MaterialColors
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
+import com.mynikatech.apnafund.data.mappers.toEntity
+import com.mynikatech.apnafund.data.model.LoanDetailsWithMemberNames
 import com.mynikatech.apnafund.databinding.FragmentFundLoanSummaryBinding
 import com.mynikatech.apnafund.net.dto.LoanDetailsWithMemberNamesDto
+import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.LoansViewModel
 import com.mynikatech.apnafund.util.Converters
+import com.mynikatech.apnafund.util.applyStatusStyle
 import com.mynikatech.apnafund.util.showLoanDetailsSummaryDialog
 import kotlinx.coroutines.launch
-import com.mynikatech.apnafund.util.applyStatusStyle
 
 class FundLoanSummaryFragment : Fragment() {
 
@@ -119,7 +127,8 @@ class FundLoanSummaryFragment : Fragment() {
             getString(R.string.text_issued),
             getString(R.string.text_principal),
             getString(R.string.text_interest),
-            getString(R.string.text_workflow)
+            getString(R.string.text_workflow),
+            getString(R.string.label_action)
         )
 
         headers.forEachIndexed { index, title ->
@@ -197,7 +206,7 @@ class FundLoanSummaryFragment : Fragment() {
             if (i == 3 || i == 4 || i == 5)
                 tv.gravity = Gravity.END
 
-            if(i == 1) {
+            if (i == 1) {
                 tv.applyStatusStyle(value)
             }
 
@@ -211,7 +220,133 @@ class FundLoanSummaryFragment : Fragment() {
             row.addView(tv)
         }
 
+        // ===============================
+        // ACTION COLUMN
+        // ===============================
+
+        val actionLayout = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(8, 4, 8, 4)
+        }
+
+        val closeButton = Button(requireContext()).apply {
+            isAllCaps = false
+            textSize = 12f
+            text = if (SessionManager.isModerator()) getString(R.string.text_close_loan) else getString(R.string.label_close_loan_request)
+        }
+
+        // Disable if already closed
+        if (loan.status.equals(ApnaBankConstants.STATUS_CLOSED, true) || loan.status.equals(ApnaBankConstants.STATUS_REJECTED, true) ) {
+            closeButton.isEnabled = false
+        }
+
+        closeButton.setOnClickListener {
+
+            if (loan.status.equals(ApnaBankConstants.STATUS_CLOSED, true)) {
+                Toast.makeText(context,
+                    getString(R.string.error_loan_already_closed), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (SessionManager.isModerator()) {
+                showDirectClosureConfirmation(loan.toEntity())
+            } else {
+                checkPendingAndProceed(loan.toEntity())
+            }
+
+        }
+
+        actionLayout.addView(closeButton)
+
+        row.addView(actionLayout)
+
         binding.tableLoans.addView(row)
+    }
+
+    private fun showDirectClosureConfirmation(loan: LoanDetailsWithMemberNames) {
+
+        val message = getString(R.string.message_close_loan_direct, loan.loanNumber,  Converters.formatCurrency(loan.currPrincipal))
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.title_close_loan_moderator))
+            .setMessage(message)
+            .setPositiveButton(getString(R.string.text_close_loan)) { _, _ ->
+                loansViewModel.closeLoanDirect(loan.loanId ?: return@setPositiveButton, SessionManager.userId)
+            }
+            .setNegativeButton(getString(R.string.text_cancel_button), null)
+            .show()
+    }
+
+
+    private fun checkPendingAndProceed(loan: LoanDetailsWithMemberNames) {
+
+        lifecycleScope.launch {
+
+            try {
+                val loanId = loan.loanId
+                if (loanId == null) {
+                    Toast.makeText(requireContext(),
+                        getString(R.string.error_invalid_loan), Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                val isPending = loansViewModel.hasPendingClosureRequest(loanId)
+                if (isPending) {
+
+                    AlertDialog.Builder(requireContext())
+                        .setTitle(getString(R.string.title_request_pending))
+                        .setMessage(
+                            getString(R.string.message_loan_closure_request_pending)
+                        )
+                        .setPositiveButton(getString(R.string.text_button_ok), null)
+                        .show()
+
+                } else {
+                    showCloseLoanConfirmation(loan)
+                }
+
+            } catch (e: Exception) {
+                Log.e("checkPendingAndProceed", e.message.toString())
+
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.error_server),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    private fun showCloseLoanConfirmation(loan: LoanDetailsWithMemberNames) {
+
+        val tentativeClosureAmount =
+            (loan.currPrincipal) + (loan.emiInterest)
+
+        val message = getString(
+            R.string.message_close_loan_request,
+            loan.loanNumber,
+            Converters.formatCurrency(loan.loanAmount),
+            Converters.formatCurrency(loan.currPrincipal),
+            Converters.formatCurrency(loan.emiInterest),
+            Converters.formatCurrency(tentativeClosureAmount)
+        )
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.text_close_loan))
+            .setMessage(message)
+            .setPositiveButton(getString(R.string.text_button_ok)) { _, _ ->
+                raiseLoanClosureRequest(loan)
+            }
+            .setNegativeButton(getString(R.string.text_cancel_button), null)
+            .show()
+    }
+
+    private fun raiseLoanClosureRequest(loan: LoanDetailsWithMemberNames) {
+        loan.loanId?.let { loanId ->
+            loansViewModel.requestLoanClosure(
+                loanId = loanId,
+                requestedAmount = loan.loanAmount, // optional
+                remarks = "User requested closure"
+            )
+        }
     }
 
     private fun updateSummary(loans: List<LoanDetailsWithMemberNamesDto>) {

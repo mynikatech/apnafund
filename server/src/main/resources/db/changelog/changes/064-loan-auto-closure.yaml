@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 064-loan-close-auto-approval
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/064-loan-close-auto-approval.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

@@ -155,6 +155,7 @@ class UserSummaryFragment : Fragment() {
         binding.fabAssistant.setOnClickListener {
             findNavController().navigate(R.id.aiChatFragment)
         }
+        setupObservers()
 
         userSummaryViewModel.userName.observe(viewLifecycleOwner) { nameFromVm ->
 
@@ -284,8 +285,13 @@ class UserSummaryFragment : Fragment() {
                     }
                 },
                 onCloseLoanClick = { loan ->
-                    // 👇 implement this
-                    showCloseLoanConfirmation(loan)
+                    val isModerator = SessionManager.isModerator()
+
+                    if (isModerator) {
+                        showDirectClosureConfirmation(loan)
+                    } else {
+                        checkPendingAndProceed(loan)
+                    }
                 }
             )
             binding.recyclerViewLoans.adapter = adapter
@@ -312,6 +318,17 @@ class UserSummaryFragment : Fragment() {
             binding.chipGroupName.isClickable =
                 SessionManager.isMultiGroupUser()
 
+        }
+
+        loanViewModel.closeLoanResult.observe(viewLifecycleOwner) { result ->
+
+            result.onSuccess {
+                Toast.makeText(requireContext(), "Loan closed successfully", Toast.LENGTH_SHORT).show()
+            }
+
+            result.onFailure {
+                Toast.makeText(requireContext(), it.message ?: "Failed", Toast.LENGTH_SHORT).show()
+            }
         }
         binding.chipGroupName.setOnClickListener {
 
@@ -460,6 +477,20 @@ class UserSummaryFragment : Fragment() {
         }
     }
 
+    private fun showDirectClosureConfirmation(loan: LoanDetailsWithMemberNames) {
+
+        val message = getString(R.string.message_close_loan_direct, loan.loanNumber,  Converters.formatCurrency(loan.currPrincipal))
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.title_close_loan_moderator))
+            .setMessage(message)
+            .setPositiveButton(getString(R.string.text_close_loan)) { _, _ ->
+                loanViewModel.closeLoanDirect(loan.loanId ?: return@setPositiveButton, SessionManager.userId)
+            }
+            .setNegativeButton(getString(R.string.text_cancel_button), null)
+            .show()
+    }
+
     private fun updateFundExpandUI() {
         binding.lineFundDetails.visibility =
             if (isFundExpanded) View.VISIBLE else View.GONE
@@ -474,12 +505,24 @@ class UserSummaryFragment : Fragment() {
     }
 
     private fun showCloseLoanConfirmation(loan: LoanDetailsWithMemberNames) {
+
+        val tentativeClosureAmount =
+            (loan.currPrincipal) + (loan.emiInterest)
+
+        val message = getString(
+            R.string.message_close_loan_request,
+            loan.loanNumber,
+            Converters.formatCurrency(loan.loanAmount),
+            Converters.formatCurrency(loan.currPrincipal),
+            Converters.formatCurrency(loan.emiInterest),
+            Converters.formatCurrency(tentativeClosureAmount)
+        )
+
         AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.text_close_loan))
-            .setMessage(getString(R.string.message_confirm_loan_close))
+            .setMessage(message)
             .setPositiveButton(getString(R.string.text_button_ok)) { _, _ ->
-                // call ViewModel to close loan
-                //loansViewModel.closeLoan(loan.loanId)
+                raiseLoanClosureRequest(loan)
             }
             .setNegativeButton(getString(R.string.text_cancel_button), null)
             .show()
@@ -1000,6 +1043,65 @@ class UserSummaryFragment : Fragment() {
                     userSummaryViewModel.loadFundDetails(userId, selectedFund.fundId)
                 }
                 .show()
+        }
+    }
+    private fun raiseLoanClosureRequest(loan: LoanDetailsWithMemberNames) {
+        loan.loanId?.let { loanId ->
+            loanViewModel.requestLoanClosure(
+                loanId = loanId,
+                requestedAmount = loan.loanAmount, // optional
+                remarks = "User requested closure"
+            )
+        }
+    }
+    private fun setupObservers() {
+
+        loanViewModel.closureRequestStatus.observe(viewLifecycleOwner) { result ->
+
+            result.onSuccess { message ->
+                Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+            }
+
+            result.onFailure { error ->
+                Toast.makeText(
+                    requireContext(),
+                    error.message ?: "Failed to request closure",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
+    private fun checkPendingAndProceed(loan: LoanDetailsWithMemberNames) {
+
+        lifecycleScope.launch {
+
+            try {
+
+                val isPending = loanViewModel.hasPendingClosureRequest(loan.loanId ?: 0)
+                if (isPending) {
+
+                    AlertDialog.Builder(requireContext())
+                        .setTitle(getString(R.string.title_request_pending))
+                        .setMessage(
+                            getString(R.string.message_loan_closure_request_pending)
+                        )
+                        .setPositiveButton(getString(R.string.text_button_ok), null)
+                        .show()
+
+                } else {
+                    showCloseLoanConfirmation(loan)
+                }
+
+            } catch (e: Exception) {
+                Log.e("checkPendingAndProceed", e.message.toString())
+
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.error_server),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
     }
 }

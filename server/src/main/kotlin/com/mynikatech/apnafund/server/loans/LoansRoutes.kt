@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund.server.loans
 
 import com.mynikatech.apnafund.net.dto.InsertWithLoanDetailsRequest
+import com.mynikatech.apnafund.net.dto.LoanClosureRequestDto
 import com.mynikatech.apnafund.net.dto.LoanDetailsDto
 import com.mynikatech.apnafund.net.dto.LoanEmisDto
 import com.mynikatech.apnafund.net.dto.LoansDto
@@ -373,6 +374,66 @@ fun Route.loansRoutes(
             val row = sql.getUserLoanDetails(uid, fid).firstOrNull()
             if (row != null) call.respondOk(row) else call.respondOk(HttpStatusCode.NoContent)
         }
+        get("/hasPendingReq/{loanId}") {
+
+            val loanId = call.parameters["loanId"]?.toIntOrNull()
+                ?: return@get call.respondError(
+                    HttpStatusCode.BadRequest,
+                    "validation",
+                    "loanId required"
+                )
+
+            val isPending = sql.hasPendingClosureRequest(loanId)
+
+            call.respondOk(isPending)
+        }
+
+        post("/close/direct") {
+
+            val req = call.receive<Map<String, Int>>()
+            val loanId = req["loanId"]
+                ?: return@post call.respondError(
+                    HttpStatusCode.BadRequest,
+                    "validation",
+                    "loanId required"
+                )
+
+            val loan = sql.getLoanById(loanId)
+                ?: return@post call.respondError(
+                    HttpStatusCode.NotFound,
+                    "validation",
+                    "Loan not found"
+                )
+
+            val fund = fundSql.getFund(loan.fundId).first()
+            val userId = req["userId"]
+
+            if (userId != fund.moderator) {
+                return@post call.respondError(
+                    HttpStatusCode.Forbidden,
+                    "auth",
+                    "Only moderator can close loan"
+                )
+            }
+
+            // Direct close
+            sql.closeLoanByApproval(loanId, userId)
+
+            // Optional audit
+            approvalSql.createAutoApprovedClosure(loanId, userId)
+
+            //  Notify
+            notificationService.notifyLoanClosed(
+                loanId,
+                fund.fundId!!,
+                fund.fundName,
+                users.getUserById(loan.borrowerId),
+                "FORECLOSURE",
+                users.getUserById(userId).fullName
+            )
+
+            call.respondOk(Unit)
+        }
 
         // ---- EMIs ----
         route("emis") {
@@ -514,7 +575,65 @@ fun Route.loansRoutes(
                 call.respondOk(rows)
             }
         }
+        post("closure/request") {
 
+            val req = call.receive<LoanClosureRequestDto>()
+            val loanId = req.loanId
+
+            val loanDetails = sql.getLoanComplete(loanId).firstOrNull()
+                ?: return@post call.respondError(
+                    HttpStatusCode.NotFound,
+                    "not_found",
+                    "Loan not found"
+                )
+
+            val fund = fundSql.getFund(loanDetails.fundId).firstOrNull()
+                ?: return@post call.respondError(
+                    HttpStatusCode.NotFound,
+                    "not_found",
+                    "Fund not found"
+                )
+
+            val borrowerUser = users.getUserById(loanDetails.borrowerId)
+            val moderatorUser = users.getUserById(fund.moderator)
+            // Already closed
+            if (loanDetails.status == "CLOSED") {
+                return@post call.respondError(
+                    HttpStatusCode.BadRequest,
+                    "validation",
+                    "Loan is already closed"
+                )
+            }
+
+            val success = approvalSql.createLoanClosureApproval(
+                loanId = loanId,
+                requestedBy = loanDetails.borrowerId,
+                approver = fund.moderator,
+                closureType = "FORECLOSURE",
+                requestedAmount = req.requestedAmount,
+                remarks = req.remarks
+            )
+
+            if (!success) {
+                return@post call.respondError(
+                    HttpStatusCode.InternalServerError,
+                    "server_error",
+                    "Failed to create loan closure request"
+                )
+            }
+
+            notificationService.notifyLoanClosureRequested(
+                loanId = loanId,
+                fundId = fund.fundId!!,
+                fundName = fund.fundName,
+                borrowerName = borrowerUser.fullName,
+                moderator = moderatorUser,
+                requestedAmount = req.requestedAmount,
+                remarks = req.remarks
+            )
+
+            call.respondOk(Unit, HttpStatusCode.NoContent)
+        }
         // ---- Details ----
         route("details") {
 

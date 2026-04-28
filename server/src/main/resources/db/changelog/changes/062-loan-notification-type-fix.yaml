@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 062-loan-notification-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/062-loan-notification-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

@@ -146,4 +146,26 @@ interface LoansSql {
     fun getLoanById(
         @Bind("loanId") loanId: Int
     ): LoansDto?
+
+    @SqlQuery(
+        """
+    SELECT close_loan_by_approval(
+        :loanId,
+        :approvedBy
+    )
+    """
+    )
+    fun closeLoanByApproval(
+        @Bind("loanId") loanId: Int,
+        @Bind("approvedBy") approvedBy: Int
+    ): Boolean
+
+    @SqlQuery("""
+    SELECT has_pending_loan_closure_request(:loanId)
+""")
+    fun hasPendingClosureRequest(
+        @Bind("loanId") loanId: Int
+    ): Boolean
+
+
 }

@@ -23,6 +23,12 @@ class LoansViewModel: ViewModel() {
     private val _fundLoans = MutableLiveData<List<LoanDetailsWithMemberNamesDto>>()
     val fundLoans: LiveData<List<LoanDetailsWithMemberNamesDto>> = _fundLoans
 
+    private val _closureRequestStatus = MutableLiveData<Result<String>>()
+    val closureRequestStatus: LiveData<Result<String>> = _closureRequestStatus
+
+    private val _closeLoanResult = MutableLiveData<Result<Unit>>()
+    val closeLoanResult: LiveData<Result<Unit>> = _closeLoanResult
+
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun getAllLoanEmisForFundForMonthYear(
         fundId: Int,
@@ -111,6 +117,45 @@ class LoansViewModel: ViewModel() {
                 Log.e("LoansViewModel", "Error loading fund loans", e)
 
                 _fundLoans.postValue(emptyList())
+            }
+        }
+    }
+
+    fun requestLoanClosure(
+        loanId: Int,
+        requestedAmount: Double?,
+        remarks: String?
+    ) {
+        viewModelScope.launch {
+            try {
+                loanRepository.requestLoanClosure(
+                    loanId = loanId,
+                    requestedAmount = requestedAmount,
+                    remarks = remarks
+                )
+                _closureRequestStatus.postValue(
+                    Result.success("Closure request sent to moderator")
+                )
+            } catch (e: Exception) {
+                Log.e("LoansViewModel", "Error requesting closure", e)
+                _closureRequestStatus.postValue(
+                    Result.failure(e)
+                )
+            }
+        }
+    }
+
+    suspend fun hasPendingClosureRequest(loanId: Int): Boolean {
+        return loanRepository.hasPendingClosureRequest(loanId)
+    }
+
+    fun closeLoanDirect(loanId: Int, userId: Int) {
+        viewModelScope.launch {
+            try {
+                loanRepository.closeLoanDirect(loanId, userId)
+                _closeLoanResult.postValue(Result.success(Unit))
+            } catch (e: Exception) {
+                _closeLoanResult.postValue(Result.failure(e))
             }
         }
     }
