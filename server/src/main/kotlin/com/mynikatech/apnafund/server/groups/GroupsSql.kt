@@ -3,6 +3,7 @@ package com.mynikatech.apnafund.server.groups
 import com.mynikatech.apnafund.net.dto.GroupMemberWithNameDto
 import com.mynikatech.apnafund.net.dto.GroupMembersDto
 import com.mynikatech.apnafund.net.dto.GroupsDto
+import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
 import org.jdbi.v3.sqlobject.kotlin.RegisterKotlinMapper
 import org.jdbi.v3.sqlobject.customizer.Bind
 import org.jdbi.v3.sqlobject.kotlin.BindKotlin
@@ -17,6 +18,9 @@ interface GroupsSql {
 
     @SqlQuery("""SELECT * FROM get_groups()""")
     fun getAllGroups(): List<GroupsDto>
+
+    @SqlQuery("""SELECT * FROM get_groups_with_moderator_info()""")
+    fun getAllGroupsWithModeratorInfo(): List<GroupsWithModeratorDto>
 
     @SqlQuery("""SELECT * FROM get_group(:id)""")
     fun getGroup(@Bind("id") id: Int): List<GroupsDto>   // returns 0..1 row; caller can firstOrNull()

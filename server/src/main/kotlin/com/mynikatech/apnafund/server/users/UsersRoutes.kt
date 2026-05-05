@@ -13,6 +13,7 @@ import com.mynikatech.apnafund.net.dto.SendEmailVerificationReq
 import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
 import com.mynikatech.apnafund.net.dto.UserFundDetailsDto
 import com.mynikatech.apnafund.net.dto.UserPinHistoryDto
+import com.mynikatech.apnafund.net.dto.UserStatusResponse
 import com.mynikatech.apnafund.net.dto.UsersDto
 import com.mynikatech.apnafund.net.dto.ValidateUserRequest
 import com.mynikatech.apnafund.net.dto.VerifyEmailReq
@@ -58,8 +59,8 @@ fun Route.usersRoutes(
 
     get("get/for-moderator/{userId}") {
         val userId = call.parameters["userId"]?.toIntOrNull()
-        if( null == userId) {
-            call.respond(HttpStatusCode.BadRequest, "userId required");
+        if (null == userId) {
+            call.respond(HttpStatusCode.BadRequest, "userId required")
             return@get
         }
         call.safeRoute(
@@ -111,11 +112,17 @@ fun Route.usersRoutes(
             clientMessage = "Failed to fetch user"
         ) {
             val user = users.getUserByEmail(email).firstOrNull()
-                ?: return@get call.respondError(
-                    HttpStatusCode.NotFound,
-                    "not_found",
-                    "User not found"
+
+            if (user == null) {
+                return@get call.respondOk(
+                    LoginUserResponse(
+                        user = null,
+                        groups = emptyList(),
+                        pendingGroups = emptyList(),
+                        firebaseToken = ""
+                    )
                 )
+            }
 
             val userId = user.userId
                 ?: return@get call.respondError(
@@ -124,6 +131,7 @@ fun Route.usersRoutes(
                     "Invalid userId"
                 )
             val userGroups = users.getBasicGroupsForUser(userId)
+            val pendingGroups = users.getBasicPendingGroupsForUser(userId)
 
             val firebaseToken = FirebaseTokenService.generateFirebaseCustomToken(
                 userId = userId,
@@ -135,6 +143,7 @@ fun Route.usersRoutes(
                 LoginUserResponse(
                     user = user,
                     groups = userGroups,
+                    pendingGroups = pendingGroups,
                     firebaseToken = firebaseToken
                 )
             )
@@ -154,12 +163,17 @@ fun Route.usersRoutes(
             clientMessage = "Failed to fetch user"
         ) {
             val u = users.getUserByPhone(phone).firstOrNull()
-                ?: return@get call.respondError(
-                    HttpStatusCode.NotFound,
-                    "not_found",
-                    "User not found"
-                )
 
+            if (u == null) {
+                return@get call.respondOk(
+                    LoginUserResponse(
+                        user = null,
+                        groups = emptyList(),
+                        pendingGroups = emptyList(),
+                        firebaseToken = ""
+                    )
+                )
+            }
             val userId = u.userId
                 ?: return@get call.respondError(
                     HttpStatusCode.InternalServerError,
@@ -167,6 +181,7 @@ fun Route.usersRoutes(
                     "Invalid userId"
                 )
             val userGroups = users.getBasicGroupsForUser(userId)
+            val pendingGroups = users.getBasicPendingGroupsForUser(userId)
 
             val firebaseToken = FirebaseTokenService.generateFirebaseCustomToken(
                 userId = userId,
@@ -178,6 +193,7 @@ fun Route.usersRoutes(
                 LoginUserResponse(
                     user = u,
                     groups = userGroups,
+                    pendingGroups = pendingGroups,
                     firebaseToken = firebaseToken
                 )
             )
@@ -226,8 +242,10 @@ fun Route.usersRoutes(
             }
             val userRoles = userRoles.getRolesOfUser(id)
             val userGroups = users.getBasicGroupsForUser(id)
+            val pendingGroups = users.getBasicPendingGroupsForUser(id)
             rows.groups = userGroups
             rows.roles = userRoles
+            rows.pendingGroups = pendingGroups
             rows
         }
     }
@@ -249,6 +267,32 @@ fun Route.usersRoutes(
 
             users.getGroupMember(userId, groupId).firstOrNull()
                 ?: throw NoSuchElementException("Group member not found")
+        }
+    }
+    get("/status") {
+        val email = call.request.queryParameters["email"]
+
+        if (email.isNullOrBlank()) {
+            call.respond(HttpStatusCode.BadRequest, "Email required")
+            return@get
+        }
+
+        val user = users.getUserByEmail(email).firstOrNull()
+
+        if (user == null) {
+            call.respond(
+                UserStatusResponse(
+                    exists = false
+                )
+            )
+        } else {
+            call.respond(
+                UserStatusResponse(
+                    exists = true,
+                    isInvited = user.isInvited,
+                    hasPasswordSet = user.passwordHash != null
+                )
+            )
         }
     }
 
@@ -362,6 +406,23 @@ fun Route.usersRoutes(
         }
     }
 
+    get("get/groups-for-moderator-user/moderator-info/{moderatorUserId}") {
+        val userId = call.parameters["moderatorUserId"]?.toIntOrNull()
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "userId required"
+            )
+        call.safeRoute(
+            logMessage = "GET /users/get/groups-for-moderator-user/$userId failed",
+            clientMessage = "Failed to fetch moderator groups"
+        ) {
+
+            users.getGroupsForModeratorUserWithModeratorInfo(userId)
+                ?: throw NoSuchElementException("No group found")
+        }
+    }
+
     get("get/funds-for-user/{userId}") {
         val userId = call.parameters["userId"]?.toIntOrNull()
             ?: return@get call.respondError(
@@ -453,7 +514,7 @@ fun Route.usersRoutes(
         if (dto.emailId.isNullOrBlank()) {
             call.respond(HttpStatusCode.BadRequest, "emailId required"); return@post
         }
-        val id = users.upsertUserByEmail(dto)
+        val id = users.upsertUserByEmail(dto, 1)
         try {
             val event = UserNotificationFactory.userRegistered(
                 userId = id.toString(),
@@ -481,7 +542,7 @@ fun Route.usersRoutes(
         if (dto.emailId.isNullOrBlank()) {
             call.respond(HttpStatusCode.BadRequest, "emailId required"); return@put
         }
-        users.upsertUserByEmail(dto)
+        users.upsertUserByEmail(dto, 1)
 
         try {
             val event = UserNotificationFactory.userUpdated(
@@ -749,15 +810,15 @@ fun Route.usersRoutes(
             return@post
         }
 
-        // ✅ Force correct identity
+        // Force correct identity
         val user = existing.first()
 
         val updatedDto = user.copy(
             firebaseUserId = req.firebaseUserId
         )
 
-        // ✅ Reuse existing UPSERT
-        users.upsertUserByEmail(updatedDto)
+        // Reuse existing UPSERT
+        users.upsertUserByEmail(updatedDto, 1) // update is done by the system hence hardcoding to 1 for now.
 
         call.respond(HttpStatusCode.NoContent)
     }
@@ -793,6 +854,7 @@ fun Route.usersRoutes(
     }
 
 }
+
 inline suspend fun <reified T> ApplicationCall.safeRoute(
     logMessage: String,
     clientMessage: String,

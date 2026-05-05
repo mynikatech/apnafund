@@ -52,11 +52,13 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
         }
     }
 
-    override fun onApproveClicked(item: PendingApprovalDto, position: Int) {
 
+    override fun onApproveClicked(item: PendingApprovalDto, position: Int) {
+        updateProcessingState(position, true)
         lifecycleScope.launch {
 
             try {
+
 
                 when (item.entityType) {
 
@@ -77,7 +79,7 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
                     requireContext(),
                     getString(R.string.text_approved), Toast.LENGTH_SHORT
                 ).show()
-                observePendingRequests()
+                //observePendingRequests()
 
             } catch (e: io.ktor.client.plugins.HttpRequestTimeoutException) {
                 Log.e("PendingApprovalFragment", e.message.toString())
@@ -86,7 +88,7 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
                     getString(R.string.error_request_timed_out),
                     Toast.LENGTH_LONG
                 ).show()
-                adapter.notifyItemChanged(position)
+                updateProcessingState(position, false)
 
             } catch (ex: Exception) {
 
@@ -96,12 +98,13 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
                     getString(R.string.error_server),
                     Toast.LENGTH_LONG
                 ).show()
-                adapter.notifyItemChanged(position)
+                updateProcessingState(position, false)
             }
         }
     }
 
     override fun onRejectClicked(item: PendingApprovalDto, position: Int) {
+        updateProcessingState(position, true)
 
         lifecycleScope.launch {
             try {
@@ -125,7 +128,7 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
                     requireContext(),
                     getString(R.string.text_rejected), Toast.LENGTH_SHORT
                 ).show()
-                observePendingRequests()
+                //observePendingRequests()
             } catch (e: io.ktor.client.plugins.HttpRequestTimeoutException) {
                 Log.e("PendingApprovalFragment", e.message.toString())
                 Toast.makeText(
@@ -133,7 +136,7 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
                     getString(R.string.error_request_timed_out),
                     Toast.LENGTH_LONG
                 ).show()
-                adapter.notifyItemChanged(position)
+                updateProcessingState(position, false)
 
             } catch (e: Exception) {
                 Log.e("PendingApprovalFragment", e.message.toString())
@@ -142,7 +145,7 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
                     getString(R.string.error_server),
                     Toast.LENGTH_LONG
                 ).show()
-                adapter.notifyItemChanged(position)
+                updateProcessingState(position, false)
             }
         }
     }
@@ -157,5 +160,14 @@ class PendingApprovalFragment : Fragment(), PendingApprovalAdapter.OnActionClick
 
         binding.layoutEmpty.visibility =
             if (isEmpty) View.VISIBLE else View.GONE
+    }
+
+    private fun updateProcessingState(position: Int, isProcessing: Boolean) {
+        val currentList = adapter.getItems().toMutableList()
+
+        if (position < 0 || position >= currentList.size) return
+
+        currentList[position] = currentList[position].copy(isProcessing = isProcessing)
+        adapter.updateList(currentList)
     }
 }

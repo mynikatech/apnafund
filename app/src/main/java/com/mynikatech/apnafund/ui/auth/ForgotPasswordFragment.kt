@@ -68,7 +68,12 @@ class ForgotPasswordFragment : Fragment() {
                     binding.buttonSendResetCode.isEnabled = true
                     return@launch
                 }
-                val user = loginResponse.user.toEntity()
+                val user = loginResponse.user?.toEntity()
+                if (user == null) {
+                    showToast(getString(R.string.error_user_not_found))
+                    binding.buttonSendResetCode.isEnabled = true
+                    return@launch
+                }
                 val resp = try {
                     userViewModel.resendEmailVerification(
                         userId = user.userId,

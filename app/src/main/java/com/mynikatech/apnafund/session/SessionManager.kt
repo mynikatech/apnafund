@@ -23,6 +23,7 @@ object SessionManager {
     private lateinit var prefs: SharedPreferences
     var isFirebaseSynced: Boolean = false
     var userGroups: List<UserGroup>? = emptyList()
+    var userPendingGroups: List<UserGroup>? = emptyList()
 
     val hasValidSession: Boolean
         get() = userId > 0

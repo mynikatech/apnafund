@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 068-add-isinvite-user
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/068-add-isinvite-user.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

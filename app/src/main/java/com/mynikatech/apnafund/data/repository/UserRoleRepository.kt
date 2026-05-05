@@ -26,6 +26,7 @@ import com.mynikatech.apnafund.net.UsersApi
 import com.mynikatech.apnafund.net.dto.BootstrapData
 import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
 import com.mynikatech.apnafund.net.dto.GroupsDto
+import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
 import com.mynikatech.apnafund.net.dto.LoginUserResponse
 import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
 import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
@@ -35,6 +36,7 @@ import com.mynikatech.apnafund.net.dto.SaveOrUpdateUserResponse
 import com.mynikatech.apnafund.net.dto.SendEmailVerificationReq
 import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
 import com.mynikatech.apnafund.net.dto.UpdateFirebaseUidReq
+import com.mynikatech.apnafund.net.dto.UserStatusResponse
 import com.mynikatech.apnafund.net.dto.UsersDto
 import com.mynikatech.apnafund.net.dto.VerifyEmailReq
 import kotlinx.coroutines.Dispatchers
@@ -416,5 +418,13 @@ class UserRoleRepository(
 
     suspend fun getGroupsForModeratorUser(userId: Int): List<GroupsDto> {
         return usersApi.getGroupsForModeratorUser(userId)
+    }
+
+    suspend fun getGroupsForModeratorUserWithModInfo(userId: Int): List<GroupsWithModeratorDto> {
+        return usersApi.getGroupsForModeratorUserWithModInfo(userId)
+    }
+
+    suspend fun checkUserStatus(email: String): UserStatusResponse {
+        return userRolesApi.checkUserStatus(email)
     }
 }

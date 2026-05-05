@@ -5,5 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AddFundWithDetailsRequest(
     val fund: FundsDto,
-    val details: FundDetailsDto
+    val details: FundDetailsDto,
+    val requestorId: Int
 )

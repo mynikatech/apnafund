@@ -7,6 +7,7 @@ import com.mynikatech.apnafund.net.dto.FundWithDetailsDto
 import com.mynikatech.apnafund.net.dto.FundsDto
 import com.mynikatech.apnafund.net.dto.GroupMembersDto
 import com.mynikatech.apnafund.net.dto.GroupsDto
+import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
 import com.mynikatech.apnafund.net.dto.LoginUserResponse
 import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
 import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
@@ -230,6 +231,13 @@ class UsersApiKtor(
     override suspend fun getGroupsForModeratorUser(userId: Int): List<GroupsDto> =
         try {
             client.get("/users/get/groups-for-moderator-user/$userId").unwrap()
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+    override suspend fun getGroupsForModeratorUserWithModInfo(userId: Int): List<GroupsWithModeratorDto> =
+        try {
+            client.get("/users/get/groups-for-moderator-user//moderator-info/$userId").unwrap()
         } catch (_: Exception) {
             emptyList()
         }

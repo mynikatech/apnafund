@@ -9,6 +9,7 @@ import com.mynikatech.apnafund.data.model.GroupMemberWithName
 import com.mynikatech.apnafund.data.model.GroupMembers
 import com.mynikatech.apnafund.data.model.Groups
 import com.mynikatech.apnafund.net.GroupsApi
+import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -52,6 +53,17 @@ class GroupRepository(
         flow {
             val dtos = api.getAllGroups()
             emit(dtos.map { it.toEntity() })
+        }
+            .catch { e ->
+                Log.e("GroupRepository", "Error fetching groups", e)
+                emit(emptyList())
+            }
+            .flowOn(Dispatchers.IO)
+
+    fun fetchAllGroupsWithModerator(): Flow<List<GroupsWithModeratorDto>> =
+        flow {
+            val dtos = api.getAllGroupsWithModeratorIndo()
+            emit(dtos)
         }
             .catch { e ->
                 Log.e("GroupRepository", "Error fetching groups", e)

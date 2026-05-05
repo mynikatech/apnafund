@@ -29,7 +29,6 @@ class UserSummaryRepository(
 
     suspend fun getGroupForUser(userId: Int) = usersApi.getGroupForUser(userId)
     suspend fun getGroupsForUser(userId: Int) = usersApi.getGroupsForUser(userId)
-    suspend fun getGroupForModeratorUser(userId: Int) = usersApi.getGroupsForModeratorUser(userId)
     suspend fun getFundsForUser(userId: Int) = usersApi.getFundsForUser(userId)
     suspend fun getRateOfInterestforFund(fundId: Int) = fundsApi.getRateOfInterestforFund(fundId)
     suspend fun getTotalDeposit(userId: Int, fundId: Int): Double? {

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 069-add-isnvited-col-rename
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/069-add-isnvited-col-rename.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

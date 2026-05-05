@@ -302,7 +302,7 @@
     <string name="error_otp_verification_failed">OTP verification failed</string>
     <string name="error_phone_verification_failed">Phone verification failed. Please retry.</string>
     <string name="error_login_failed_contact_support">Login failed. Please contact support.</string>
-    <string name="message_enter_email_id">Please enter email Id</string>
+    <string name="message_enter_email_id">Please enter Email Id</string>
     <string name="warn_enter_valid_email">Enter valid email address</string>
     <string name="error_no_user_found_email">No user found with this email</string>
     <string name="error_valid_group_selection">Valid group selection is required</string>
@@ -507,6 +507,56 @@
     Tentative Closure: %5$s\n\n
     Note: Final closure amount will be calculated by moderator.\n\n
     Do you want to request loan closure?
-</string>
+    </string>
+
+    <string name="msg_group_pending_approval">
+    Your group request is pending approval. It will appear here once approved.
+    </string>
+    <string name="msg_pending_limit">
+    You already have multiple group requests pending. Please wait for approval before creating a new group.
+    </string>
+    <string name="label_continue">Continue</string>
+    <string name="msg_pending_warning">
+    You already have pending group request(s). Do you still want to create a new group?
+    </string>
+    <string name="button_set_password">Set Password</string>
+    <string name="error_account_already_exists">Account already exists. Please login.</string>
+    <string name="msg_checking_user_status">Please wait, checking user status...</string>
+    <string name="message_invited_user_set_password">
+    Your account has already been created. Please verify your details and set your password to continue.
+    </string>
+    <string name="error_user_not_found_re_login">User not found. Please re-login.</string>
+    <string name="error_phone_number_registered_login">Phone number already registered. Please login.</string>
+    <string name="error_saving_user">Error saving user</string>
+    <string name="header_join_via_invite">Join via Invite</string>
+    <string name="msg_enter_email_to_continue">Enter your email to continue</string>
+    <string name="label_invited_by">Invited by: -</string>
+    <string name="error_no_invite_found">No Invite found with this Email Id. Please connect with your moderator.</string>
+    <string name="wran_enter_email_to_continue">Please Enter an Email Id to Continue</string>
+    <string name="link_received_invite">Received an invite?</string>
+    <string name="title_no_invite_found">No Invite Found</string>
+    <string name="dialog_no_invite_found_message">
+    We couldn’t find an invite for this email.\n\n
+    If you believe this is a mistake, please contact your group moderator.\n\n
+    Would you like to register instead?
+    </string>
+    <string name="title_account_inactive">Account Inactive</string>
+    <string name="dialog_account_inactive_message">Your account has been deactivated by the moderator/admin.\n\nPlease contact your group moderator to regain access.</string>
+    <string name="msg_go_to_login">Go to Login</string>
+    <string name="title_account_already_verified">Account Already Verified</string>
+    <string name="dialog_account_verified_set_password_message">Your account is already verified.\n\nPlease continue to set your password.</string>
+    <string name="title_invite_found">Invite Found</string>
+    <string name="title_account_exists">Account Exists</string>
+    <string name="dialog_account_exists_login_message">You already have an active account.\n\nPlease login using your credentials.</string>
+    <string name="title_too_many_attempts">Too Many Attempts</string>
+    <string name="dialog_invite_message">
+    You have been invited to join\n\nby: %1$s\n\nDo you want to continue?
+    </string>
+    <string name="dialog_rate_limit_message">You have tried too many times.\n\nPlease wait a moment before trying again.</string>
+    <string name="dialog_invited_verified_set_password_message">
+    An account has already been created for you by %1$s.\n\nYou have verified your account. Please continue to set your password.
+    </string>
+    <string name="text_your_moderator">your moderator</string>
+
 
 </resources>

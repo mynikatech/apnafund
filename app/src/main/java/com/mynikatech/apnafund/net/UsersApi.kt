@@ -5,6 +5,7 @@ import com.mynikatech.apnafund.net.dto.FundWithDetailsDto
 import com.mynikatech.apnafund.net.dto.FundsDto
 import com.mynikatech.apnafund.net.dto.GroupMembersDto
 import com.mynikatech.apnafund.net.dto.GroupsDto
+import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
 import com.mynikatech.apnafund.net.dto.LoginUserResponse
 import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
 import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
@@ -51,6 +52,7 @@ interface UsersApi {
     suspend fun getGroupForUser(userId: Int): GroupsDto?
     suspend fun getGroupsForUser(userId: Int): List<GroupsDto>
     suspend fun getGroupsForModeratorUser(userId: Int): List<GroupsDto>
+    suspend fun getGroupsForModeratorUserWithModInfo(userId: Int): List<GroupsWithModeratorDto>
     suspend fun getFundsForUser(userId: Int): List<FundsDto>
     suspend fun getTotalDeposit(userId: Int, fundId: Int): Double?
     suspend fun getPerMemberExpectedMaturityAmount(fundId: Int): Double?

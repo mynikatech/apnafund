@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 074-add-audit-user-fields
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/074-add-audit-user-fields.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

@@ -11,6 +11,8 @@ class ApprovalViewModel(
 
     private val loanRepository = ApnaFundApplication.loanRepository
 
+    private val groupRepository = ApnaFundApplication.groupRepository
+
     suspend fun getPendingApprovalsWithDetails(userId: Int): List<PendingApprovalDto> {
 
         val approvals = repository.getPendingApprovals(userId)
@@ -37,6 +39,15 @@ class ApprovalViewModel(
                         loanPeriod  = loan?.period.toString(),
                         LoanIntRate = loan?.rateOfInterest.toString()
                    )
+                }
+                "GROUP" -> {
+                    val group = groupRepository.fetchGroup(approval.entityId)
+
+                    approval.copy(
+                        groupName = group?.groupName,
+                        groupDescription = group?.description
+
+                    )
                 }
 
                 else -> approval

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 071-user-audit-fields-support
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/071-user-audit-fields-support.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

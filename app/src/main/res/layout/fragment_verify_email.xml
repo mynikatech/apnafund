@@ -74,7 +74,7 @@
                 android:layout_marginTop="8dp"
                 android:text="@string/text_code_expires"
                 android:textSize="14sp"
-                android:textColor="@color/primary_colour" />
+                android:textColor="?attr/colorOnSurface" />
 
             <Button
                 android:id="@+id/buttonVerify"
@@ -90,7 +90,7 @@
                 android:layout_marginTop="16dp"
                 android:text="@string/message_not_receive"
                 android:textSize="14sp"
-                android:textColor="@android:color/darker_gray" />
+                android:textColor="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/textResendTimer"
@@ -99,7 +99,7 @@
                 android:layout_marginTop="6dp"
                 android:text="@string/text_resend_available"
                 android:textSize="14sp"
-                android:textColor="@android:color/darker_gray" />
+                android:textColor="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/textResend"
@@ -108,7 +108,7 @@
                 android:layout_marginTop="12dp"
                 android:text="@string/message_resend_code"
                 android:textSize="16sp"
-                android:textColor="@color/primary_colour"
+                android:textColor="@color/link_colour"
                 android:enabled="false"
                 android:alpha="0.8" />
 
@@ -120,7 +120,7 @@
                 android:layout_marginTop="32dp"
                 android:text="@string/message_back_to_login"
                 android:textSize="14sp"
-                android:textColor="@color/primary_colour" />
+                android:textColor="@color/link_colour" />
 
         </LinearLayout>
     </ScrollView>

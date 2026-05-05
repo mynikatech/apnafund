@@ -6,9 +6,11 @@ import com.mynikatech.apnafund.net.dto.PendingModeratorRequestDto
 import com.mynikatech.apnafund.net.dto.RolesDto
 import com.mynikatech.apnafund.net.dto.UserProfileDto
 import com.mynikatech.apnafund.net.dto.UserRolesDto
+import com.mynikatech.apnafund.net.dto.UserStatusResponse
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -81,5 +83,11 @@ class UserRolesApiKtor(
     }
     override suspend fun getBootStrapData(): BootstrapData {
         return client.get("/user-roles/bootstrap/data").unwrap<BootstrapData>()
+    }
+
+    override suspend fun checkUserStatus(email: String): UserStatusResponse {
+        return client.get("users/status") {
+            parameter("email", email)
+        }.body()
     }
 }

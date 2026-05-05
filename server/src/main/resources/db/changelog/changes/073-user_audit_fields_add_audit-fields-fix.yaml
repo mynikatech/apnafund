@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 073-get-user-all-funcs-add-new-fields
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/073-get-user-all-funcs-add-new-fields.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

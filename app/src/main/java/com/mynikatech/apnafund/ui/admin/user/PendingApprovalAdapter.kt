@@ -3,6 +3,7 @@ package com.mynikatech.apnafund.ui.admin.user
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.mynikatech.apnafund.databinding.ItemPendingApprovalBinding
 import com.mynikatech.apnafund.net.dto.PendingApprovalDto
@@ -26,6 +27,15 @@ class PendingApprovalAdapter(
 
         fun bind(item: PendingApprovalDto) {
 
+            binding.buttonApprove.isEnabled = !item.isProcessing
+            binding.buttonReject.isEnabled = !item.isProcessing
+
+            binding.buttonApprove.text =
+                if (item.isProcessing) "Approving..." else "Approve"
+
+            binding.buttonReject.text =
+                if (item.isProcessing) "Rejecting..." else "Reject"
+
             when (item.entityType) {
 
                 "GROUP" -> bindGroup(item)
@@ -36,25 +46,23 @@ class PendingApprovalAdapter(
             }
 
             binding.buttonApprove.setOnClickListener {
-                binding.buttonApprove.isEnabled = false
-                binding.buttonReject.isEnabled = false
+                val pos = bindingAdapterPosition
+                if (pos == RecyclerView.NO_POSITION) return@setOnClickListener
                 listener.onApproveClicked(item, bindingAdapterPosition)
             }
 
             binding.buttonReject.setOnClickListener {
-                binding.buttonApprove.isEnabled = false
-                binding.buttonReject.isEnabled = false
+                val pos = bindingAdapterPosition
+                if (pos == RecyclerView.NO_POSITION) return@setOnClickListener
                 listener.onRejectClicked(item, bindingAdapterPosition)
             }
         }
 
         private fun bindGroup(item: PendingApprovalDto) {
             binding.layoutGroup.visibility = View.VISIBLE
-            binding.textModerator.text =
-                "${item.subtitle}: ${item.requesterName}"
-
-            binding.textGroupName.text = item.title
-            binding.textGroupDescription.text = item.description ?: "N/A"
+            binding.textModerator.text = item.requesterName
+            binding.textGroupName.text = item.groupName
+            binding.textGroupDescription.text = item.groupDescription ?: "N/A"
         }
 
         private fun bindLoan(item: PendingApprovalDto) {
@@ -93,8 +101,30 @@ class PendingApprovalAdapter(
     override fun getItemCount(): Int = items.size
 
     fun updateList(newItems: List<PendingApprovalDto>) {
+        val diffCallback = PendingDiffCallback(items, newItems)
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+
         items = newItems
-        notifyDataSetChanged()
+        diffResult.dispatchUpdatesTo(this)
     }
     fun getItems(): List<PendingApprovalDto> = items
+
+
+    class PendingDiffCallback(
+        private val oldList: List<PendingApprovalDto>,
+        private val newList: List<PendingApprovalDto>
+    ) : DiffUtil.Callback() {
+
+        override fun getOldListSize() = oldList.size
+        override fun getNewListSize() = newList.size
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldList[oldItemPosition].approvalId ==
+                    newList[newItemPosition].approvalId
+        }
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldList[oldItemPosition] == newList[newItemPosition]
+        }
+    }
 }

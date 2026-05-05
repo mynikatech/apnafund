@@ -30,10 +30,15 @@ import com.mynikatech.apnafund.data.mappers.toDto
 import com.mynikatech.apnafund.data.model.Groups
 import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.databinding.FragmentRegisterBinding
+import com.mynikatech.apnafund.net.ApiException
 import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
 import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
 import com.mynikatech.apnafund.net.dto.SaveOrUpdateUserResponse
 import com.mynikatech.apnafund.net.dto.UserSaveSource
+import com.mynikatech.apnafund.net.dto.UserState
+import com.mynikatech.apnafund.net.dto.UserStatusResponse
+import com.mynikatech.apnafund.net.dto.UsersDto
+import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
 import com.mynikatech.apnafund.util.ApnaBankDate
 import com.mynikatech.apnafund.util.Converters
@@ -48,6 +53,8 @@ class RegisterFragment : Fragment() {
     private lateinit var binding: FragmentRegisterBinding
     private lateinit var auth: FirebaseAuth
     private val userViewModel: UserViewModel by viewModels()
+    private var currentUserStatus: UserStatusResponse? = null
+    private var lastHandledEmail: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -83,23 +90,92 @@ class RegisterFragment : Fragment() {
             }
         )
         binding.editTextFirstName.addTextChangedListener { validateUserInput() }
-        binding.editTextEmail.addTextChangedListener { validateUserInput() }
-        binding.editTextPhone.addTextChangedListener { validateUserInput() }
+        binding.editTextEmail.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                val email = binding.editTextEmail.text.toString().trim()
+                if (email.isNotEmpty()) {
+                    userViewModel.fetchUserByEmail(email)
+
+                }
+            }
+        }
+
+        userViewModel.userLiveData.observe(viewLifecycleOwner) { user ->
+
+            val email = binding.editTextEmail.text.toString().trim()
+
+            if (email.isBlank() || email == lastHandledEmail) return@observe
+
+            lastHandledEmail = email
+
+            if (user == null) {
+
+                val phone = binding.editTextPhone.text.toString().trim()
+
+                // Only check phone if entered fully
+                if (phone.length == 10) {
+
+                    lifecycleScope.launch {
+                        val currentPhone = binding.editTextPhone.text.toString().trim()
+                        if (currentPhone != phone) return@launch
+                        val phoneResponse = try {
+                            userViewModel.getUserByPhone(phone)
+                        } catch (e: ApiException) {
+                            if (e.code != 404) {
+                                showToast(getString(R.string.error_server))
+                                return@launch
+                            }
+                            null
+                        }
+
+                        val phoneUser = phoneResponse?.user
+
+                        if (phoneUser != null) {
+                            showToast(getString(R.string.error_phone_number_registered_login))
+                            disableAllFields()
+                            return@launch
+                        }
+
+                        // Both email & phone are new
+                        showNewUserForm()
+                        enableAllFields()
+                    }
+
+                } else {
+                    // Phone not entered yet → allow typing
+                    showNewUserForm()
+                    enableAllFields()
+                }
+
+                return@observe
+            }
+
+            val state = deriveUserState(user)
+            handleUserState(state, user)
+        }
+        binding.editTextEmail.addTextChangedListener {
+            lastHandledEmail = null
+            resetFormState()
+            validateUserInput()
+        }
+        binding.editTextPhone.addTextChangedListener { text ->
+
+            val phone = text.toString().trim()
+
+            resetFormState()
+            validateUserInput()
+
+            if (phone.length == 10) {
+                checkPhoneExists(phone)
+            }
+        }
         binding.editTextGroupName.addTextChangedListener { validateUserInput() }
         binding.editTextPassword.addTextChangedListener { validateUserInput() }
         binding.editTextConfirmPassword.addTextChangedListener { validateUserInput() }
         val radioGroup = binding.radioGroupRole
-        radioGroup.setOnCheckedChangeListener { _, checkedId ->
-            when (checkedId) {
-                R.id.radio_member -> {
-                    binding.moderatorFieldsContainer.visibility = View.GONE
-                }
-
-                R.id.radio_moderator -> {
-                    binding.moderatorFieldsContainer.visibility = View.VISIBLE
-                    validateUserInput()
-                }
-            }
+        radioGroup.setOnCheckedChangeListener { _, _ ->
+            applyRoleState()
+            validateUserInput()
         }
         binding.iconModeratorInfo.setOnClickListener {
             AlertDialog.Builder(requireContext())
@@ -113,26 +189,67 @@ class RegisterFragment : Fragment() {
             binding.buttonRegister.text = getString(R.string.text_registering)
             val firstName = binding.editTextFirstName.text.toString().trim().toTitleCase()
             val lastName = binding.editTextLastName.text.toString().trim().toTitleCase()
-
             val email = binding.editTextEmail.text.toString()
             val phone = binding.editTextPhone.text.toString()
             val password = binding.editTextPassword.text.toString()
             val isModerator = binding.radioModerator.isChecked
             val groupName = binding.editTextGroupName.text.toString().trim().toTitleCase()
             val groupDesc = binding.editTextGroupDesc.text.toString()
-            lifecycleScope.launch {
-                val isDuplicate = userViewModel.isDuplicate(email, phone)
-                Log.d("DuplicateCheck", "isDuplicate: $isDuplicate for $email, $phone")
-                if (isDuplicate) {
-                    Toast.makeText(
-                        context,
-                        getString(R.string.text_existing_user_error_message), Toast.LENGTH_LONG
-                    ).show()
-                    return@launch
+            val user = userViewModel.userLiveData.value
+            val state = deriveUserState(user)
+
+            when (state) {
+
+                UserState.NEW -> {
+                    // allowed to proceed
+                }
+
+                UserState.ACTIVE -> {
+                    showExistingUserDialog()
+                    resetRegisterButton()
+                    return@setOnClickListener
+                }
+
+                UserState.INACTIVE -> {
+                    showInactiveUserDialog(user!!)
+                    resetRegisterButton()
+                    return@setOnClickListener
+                }
+
+                UserState.INVITED_NOT_VERIFIED -> {
+                    showInvitedVerifyDialog(user!!)
+                    resetRegisterButton()
+                    return@setOnClickListener
+                }
+
+                UserState.INVITED_VERIFIED_NO_PASSWORD -> {
+                    showInvitedVerifiedSetPasswordDialog(user!!)
+                    resetRegisterButton()
+                    return@setOnClickListener
                 }
             }
-            if (!validatePasswordInputs()) return@setOnClickListener
+            if (!validatePasswordInputs()) {
+                binding.buttonRegister.isEnabled = true
+                binding.buttonRegister.text = getString(R.string.button_register)
+                return@setOnClickListener
+            }
             viewLifecycleOwner.lifecycleScope.launch {
+                val phoneResponse = try {
+                    userViewModel.getUserByPhone(phone)
+                } catch (e: ApiException) {
+                    if (e.code != 404) {
+                        showToast(getString(R.string.error_server))
+                        resetRegisterButton()
+                        return@launch
+                    }
+                    null
+                }
+
+                if (phoneResponse?.user != null) {
+                    showToast(getString(R.string.error_phone_number_registered_login))
+                    resetRegisterButton()
+                    return@launch
+                }
                 if (isModerator) {
                     saveModeratorUser(
                         "1", firstName, lastName,
@@ -168,48 +285,23 @@ class RegisterFragment : Fragment() {
                     }
                         .onFailure {
                             binding.buttonRegister.isEnabled = true
+                            binding.buttonRegister.text = getString(R.string.button_register)
                             showToast(
                                 getString(R.string.error_server)
                             )
                         }
                 } else {
-                    if (checkPreAddedMember(email, phone)) {
-                        val shouldSetPin = binding.setPinFlag.isChecked
-                        saveRegularUser("1", firstName, lastName, email, phone, password)
-                            .onSuccess { resp ->
-                                if (!resp.emailVerified) {
-                                    val action = RegisterFragmentDirections
-                                        .actionRegisterFragmentToVerifyEmailFragment(
-                                            userId = resp.userId,
-                                            email = email,
-                                            userName = "$firstName $lastName",
-                                            shouldSetPin = shouldSetPin,
-                                            emailOtpExpiresAtMillis = resp.emailOtpExpiresAtMillis
-                                                ?: 0,
-                                            purpose = ApnaBankConstants.TEXT_EMAIL_VERIFY
-                                        )
-                                    findNavController().navigate(action)
-                                } else {
-                                    if (shouldSetPin) {
-                                        val action =
-                                            RegisterFragmentDirections
-                                                .actionRegisterFragmentToSetPinFragment(resp.userId)
-                                        findNavController().navigate(action)
-                                    } else {
-                                        findNavController()
-                                            .navigate(R.id.action_registerFragment_to_loginFragment)
-                                    }
-                                }
-                            }
-                            .onFailure {
-                                binding.buttonRegister.isEnabled = true
-                                showToast(
-                                    getString(R.string.error_server)
-                                )
-                            }
-                    } else {
-                        binding.buttonRegister.isEnabled = true
+
+                    if (state != UserState.NEW) {
+                        resetRegisterButton()
+                        return@launch
+                    }
+
+                    // BUSINESS RULE CHECK If not moderator message to contact admin to get the invite.
+                    if (!isModerator) {
                         showToast(getString(R.string.message_contact_moderator_add_before_registering))
+                        resetRegisterButton()
+                        return@launch
                     }
                 }
             }
@@ -217,6 +309,318 @@ class RegisterFragment : Fragment() {
         binding.buttonCancel.setOnClickListener {
             findNavController().navigateUp()
         }
+    }
+
+    private fun applyRoleState() {
+        val isModerator = binding.radioModerator.isChecked
+
+        binding.moderatorFieldsContainer.visibility =
+            if (isModerator) View.VISIBLE else View.GONE
+
+        binding.editTextGroupName.isEnabled = isModerator
+        binding.editTextGroupDesc.isEnabled = isModerator
+    }
+
+    private fun resetRegisterButton() {
+        binding.buttonRegister.isEnabled = true
+        binding.buttonRegister.text = getString(R.string.button_register)
+    }
+
+    private fun checkPhoneExists(phone: String) {
+
+        lifecycleScope.launch {
+
+            val response = try {
+                userViewModel.getUserByPhone(phone)
+            } catch (e: ApiException) {
+                if (e.code != 404) {
+                    showToast(getString(R.string.error_server))
+                }
+                return@launch
+            }
+
+            val user = response?.user ?: return@launch
+
+            val state = deriveUserState(user)
+
+            when (state) {
+
+                UserState.ACTIVE -> {
+                    showExistingUserDialog()
+                }
+
+                UserState.INACTIVE -> {
+                    showInactiveUserDialog(user)
+                }
+
+                UserState.INVITED_NOT_VERIFIED -> {
+                    showInvitedVerifyDialog(user)
+                }
+
+                UserState.INVITED_VERIFIED_NO_PASSWORD -> {
+                    showInvitedVerifiedSetPasswordDialog(user)
+                }
+
+                else -> {
+                    // NEW → do nothing
+                }
+            }
+        }
+    }
+
+    private fun deriveUserState(user: UsersDto?): UserState {
+        return when {
+            user == null -> UserState.NEW
+
+            user.status == ApnaBankConstants.STATUS_INACTIVE ->
+                UserState.INACTIVE
+
+            user.isInvited && !user.emailVerified ->
+                UserState.INVITED_NOT_VERIFIED
+
+            user.isInvited && user.emailVerified && user.passwordHash.isNullOrBlank() ->
+                UserState.INVITED_VERIFIED_NO_PASSWORD
+
+            !user.passwordHash.isNullOrBlank() && user.emailVerified ->
+                UserState.ACTIVE
+
+            else -> UserState.NEW
+        }
+    }
+
+    private fun handleUserState(state: UserState, user: UsersDto?) {
+
+        when (state) {
+
+            UserState.NEW -> {
+                showNewUserForm()
+                enableAllFields()
+            }
+
+            UserState.INVITED_NOT_VERIFIED -> {
+                showInvitedVerifyDialog(user!!)
+            }
+
+            UserState.INVITED_VERIFIED_NO_PASSWORD -> {
+                showInvitedVerifiedSetPasswordDialog(user!!)
+            }
+
+            UserState.ACTIVE -> {
+                showExistingUserDialog()
+            }
+
+            UserState.INACTIVE -> {
+                showInactiveUserDialog(user!!)
+            }
+        }
+    }
+
+    private fun showInvitedVerifyDialog(user: UsersDto) {
+
+        // Optional: lock rest of UI
+        disableAllFields()
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.title_account_exists))
+            .setMessage(
+                "An account has already been created for you by " +
+                        "${user.createdByName ?: "your moderator"}.\n\n" +
+                        "Please verify your email to activate your account."
+            )
+            .setCancelable(false)
+
+            .setPositiveButton(getString(R.string.label_continue)) { _, _ ->
+                navigateToVerifyEmail(user)
+            }
+
+            .setNegativeButton(getString(R.string.text_cancel_button)) { _, _ ->
+                enableAllFields()   // allow editing again
+                validateUserInput()
+                lastHandledEmail = null
+            }
+
+            .show()
+    }
+
+    private fun showInvitedVerifiedSetPasswordDialog(user: UsersDto) {
+
+        // Optional: lock rest of UI
+        disableAllFields()
+        val invitedBy = user.createdByName ?: getString(R.string.text_your_moderator)
+
+        val message = getString(
+            R.string.dialog_invited_verified_set_password_message,
+            invitedBy
+        )
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.title_account_exists))
+            .setMessage(message)
+            .setCancelable(false)
+
+            .setPositiveButton(getString(R.string.label_continue)) { _, _ ->
+                navigateToSetPassword(user)
+            }
+
+            .setNegativeButton(getString(R.string.text_cancel_button)) { _, _ ->
+                enableAllFields()   // allow editing again
+                validateUserInput()
+                lastHandledEmail = null
+            }
+
+            .show()
+    }
+
+    private fun navigateToVerifyEmail(user: UsersDto) {
+
+        val action = RegisterFragmentDirections
+            .actionRegisterFragmentToVerifyEmailFragment(
+                userId = user.userId!!,
+                email = user.emailId,
+                userName = "${user.firstName} ${user.lastName}",
+                shouldSetPin = binding.setPinFlag.isChecked,
+                emailOtpExpiresAtMillis = 0L,
+                purpose = ApnaBankConstants.TEXT_INVITE_VERIFY
+            )
+
+        findNavController().navigate(action)
+    }
+
+    private fun navigateToSetPassword(user: UsersDto) {
+
+        val action = RegisterFragmentDirections
+            .actionRegisterFragmentToSetPasswordFragment(
+                userId = user.userId!!,
+            )
+
+        findNavController().navigate(action)
+    }
+
+    private fun showInactiveUserDialog(user: UsersDto) {
+        disableAllFields()
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.title_account_inactive))
+            .setMessage(getString(R.string.dialog_account_inactive_message))
+            .setCancelable(false)
+            .setPositiveButton(getString(R.string.msg_go_to_login)) { _, _ ->
+                navigateToLogin()
+            }
+
+            .setNegativeButton(getString(R.string.text_cancel_button)) { _, _ ->
+                // Allow user to edit email/phone again
+                enableAllFields()
+                validateUserInput()
+                lastHandledEmail = null
+            }
+            .show()
+    }
+
+    private fun disableAllFields() {
+
+        // Keep email editable so user can correct it
+        binding.editTextEmail.isEnabled = true
+
+        // Disable personal fields
+        binding.editTextFirstName.isEnabled = false
+        binding.editTextLastName.isEnabled = false
+        binding.editTextPhone.isEnabled = false
+
+        // Disable password fields
+        binding.editTextPassword.isEnabled = false
+        binding.editTextConfirmPassword.isEnabled = false
+
+        // Disable role selection
+        binding.radioMember.isEnabled = false
+        binding.radioModerator.isEnabled = false
+        binding.radioGroupRole.isEnabled = false
+
+        // Disable moderator-specific fields
+        binding.editTextGroupName.isEnabled = false
+        binding.editTextGroupDesc.isEnabled = false
+
+        // Optional: clear validation errors (prevents stale red errors)
+        binding.editTextFirstName.error = null
+        binding.editTextLastName.error = null
+        binding.editTextEmail.error = null
+        binding.editTextPhone.error = null
+        binding.editTextPassword.error = null
+        binding.editTextConfirmPassword.error = null
+        binding.editTextGroupName.error = null
+    }
+
+    private fun enableAllFields() {
+
+        // Text fields
+        binding.editTextFirstName.isEnabled = true
+        binding.editTextLastName.isEnabled = true
+        binding.editTextEmail.isEnabled = true
+        binding.editTextPhone.isEnabled = true
+        binding.editTextPassword.isEnabled = true
+        binding.editTextConfirmPassword.isEnabled = true
+
+        // Role selection
+        binding.radioMember.isEnabled = true
+        binding.radioModerator.isEnabled = true
+        binding.radioGroupRole.isEnabled = true
+        binding.editTextGroupName.isEnabled = true
+        binding.editTextGroupDesc.isEnabled = true
+        binding.textSetPasswordInfo.visibility = View.GONE
+
+        // Button state should depend on validation (NOT force enabled)
+        validateUserInput()
+        applyRoleState()
+    }
+
+    fun showNewUserForm() {
+        resetFormState()
+        binding.editTextFirstName.visibility = View.VISIBLE
+        binding.editTextLastName.visibility = View.VISIBLE
+        binding.editTextPhone.visibility = View.VISIBLE
+        binding.editTextPassword.visibility = View.VISIBLE
+        binding.editTextConfirmPassword.visibility = View.VISIBLE
+        binding.buttonRegister.text = getString(R.string.button_register)
+    }
+
+    fun showSetPasswordFlow(user: UsersDto) {
+        binding.textSetPasswordInfo.visibility = View.VISIBLE
+        binding.textSetPasswordInfo.text =
+            getString(R.string.message_invited_user_set_password)
+        binding.editTextFirstName.isEnabled = false
+        binding.editTextLastName.isEnabled = false
+        binding.editTextPhone.isEnabled = false
+        binding.radioGroupRole.isEnabled = false
+        binding.editTextFirstName.setText(user.firstName)
+        binding.editTextLastName.setText(user.lastName)
+        binding.editTextPhone.setText(user.phoneNumber)
+        for (i in 0 until binding.radioGroupRole.childCount) {
+            binding.radioGroupRole.getChildAt(i).isEnabled = false
+        }
+        binding.editTextPassword.visibility = View.VISIBLE
+        binding.editTextConfirmPassword.visibility = View.VISIBLE
+        binding.buttonRegister.text = getString(R.string.button_set_password)
+    }
+
+    fun showLoginRedirect() {
+        Log.d("Register Fragment: ShowLoginRedirect", "triggered")
+        Toast.makeText(
+            requireContext(),
+            getString(R.string.error_account_already_exists),
+            Toast.LENGTH_LONG
+        ).show()
+        binding.buttonRegister.setOnClickListener {
+            findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
+        }
+    }
+
+    fun resetFormState() {
+        binding.editTextFirstName.isEnabled = true
+        binding.editTextLastName.isEnabled = true
+        binding.editTextPhone.isEnabled = true
+        binding.textSetPasswordInfo.visibility = View.GONE
+        for (i in 0 until binding.radioGroupRole.childCount) {
+            binding.radioGroupRole.getChildAt(i).isEnabled = true
+        }
+        applyRoleState()
     }
 
     fun TextInputLayout.setInfoDialog(
@@ -295,6 +699,7 @@ class RegisterFragment : Fragment() {
 
         val passwordHash = Converters.hashPassword(password)
         val userCode = Converters.generateUserCode(firstName, lastName)
+        val now = System.currentTimeMillis()
 
         val user = Users(
             userId = 0,
@@ -304,7 +709,13 @@ class RegisterFragment : Fragment() {
             phoneNumber = phone,
             firebaseUserId = uid,
             userCode = userCode,
-            passwordHash = passwordHash
+            passwordHash = passwordHash,
+            createdByUserId = null,
+            userSaveSource = UserSaveSource.SELF_REGISTER,
+            createdAt = now,
+            updatedByUserId = null,
+            updatedAt = null,
+            createdByName = null
         )
 
         return userViewModel.saveOrUpdateUser(
@@ -326,6 +737,7 @@ class RegisterFragment : Fragment() {
 
         val passwordHash = Converters.hashPassword(password)
         val userCode = Converters.generateUserCode(firstName, lastName)
+        val now = System.currentTimeMillis()
 
         val user = Users(
             userId = 0,
@@ -335,7 +747,13 @@ class RegisterFragment : Fragment() {
             phoneNumber = phone,
             firebaseUserId = uid,
             passwordHash = passwordHash,
-            userCode = userCode
+            userCode = userCode,
+            createdByUserId = null,
+            userSaveSource = UserSaveSource.SELF_REGISTER,
+            createdAt = now,
+            updatedByUserId = null,
+            updatedAt = null,
+            createdByName = null
         )
         val group = Groups(
             groupName = groupName,
@@ -346,7 +764,8 @@ class RegisterFragment : Fragment() {
         )
         val regModReq = RegisterModeratorRequest(
             user = user.toDto(),
-            group = group.toDto()
+            group = group.toDto(),
+            requestorId = SessionManager.userId
         )
         return userViewModel.registerModeratorAndGroup(regModReq)
     }
@@ -413,6 +832,39 @@ class RegisterFragment : Fragment() {
         binding.editTextPassword.error = null
         binding.editTextConfirmPassword.error = null
         return true
+    }
+
+    override fun onPause() {
+        super.onPause()
+        userViewModel.userLiveData.removeObservers(viewLifecycleOwner)
+    }
+
+    private fun showExistingUserDialog() {
+
+        // Lock the form so user can’t continue registering
+        disableAllFields()
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.title_account_exists))
+            .setMessage(getString(R.string.dialog_account_exists_login_message))
+            .setCancelable(false)
+
+            .setPositiveButton(getString(R.string.msg_go_to_login)) { _, _ ->
+                navigateToLogin()
+            }
+
+            .setNegativeButton(getString(R.string.text_cancel_button)) { _, _ ->
+                // Allow user to edit email/phone again
+                enableAllFields()
+                validateUserInput()
+                lastHandledEmail = null
+            }
+
+            .show()
+    }
+
+    private fun navigateToLogin() {
+        findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
     }
 }
 

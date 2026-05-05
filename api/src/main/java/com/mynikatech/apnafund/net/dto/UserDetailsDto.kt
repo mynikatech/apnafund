@@ -13,5 +13,6 @@ data class UserDetailsDto(
     val userRoles: List<String>,
     val userNotifications: List<UserNotificationsDto>,
     val userFunds: List<FundsDto>,
-    val groups: List<UserGroup> = emptyList()
+    val groups: List<UserGroup> = emptyList(),
+    val pendingGroups: List<UserGroup> = emptyList()
 )

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 067-get-pending-groups-user
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/067-get-pending-groups-user.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

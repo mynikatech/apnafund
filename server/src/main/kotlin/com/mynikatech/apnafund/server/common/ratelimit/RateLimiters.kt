@@ -13,7 +13,7 @@ object RateLimiters {
     )
 
     val loginLimiter = RateLimiter(
-        maxRequests = 10,
+        maxRequests = 25,
         windowMillis = RateLimitConfig.ONE_HOUR_MS
     )
 }

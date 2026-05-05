@@ -17,7 +17,14 @@ data class UsersDto(
     val firebaseUserId: String? = null,
     val emailVerified: Boolean = false,
     val emailVerifiedAt: String? = null,
-    val userCode: String
+    val userCode: String,
+    val isInvited: Boolean = false,
+    val createdByUserId: Int?,
+    val userSaveSource: UserSaveSource?,
+    val createdAt: Long,
+    val updatedByUserId: Int?,
+    val updatedAt: Long?,
+    val createdByName: String? = null
 ) {
 
     val fullName: String

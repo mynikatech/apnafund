@@ -1,5 +1,6 @@
 package com.mynikatech.apnafund.ui.admin
 
+import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.util.TypedValue
@@ -10,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.tabs.TabLayoutMediator
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.databinding.FragmentAdminBinding
@@ -85,6 +87,21 @@ class AdminFragment : Fragment() {
                 isAllCaps = true
             }
         }.attach()
+
+        binding.adminTabs.post {
+            for (i in 0 until binding.adminTabs.tabCount) {
+                val tab = binding.adminTabs.getTabAt(i)
+                val tv = tab?.customView as? TextView
+
+                tv?.setTextColor(
+                    MaterialColors.getColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorOnSurface,
+                        Color.BLACK
+                    )
+                )
+            }
+        }
     }
 
     inner class PagerAdapter(
@@ -101,7 +118,7 @@ class AdminFragment : Fragment() {
                 getString(R.string.text_pending_approval) -> PendingApprovalFragment()
                 getString(R.string.text_deposits) -> DepositEntryFragment()
                 getString(R.string.text_loan_emi) -> LoanEmiEntryFragment()
-                getString(R.string.text_loan_emi) -> AdminFeedbackFragment()
+                getString(R.string.tab_feedback) -> AdminFeedbackFragment()
                 else -> Fragment()
             }
         }

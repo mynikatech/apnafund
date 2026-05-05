@@ -27,7 +27,7 @@ interface FundsApi {
     suspend fun updateFund(id: Int, dto: FundsDto)
     suspend fun deleteFund(id: Int): Boolean
     suspend fun getRateOfInterestforFund(fundId: Int): Double
-    suspend fun addFundWithDetails(dto: FundsDto, details: FundDetailsDto): Int
+    suspend fun addFundWithDetails(dto: FundsDto, details: FundDetailsDto, requestorId: Int): Int
 
     // Members
     suspend fun getAllFundMembers(fundId: Int): List<FundMembersDto>

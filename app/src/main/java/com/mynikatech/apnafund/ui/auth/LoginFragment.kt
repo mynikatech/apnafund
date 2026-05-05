@@ -1,6 +1,7 @@
 // LoginFragment.kt
 package com.mynikatech.apnafund.ui.auth
 
+import android.graphics.Color
 import android.os.Bundle
 import android.text.InputFilter
 import android.util.Log
@@ -47,8 +48,10 @@ class LoginFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d("Login Fragment", "On View Created")
         FirebaseApp.initializeApp(requireContext())
         auth = FirebaseAuth.getInstance()
+        Log.d("Login Fragment", "Firebase Instance Created")
         binding.phoneEditText.filters = arrayOf(
             InputFilter.LengthFilter(10),
             InputFilter { source, start, end, dest, dstart, dend ->
@@ -93,8 +96,16 @@ class LoginFragment : Fragment() {
                         binding.loginButton.isEnabled = true
                         return@launch
                     }
+                    val userDto = loginResponse.user
+                    if (userDto == null) {
+                        showToast(getString(R.string.error_user_not_found_register_first))
+                        binding.otpLayout.visibility = View.GONE
+                        binding.verifyOtpButton.visibility = View.GONE
+                        binding.loginButton.isEnabled = true
+                        return@launch
+                    }
 
-                    val localUser = loginResponse.user.toEntity()
+                    val localUser = userDto.toEntity()
 
                     if (localUser == null) {
                         Toast.makeText(
@@ -140,7 +151,11 @@ class LoginFragment : Fragment() {
                 signInWithPhoneAuthCredential(credential, phone)
             }
         }
-
+        binding.inviteRedirectText.setOnClickListener {
+            findNavController().navigate(
+                R.id.action_loginFragment_to_inviteEntryFragment
+            )
+        }
         binding.cancelOtpButton.setOnClickListener {
 
             // Reset phone-login state
@@ -233,7 +248,15 @@ class LoginFragment : Fragment() {
             }
 
 
-            val localUser = loginResponse.user.toEntity()
+            val userDto = loginResponse.user
+
+            if (userDto == null) {
+                showToast(getString(R.string.error_user_not_found_register_first))
+                binding.loginButton.isEnabled = true
+                return@launch
+            }
+
+            val localUser = userDto.toEntity()
             val firebaseToken = loginResponse.firebaseToken
 
 
@@ -246,14 +269,44 @@ class LoginFragment : Fragment() {
 
             val userPassword = localUser.passwordHash
             if (userPassword.isNullOrEmpty()) {
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.error_password_not_set),
-                    Toast.LENGTH_SHORT
-                ).show()
-                val action = LoginFragmentDirections
-                    .actionLoginFragmentToSetPasswordFragment(localUser.userId)
-                findNavController().navigate(action)
+                val isVerified = userViewModel.isEmailVerified(localUser.userId)
+
+                if (!isVerified) {
+                    showToast("Your Account is not verified yet.")
+
+                    // optional: resend OTP
+                    val resp = try {
+                        userViewModel.resendEmailVerification(
+                            userId = localUser.userId,
+                            email = email,
+                            userName = "${localUser.firstName} ${localUser.lastName}",
+                            purpose = ApnaBankConstants.TEXT_EMAIL_VERIFY
+                        )
+                    } catch (e: ApiException) {
+                        showToast(getString(R.string.error_server))
+                        binding.loginButton.isEnabled = true
+                        return@launch
+                    }
+
+                    findNavController().navigate(
+                        LoginFragmentDirections
+                            .actionLoginFragmentToVerifyEmailFragment(
+                                userId = localUser.userId,
+                                email = email,
+                                userName = "${localUser.firstName} ${localUser.lastName}",
+                                emailOtpExpiresAtMillis = resp.emailOtpExpiresAtMillis,
+                                purpose = ApnaBankConstants.TEXT_EMAIL_VERIFY
+                            )
+                    )
+
+                } else {
+                    // Only verified users can set password
+                    findNavController().navigate(
+                        LoginFragmentDirections
+                            .actionLoginFragmentToSetPasswordFragment(localUser.userId)
+                    )
+                }
+
                 binding.loginButton.isEnabled = true
                 return@launch
             }
@@ -479,8 +532,15 @@ class LoginFragment : Fragment() {
                         binding.loginButton.isEnabled = true
                         return@launch
                     }
+                    val userDto = loginResponse.user
 
-                    val localUser = loginResponse.user.toEntity()
+                    if (userDto == null) {
+                        showToast(getString(R.string.error_user_not_found))
+                        FirebaseAuth.getInstance().signOut()
+                        binding.loginButton.isEnabled = true
+                        return@launch
+                    }
+                    val localUser = userDto.toEntity()
                     if (localUser == null) {
                         Toast.makeText(requireContext(), getString(R.string.error_user_not_found), Toast.LENGTH_SHORT)
                             .show()

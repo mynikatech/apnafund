@@ -20,5 +20,8 @@ data class PendingApprovalDto(
     val loanAmount: String? = null,
     val loanPeriod: String? = null,
     val LoanIntRate: String? = null,
+    val groupName: String? = null,
+    val groupDescription: String? = null,
+    val isProcessing: Boolean = false
 
 )

@@ -198,11 +198,12 @@ class FundsApiKtor(
 
     override suspend fun addFundWithDetails(
         fund: FundsDto,
-        details: FundDetailsDto
+        details: FundDetailsDto,
+        requestorId: Int
     ): Int =
         client.post("/funds/add/with-details") {
             contentType(ContentType.Application.Json)
-            setBody(AddFundWithDetailsRequest(fund = fund, details = details))
+            setBody(AddFundWithDetailsRequest(fund = fund, details = details, requestorId = requestorId ))
         }.unwrap<Int>()
 
     override suspend fun closeFund(

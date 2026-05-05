@@ -13,7 +13,7 @@
     <color name="red">#F44336</color>
     <color name="yellow">#FDD835</color>
     <color name="green">#4CAF50</color>
-    <color name="table_text">#FFFFFFFF</color>
+    <color name="table_text">#000000</color>
     <color name="tab_text">#FF000000</color>
     <color name="background">#F8FAFC</color>
     <color name="surface">#FFFFFF</color>
@@ -26,6 +26,7 @@
     <color name="status_active_bg">#6EF294</color>   <!-- soft green -->
     <color name="status_active_text">#1E7D3A</color>
     <color name="status_bg_neutral">#E0E0E0</color>
+    <color name="table_header_bg">#C0C0C0</color>
 
     <color name="status_closed_bg">#F66A5A</color>   <!-- soft red -->
     <color name="status_closed_text">#B3261E</color>
@@ -46,5 +47,7 @@
     <color name="bottom_nav_inactive">#1E293B</color> <!-- dark grey -->
     <color name="input_outline">#64748B</color>      <!-- visible border -->
     <color name="input_hint">#475569</color>         <!-- readable hint -->
+    <color name="table_row_even">#FFFFFF</color>
+    <color name="table_row_odd">#F5F5F5</color>
 
 </resources>

@@ -19,6 +19,7 @@ import com.mynikatech.apnafund.net.dto.UserNotificationsDto
 import com.mynikatech.apnafund.net.dto.UserPasswordHistoryDto
 import com.mynikatech.apnafund.net.dto.UserPinHistoryDto
 import com.mynikatech.apnafund.net.dto.UserRolesDto
+import com.mynikatech.apnafund.net.dto.UserSaveSource
 import com.mynikatech.apnafund.net.dto.UserWithGroupDto
 import com.mynikatech.apnafund.net.dto.UsersDto
 import org.jdbi.v3.core.Jdbi
@@ -43,6 +44,7 @@ private fun ResultSet.getNullableDateString(column: String): String? =
  * USERS
  * ============================================================ */
 val UsersRowMapper = RowMapper<UsersDto> { rs: ResultSet, _: StatementContext ->
+    val userSaveSourceStr = rs.getString("userSaveSource")
     UsersDto(
         userId = rs.getInt("userId"),
         firstName = rs.getString("firstName"),
@@ -55,7 +57,19 @@ val UsersRowMapper = RowMapper<UsersDto> { rs: ResultSet, _: StatementContext ->
         isPinSet = rs.getBoolean("isPinSet"),
         hashPIN = rs.getString("hashPIN"),
         firebaseUserId = rs.getString("firebaseUserId"),
-        userCode = rs.getString("userCode")
+        userCode = rs.getString("userCode"),
+        createdByUserId = rs.getNullableInt("createdByUserId"),
+        userSaveSource = try {
+            UserSaveSource.valueOf(userSaveSourceStr)
+        } catch (e: Exception) {
+            UserSaveSource.SELF_REGISTER
+        },
+        createdAt = rs.getLong("createdAt"),
+        updatedByUserId = rs.getNullableInt("updatedByUserId"),
+        updatedAt = rs.getObject("updatedAt") as Long?,
+        isInvited = rs.getObject("isInvited") as? Boolean ?: false,
+        createdByName = rs.getString("createdByName")
+
     )
 }
 

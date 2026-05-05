@@ -21,7 +21,9 @@ class EmailVerificationService(
         purpose: String
     ): Long {
         // 1️⃣ Generate 6-digit OTP
-        val otp = OtpGenerator.generate()          // e.g. "483921"
+        val otp = OtpGenerator.generate()
+
+        logger.info("otp generated  = {}", otp)
 
         // 2️⃣ Hash OTP before storing
         val otpHash = HashUtil.sha256(otp)
@@ -58,6 +60,7 @@ class EmailVerificationService(
     ): Int {
 
         logger.info("Purpose received from UI = {}", purpose)
+        logger.info("Otp received from  UI = {}", otp)
 
         val tokenHash = HashUtil.sha256(otp)
         logger.info("Hashed token = {}", tokenHash)
@@ -71,7 +74,8 @@ class EmailVerificationService(
         logger.info(" The returned verified User Id is: $verifiedUserId")
         when (purpose) {
 
-            "EMAIL_VERIFY" -> {
+            "EMAIL_VERIFY",
+            "INVITE_VERIFY"-> {
                 // Mark email as verified
                 usersSql.markUserEmailVerified(verifiedUserId)
 

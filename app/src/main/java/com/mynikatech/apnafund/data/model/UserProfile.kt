@@ -16,4 +16,5 @@ data class UserProfile(
 ){
     var roles: List<RolesDto> = emptyList()
     var groups: List<UserGroup> = emptyList()
+    var pendingGroups: List<UserGroup> = emptyList()
 }

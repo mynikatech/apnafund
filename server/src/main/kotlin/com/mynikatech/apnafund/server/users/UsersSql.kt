@@ -6,6 +6,7 @@ import com.mynikatech.apnafund.net.dto.FeedbackWithUserGroupDto
 import com.mynikatech.apnafund.net.dto.FundsDto
 import com.mynikatech.apnafund.net.dto.GroupMembersDto
 import com.mynikatech.apnafund.net.dto.GroupsDto
+import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
 import com.mynikatech.apnafund.net.dto.UserBasicDto
 import com.mynikatech.apnafund.net.dto.UserDetailsDto
 import com.mynikatech.apnafund.net.dto.UserFundDetailsDto
@@ -49,10 +50,10 @@ interface UsersSql {
     @SqlQuery(
         """
         SELECT upsert_user_by_email(:firstName,:lastName,:emailId,:phoneNumber,:status,
-                                    :createdDate,:isPinSet,:hashPIN,:passwordHash,:firebaseUserId,:userCode)
+                                    :createdDate,:isPinSet,:hashPIN,:passwordHash,:firebaseUserId,:userCode, :isInvited, :actorUserId, :userSaveSource)
     """
     )
-    fun upsertUserByEmail(@BindKotlin u: UsersDto): Int
+    fun upsertUserByEmail(@BindKotlin u: UsersDto,  @Bind("actorUserId") actorUserId: Int): Int
 
     @SqlUpdate("""CALL delete_user(:id)""")
     fun deleteUser(@Bind("id") userId: Int)
@@ -139,8 +140,14 @@ interface UsersSql {
     @SqlQuery("""SELECT * FROM get_groups_for_moderator(:userId)""")
     fun getGroupsForModeratorUser(@Bind("userId") userId: Int): List<GroupsDto>?
 
+    @SqlQuery("""SELECT * FROM get_groups_for_moderator_with_moderator_info(:userId)""")
+    fun getGroupsForModeratorUserWithModeratorInfo(@Bind("userId") userId: Int): List<GroupsWithModeratorDto>?
+
     @SqlQuery("""SELECT * FROM get_basic_group_for_user(:userId)""")
     fun getBasicGroupsForUser(@Bind("userId") userId: Int): List<UserGroup>
+
+    @SqlQuery("""SELECT * FROM get_pending_basic_groups_for_user(:userId)""")
+    fun getBasicPendingGroupsForUser(@Bind("userId") userId: Int): List<UserGroup>
 
     @SqlQuery("""SELECT * FROM get_funds_for_user(:userId)""")
     fun getFundsForUser(@Bind("userId") userId: Int): List<FundsDto>
@@ -237,5 +244,18 @@ interface UsersSql {
         @Bind("userId") userId: Int,
         @Bind("roleCode") roleCode: String,
         @Bind("status") status: String = "ACTIVE"
+    )
+
+    @SqlUpdate("""
+    SELECT update_user_audit_fields(
+        :userId,
+        :createdByUserId,
+        :updatedByUserId
+    )
+    """)
+    fun updateAuditFields(
+        @Bind("userId") userId: Int,
+        @Bind("createdByUserId") createdByUserId: Int?,
+        @Bind("updatedByUserId") updatedByUserId: Int?
     )
 }

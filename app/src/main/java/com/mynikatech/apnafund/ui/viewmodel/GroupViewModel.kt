@@ -6,6 +6,7 @@ import com.mynikatech.apnafund.ApnaFundApplication
 import com.mynikatech.apnafund.data.model.GroupMemberWithName
 import com.mynikatech.apnafund.data.model.GroupMembers
 import com.mynikatech.apnafund.data.model.Groups
+import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
 import com.mynikatech.apnafund.util.ApnaBankDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +40,11 @@ class GroupViewModel : ViewModel() {
 
     fun fetchAllGroups(): Flow<List<Groups>> {
         val groups = groupRepository.fetchAllGroups()
+        return groups
+    }
+
+    fun fetchAllGroupsWithModerator(): Flow<List<GroupsWithModeratorDto>> {
+        val groups = groupRepository.fetchAllGroupsWithModerator()
         return groups
     }
 

@@ -27,6 +27,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+            <TextView
+                android:id="@+id/textSetPasswordInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="14sp"
+                android:visibility="gone"
+                android:paddingBottom="8dp"/>
             <!-- First Name -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/input_layout_first_name"

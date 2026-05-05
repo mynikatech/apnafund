@@ -7,30 +7,32 @@ import com.mynikatech.apnafund.R
 
 fun TextView.applyStatusStyle(status: String) {
 
+    val context = this.context
+
     when (status.uppercase()) {
 
         "ACTIVE", "APPROVED" -> {
             setBackgroundResource(R.drawable.status_chip_active)
-            setTextColor(ContextCompat.getColor(context, R.color.status_approved))
+            setTextColor(MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnPrimaryContainer))
         }
 
         "PENDING", "PENDING_APPROVAL" -> {
             setBackgroundResource(R.drawable.status_chip_pending)
-            setTextColor(ContextCompat.getColor(context, R.color.status_pending))
+            setTextColor(MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnTertiaryContainer))
         }
 
         "REJECTED" -> {
             setBackgroundResource(R.drawable.status_chip_rejected)
-            setTextColor(ContextCompat.getColor(context, R.color.status_rejected))
+            setTextColor(MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnErrorContainer))
         }
 
         "CLOSED" -> {
             setBackgroundResource(R.drawable.status_chip_closed)
-            setTextColor(ContextCompat.getColor(context, android.R.color.darker_gray))
+            setTextColor(MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurfaceVariant))
         }
 
         else -> {
-            setBackgroundResource(R.drawable.status_chip_background) // neutral
+            setBackgroundResource(R.drawable.status_chip_background)
             setTextColor(MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface))
         }
     }

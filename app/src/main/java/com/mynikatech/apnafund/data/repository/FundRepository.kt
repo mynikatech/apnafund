@@ -56,8 +56,8 @@ class FundRepository(
         return api.getFund(fundId)?.toEntity()
     }
 
-    suspend fun saveFundAndDetails(fund: Funds, fundDetails: FundDetails): Int {
-        return api.addFundWithDetails(fund.toDto(), fundDetails.toDto())
+    suspend fun saveFundAndDetails(fund: Funds, fundDetails: FundDetails, requestorId: Int): Int {
+        return api.addFundWithDetails(fund.toDto(), fundDetails.toDto(), requestorId)
     }
 
     suspend fun updateFundDetails(details: FundDetails) {

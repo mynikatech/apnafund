@@ -16,15 +16,20 @@ object InviteEmail {
             <p>
             <strong>${invitedBy}</strong> has invited you to join the 
             <strong>${groupName}</strong> group on <strong>Apna Fund</strong>.
+            Your account has already been created using this email.
         </p>
 
         <p>
             To get started:
             <ol>
                 <li>Download the <strong>Apna Fund</strong> app from the Play Store</li>
-                <li>Login using this email address</li>
+                <li>Click on Register Here</li>
+                <li>Enter this email address</li>
                 <li>Set your password and verify your email</li>
             </ol>
+        </p>
+        <p>
+            Note: You do not need to register again.
         </p>
 
         <p>

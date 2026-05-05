@@ -26,6 +26,9 @@
         <action
             android:id="@+id/actionLoginFragment_to_verifyEmailFragment"
             app:destination="@id/verifyEmailFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_inviteEntryFragment"
+            app:destination="@id/inviteEntryFragment" />
     </fragment>
 
     <fragment
@@ -108,11 +111,40 @@
         <action
             android:id="@+id/action_registerFragment_to_verifyEmailFragment"
             app:destination="@id/verifyEmailFragment" />
+        <action
+            android:id="@+id/action_registerFragment_to_setPasswordFragment"
+            app:destination="@id/changePasswordFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/inviteEntryFragment"
+        android:name="com.mynikatech.apnafund.ui.auth.InviteEntryFragment"
+        android:label="Join via Invite">
+
+        <!-- Back to Login -->
+        <action
+            android:id="@+id/action_inviteEntryFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+
+        <!-- To Verify Email (OTP screen) -->
+        <action
+            android:id="@+id/action_inviteEntryFragment_to_verifyEmailFragment"
+            app:destination="@id/verifyEmailFragment" />
+
+        <!-- Optional: Direct to Set Password (if skipping OTP in future) -->
+        <action
+            android:id="@+id/action_inviteEntryFragment_to_setPasswordFragment"
+            app:destination="@id/changePasswordFragment" />
+
+        <action
+            android:id="@+id/action_inviteEntryFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+
     </fragment>
     <fragment
         android:id="@+id/setPinFragment"
         android:name="com.mynikatech.apnafund.ui.auth.SetPinFragment"
-        android:label="Register">
+        android:label="Set Up PIN">
         <action
             android:id="@+id/action_setPinFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
@@ -359,6 +391,12 @@
         <action
             android:id="@+id/actionVerifyEmailFragmentToChangePasswordFragment"
             app:destination="@id/changePasswordFragment"
+            app:popUpTo="@id/verifyEmailFragment"
+            app:popUpToInclusive="true" />
+
+        <action
+            android:id="@+id/actionVerifyEmailFragmentToSetPasswordFragment"
+            app:destination="@id/setPasswordFragment"
             app:popUpTo="@id/verifyEmailFragment"
             app:popUpToInclusive="true" />
     </fragment>

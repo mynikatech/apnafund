@@ -6,5 +6,6 @@ import kotlinx.serialization.Serializable
 data class RegisterModeratorRequest(
 
     val user: UsersDto,
-    val group: GroupsDto
+    val group: GroupsDto,
+    val requestorId: Int
 )

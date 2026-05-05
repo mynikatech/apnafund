@@ -37,6 +37,7 @@ fun Route.userDetailsRoute(
         val notifList: List<UserNotificationsDto> = notifications.getUserNotifications(id)
         val fundsList: List<FundsDto> = users.getFundsForUserForGroup(id, groupId)
         val group: List<UserGroup> = users.getBasicGroupsForUser(id)
+        val pendingGroups: List<UserGroup> = users.getBasicPendingGroupsForUser(id)
 
         val payload = UserDetailsDto(
             firstName = u.firstName,
@@ -48,7 +49,8 @@ fun Route.userDetailsRoute(
             userRoles = roleCodes,
             userNotifications = notifList,
             userFunds = fundsList,
-            groups = group
+            groups = group,
+            pendingGroups = pendingGroups
         )
         call.respondOk(payload)
     }
@@ -71,6 +73,7 @@ fun Route.userDetailsRoute(
         val notifList: List<UserNotificationsDto> = notifications.getUserNotifications(id)
         val fundsList: List<FundsDto> = users.getFundsForUser(id)
         val group: List<UserGroup> = users.getBasicGroupsForUser(id)
+        val pendingGroups: List<UserGroup> = users.getBasicPendingGroupsForUser(id)
 
         val payload = UserDetailsDto(
             firstName = u.firstName,
@@ -82,7 +85,8 @@ fun Route.userDetailsRoute(
             userRoles = roleCodes,
             userNotifications = notifList,
             userFunds = fundsList,
-            groups = group
+            groups = group,
+            pendingGroups = pendingGroups
         )
         call.respondOk(payload)
     }

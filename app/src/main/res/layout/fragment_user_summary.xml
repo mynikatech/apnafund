@@ -50,7 +50,17 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="@string/message_no_assigned_group" />
+                    android:text="@string/message_no_assigned_group"
+                    android:visibility="gone"/>
+
+                <TextView
+                    android:id="@+id/textViewPendingMessage"
+                    style="@style/TextViewAppearance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/msg_group_pending_approval"
+                    android:visibility="gone" />
 
                 <ImageView
                     android:id="@+id/button_add_group_none"
@@ -544,7 +554,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="@string/message_text_no_funds"
-                        android:textColor="@color/black"
+                        android:textColor="?attr/colorOnBackground"
                         android:textSize="16sp" />
                 </LinearLayout>
 

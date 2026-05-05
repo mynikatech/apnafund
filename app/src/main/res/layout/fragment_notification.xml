@@ -14,8 +14,8 @@
         android:background="?attr/colorPrimary"
         android:title="@string/text_notification"
         app:layout_constraintTop_toTopOf="parent"
-        app:navigationIconTint="@color/black"
-        app:titleTextColor="@color/white" />
+        app:navigationIconTint="?attr/colorOnPrimary"
+        app:titleTextColor="?attr/colorOnPrimary" />
 
     <TextView
         android:id="@+id/text_view_notifications_header"
@@ -34,7 +34,7 @@
         android:layout_height="1dp"
         android:layout_marginTop="4dp"
         android:layout_marginBottom="4dp"
-        android:background="@android:color/darker_gray"
+        android:background="?attr/colorOutlineVariant"
         app:layout_constraintTop_toBottomOf="@id/text_view_notifications_header" />
 
     <LinearLayout
@@ -57,7 +57,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="@string/text_no_notifications_available"
-            android:textColor="@color/black"
+            android:textColor="?attr/colorOnBackground"
             android:textSize="14sp"
             android:visibility="gone"/>
     </LinearLayout>

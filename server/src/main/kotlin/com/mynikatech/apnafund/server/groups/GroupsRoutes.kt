@@ -45,6 +45,11 @@ fun Route.groupsRoutes(
         call.respondOk(list) // [] if none
     }
 
+    get("get/all/moderator-info") {
+        val list = groups.getAllGroupsWithModeratorInfo()
+        call.respondOk(list) // [] if none
+    }
+
     // 2) GET  /groups/get/{id}
     get("get/{id}") {
         val id = call.parameters["id"]?.toIntOrNull()
@@ -147,7 +152,7 @@ fun Route.groupsRoutes(
                 } catch (e: Exception) {
 
                     call.application.log.error(
-                        "🔥 Firebase group creation failed for groupId=$groupId",
+                        "Firebase group creation failed for groupId=$groupId",
                         e
                     )
 

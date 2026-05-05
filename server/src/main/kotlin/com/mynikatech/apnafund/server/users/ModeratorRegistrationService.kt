@@ -32,11 +32,20 @@ class ModeratorRegistrationService(
     ): ModeratorRegistrationResponse {
 
         val user = req.user
+        val requestorId = req.requestorId
+
+        val safeRequestorId = if (requestorId <= 0) 1 else requestorId  // Hardcoded Admin User Id = 1
 
         /* -------------------------------------------------
-         * 1️⃣ CREATE / UPSERT USER
+         * CREATE / UPSERT USER
          * ------------------------------------------------- */
-        val userId = usersSql.upsertUserByEmail(user)
+        val userId = usersSql.upsertUserByEmail(user, safeRequestorId)
+
+        usersSql.updateAuditFields(
+            userId = userId,
+            createdByUserId = userId,
+            updatedByUserId = userId
+        )
 
         /* ---- Add Passwordinto History Table ***/
         val newHash = req.user.passwordHash

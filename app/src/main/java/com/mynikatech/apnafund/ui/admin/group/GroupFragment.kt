@@ -31,9 +31,11 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.textfield.TextInputLayout
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
+import com.mynikatech.apnafund.data.mappers.toEntity
 import com.mynikatech.apnafund.data.model.Groups
 import com.mynikatech.apnafund.databinding.DialogAddGroupBinding
 import com.mynikatech.apnafund.databinding.FragmentGroupBinding
+import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.GroupViewModel
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
@@ -41,7 +43,6 @@ import com.mynikatech.apnafund.util.ApnaBankDate
 import com.mynikatech.apnafund.util.Converters
 import com.mynikatech.apnafund.util.Converters.toTitleCase
 import com.mynikatech.apnafund.util.GroupInputValidator
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -106,25 +107,27 @@ class GroupFragment : Fragment() {
         lifecycleScope.launch {
             try {
                 if (isAdmin) {
-                    groupViewModel.fetchAllGroups()
+                    groupViewModel.fetchAllGroupsWithModerator()
                         .collectLatest { groups ->
                             populateUserTable(groups)
                         }
                 } else {
-                    userViewModel.getGroupsForModeratorUser(SessionManager.userId)
+                    userViewModel.getGroupsForModeratorUserWithModInfo(SessionManager.userId)
                         .collectLatest { groups ->
                             populateUserTable(groups)
                         }
                 }
             } catch (e: Exception) {
                 Log.e("GroupFragment", "Error fetching groups", e)
-                Toast.makeText(requireContext(),
-                    getString(R.string.error_failed_load_groups), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.error_failed_load_groups), Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
 
-    private fun populateUserTable(groups: List<Groups>) {
+    private fun populateUserTable(groups: List<GroupsWithModeratorDto>) {
         updateUI(groups.isEmpty())
         cleanTable(tableLayoutGroupDetails)
         if (groups.isEmpty()) return
@@ -132,17 +135,9 @@ class GroupFragment : Fragment() {
             try {
 
 
-                val userDeferredList = groups.map { group ->
-                    async {
-                        userViewModel.fetchUser(group.moderator!!)
-                    }
-                }
-
-                val userList = userDeferredList.map { it.await() }
                 for (i in groups.indices) {
                     try {
                         val group = groups[i]
-                        val user = userList[i]
                         val serialNum = (1 + i).toString()
                         val tvNo = createTableCell(serialNum, gravity = Gravity.CENTER)
                         val tvGroupName = createTableCell(text = group.groupName)
@@ -166,8 +161,8 @@ class GroupFragment : Fragment() {
                                 )
                             }
                         }
-                        val userName = "${user?.firstName} ${user?.lastName}"
-                        val tvModerator = createTableCell(userName, userName)
+                        val moderatorName = group.moderatorName ?: "-"
+                        val tvModerator = createTableCell(moderatorName, moderatorName)
                         val tvCreatedDate =
                             createTableCell(group.createdDate, gravity = Gravity.END)
                         val tvDescription =
@@ -232,6 +227,7 @@ class GroupFragment : Fragment() {
                 .show()
         }
     }
+
     fun TextInputLayout.markRequired() {
         val label = this.hint?.toString() ?: ""
         val spannable = SpannableString("$label *")
@@ -276,7 +272,7 @@ class GroupFragment : Fragment() {
     private fun showAddGroupDialog(
         context: Context,
         addOrEditFlag: Int,
-        existingGroup: Groups? = null
+        existingGroup: GroupsWithModeratorDto? = null
     ) {
         val dialogBinding = DialogAddGroupBinding.inflate(LayoutInflater.from(context))
         val dialog = BottomSheetDialog(context)
@@ -284,7 +280,8 @@ class GroupFragment : Fragment() {
         dialog.show()
         dialogBinding.setupForm()
         var userId = 0
-        dialogBinding.buttonSaveGrp.text = if (addOrEditFlag == 1) getString(R.string.text_update_group) else getString(R.string.text_add_group)
+        dialogBinding.buttonSaveGrp.text =
+            if (addOrEditFlag == 1) getString(R.string.text_update_group) else getString(R.string.text_add_group)
 
         // Pre-fill group name
         if (addOrEditFlag == 1) {
@@ -381,8 +378,10 @@ class GroupFragment : Fragment() {
                 }
             } catch (e: Exception) {
                 Log.e("GroupFragment", "Error loading users", e)
-                Toast.makeText(context,
-                    getString(R.string.error_failed_load_users), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    getString(R.string.error_failed_load_users), Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
@@ -402,10 +401,11 @@ class GroupFragment : Fragment() {
                     } else {
                         ApnaBankConstants.STATUS_PENDING
                     }
-                    val groupToSave = existingGroup?.copy(
+                    val existingGroupWithoutMod = existingGroup?.toEntity()
+                    val groupToSave = existingGroupWithoutMod?.copy(
                         groupName = groupName,
                         moderator = userId,
-                        status = existingGroup.status,
+                        status = existingGroupWithoutMod.status,
                         description = description
                     ) ?: Groups(
                         groupName = groupName,
@@ -429,8 +429,10 @@ class GroupFragment : Fragment() {
                     dialog.dismiss()
                 } catch (e: Exception) {
                     Log.e("GroupFragment", "Error saving group", e)
-                    Toast.makeText(requireContext(),
-                        getString(R.string.error_failed_save_group), Toast.LENGTH_LONG)
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.error_failed_save_group), Toast.LENGTH_LONG
+                    )
                         .show()
                     dialogBinding.buttonSaveGrp.isEnabled = true
                 }
@@ -441,7 +443,7 @@ class GroupFragment : Fragment() {
         }
     }
 
-    private fun showConfirmToggleGroupStatus(group: Groups) {
+    private fun showConfirmToggleGroupStatus(group: GroupsWithModeratorDto) {
 
         val action =
             if (group.status == ApnaBankConstants.STATUS_ACTIVE)
@@ -462,7 +464,7 @@ class GroupFragment : Fragment() {
             .show()
     }
 
-    private fun toggleGroupStatus(group: Groups) {
+    private fun toggleGroupStatus(group: GroupsWithModeratorDto) {
         lifecycleScope.launch {
             val updatedStatus: String = if (group.status == ApnaBankConstants.STATUS_ACTIVE) {
                 ApnaBankConstants.STATUS_INACTIVE
@@ -470,7 +472,7 @@ class GroupFragment : Fragment() {
                 ApnaBankConstants.STATUS_ACTIVE
             }
             val updatedGroup = group.copy(status = updatedStatus)
-            groupViewModel.saveOrUpdateGroup(updatedGroup)
+            groupViewModel.saveOrUpdateGroup(updatedGroup.toEntity())
             val statusText = if (updatedGroup.status == ApnaBankConstants.STATUS_ACTIVE) {
                 getString(R.string.status_activated)
             } else {

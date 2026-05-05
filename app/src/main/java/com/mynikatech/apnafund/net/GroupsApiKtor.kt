@@ -17,6 +17,7 @@ import io.ktor.http.contentType
 import android.util.Log
 import com.mynikatech.apnafund.net.dto.FirebaseSyncRequest
 import com.mynikatech.apnafund.net.dto.GroupCreationRequest
+import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
 import com.mynikatech.apnafund.session.SessionManager
 
 class GroupsApiKtor(
@@ -27,6 +28,9 @@ class GroupsApiKtor(
 
     override suspend fun getAllGroups(): List<GroupsDto> =
         client.get("/groups/get/all").unwrap<List<GroupsDto>>()
+
+    override suspend fun getAllGroupsWithModeratorIndo(): List<GroupsWithModeratorDto> =
+        client.get("/groups/get/all/moderator-info").unwrap<List<GroupsWithModeratorDto>>()
 
     override suspend fun getGroup(id: Int): GroupsDto? =
         client.get("/groups/get/$id").unwrap<GroupsDto>()

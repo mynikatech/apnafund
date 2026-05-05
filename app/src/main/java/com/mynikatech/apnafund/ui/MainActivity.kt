@@ -38,7 +38,9 @@ class MainActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
+        Log.d("MainActivity", "on Create")
         if (savedInstanceState == null) {
+            Log.d("MainActivity", "Null saved instance")
             val graph = navController.navInflater.inflate(R.navigation.nav_graph)
             val startDest = intent.getStringExtra("start_dest")
             val intentUserId = intent.getIntExtra("user_id", -1)
@@ -82,6 +84,7 @@ class MainActivity : AppCompatActivity() {
         }
         binding.bottomNavigationView.setupWithNavController(navController)
         setupToolbarMenu(navController)
+        Log.d("MainActivity", "Toolbar menu set up")
         val toolbarRef = WeakReference(binding.toolbar)
         binding.toolbar.setNavigationOnClickListener {
             val currentDest = navController.currentDestination?.id
@@ -105,7 +108,8 @@ class MainActivity : AppCompatActivity() {
             R.id.changePasswordFragment, R.id.setPasswordFragment,
             R.id.loginPinFragment, R.id.fundMemberDetailsFragment,
             R.id.fundAddMembersFragment, R.id.verifyEmailFragment,
-            R.id.resetPasswordFragment, R.id.fundLoanSummaryFragment
+            R.id.resetPasswordFragment, R.id.fundLoanSummaryFragment,
+            R.id.inviteEntryFragment
         )
         navController.addOnDestinationChangedListener { _, destination, _ ->
             toolbarRef.get()?.visibility = when (destination.id) {
@@ -117,7 +121,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.fundMemberDetailsFragment, R.id.fundAddMembersFragment,
                 R.id.verifyEmailFragment, R.id.resetPasswordFragment,
                 R.id.loginPinFragment, R.id.fundLoanSummaryFragment,
-                R.id.aiChatFragment -> View.GONE
+                R.id.inviteEntryFragment, R.id.aiChatFragment -> View.GONE
 
                 else -> View.VISIBLE
             }

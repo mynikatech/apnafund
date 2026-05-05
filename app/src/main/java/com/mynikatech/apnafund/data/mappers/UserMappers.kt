@@ -18,6 +18,7 @@ import com.mynikatech.apnafund.net.dto.UserPasswordHistoryDto
 import com.mynikatech.apnafund.net.dto.UserPinHistoryDto
 import com.mynikatech.apnafund.net.dto.UserWithGroupDto
 import com.mynikatech.apnafund.net.dto.UsersDto
+import kotlin.Int
 
 // Room → DTO
 fun Users.toDto(): UsersDto = UsersDto(
@@ -34,7 +35,14 @@ fun Users.toDto(): UsersDto = UsersDto(
     passwordHash = passwordHash,
     emailVerified = emailVerified,
     emailVerifiedAt = emailVerifiedAt,
-    hashPIN = hashPIN
+    hashPIN = hashPIN,
+    createdByUserId = createdByUserId,
+    userSaveSource = userSaveSource,
+    createdAt= createdAt,
+    updatedByUserId = updatedByUserId,
+    updatedAt = updatedAt,
+    isInvited = isInvited,
+    createdByName = createdByName
 
 )
 
@@ -53,7 +61,14 @@ fun UsersDto.toEntity(): Users = Users(
     firebaseUserId = firebaseUserId,
     emailVerified = emailVerified,
     emailVerifiedAt = emailVerifiedAt,
-    userCode = userCode
+    userCode = userCode,
+    createdByUserId = createdByUserId,
+    userSaveSource = userSaveSource,
+    createdAt= createdAt,
+    updatedByUserId = updatedByUserId,
+    updatedAt = updatedAt,
+    isInvited = isInvited,
+    createdByName = createdByName
 )
 
 fun List<UsersDto>.toEntity(): List<Users> = map { it.toEntity() }

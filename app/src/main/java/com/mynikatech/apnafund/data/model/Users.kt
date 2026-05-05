@@ -3,6 +3,7 @@ package com.mynikatech.apnafund.data.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.mynikatech.apnafund.constants.ApnaBankConstants
+import com.mynikatech.apnafund.net.dto.UserSaveSource
 import com.mynikatech.apnafund.util.ApnaBankDate
 import java.sql.Timestamp
 
@@ -21,5 +22,12 @@ data class Users(
     val firebaseUserId: String? = null,
     val emailVerified: Boolean = false,
     val emailVerifiedAt: String? = null,
-    val userCode: String  // Construct as first 2 letters of FirstName+ 2 letters of lastname+ random 5 digit number with trailing zeroes
+    val isInvited: Boolean = false,
+    val userCode: String, // Construct as first 2 letters of FirstName+ 2 letters of lastname+ random 5 digit number with trailing zeroes
+    val createdByUserId: Int?,
+    val userSaveSource: UserSaveSource?,
+    val createdAt: Long,
+    val updatedByUserId: Int?,
+    val updatedAt: Long?,
+    val createdByName: String?
 )

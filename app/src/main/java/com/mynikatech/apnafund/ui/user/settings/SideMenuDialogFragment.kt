@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -102,6 +103,8 @@ class SideMenuDialogFragment : DialogFragment() {
                         lastNameEdit.setText(user?.lastName ?: SessionManager.lastName)
                         emailEdit.setText(user?.emailId ?: SessionManager.emailId)
                         phoneEdit.setText(user?.phoneNumber ?: SessionManager.phoneNumber)
+                        emailEdit.isEnabled = false
+                        phoneEdit.isEnabled = false
 
                         val dialog = AlertDialog.Builder(requireContext())
                             .setTitle(getString(R.string.title_edit_profile))
@@ -156,21 +159,20 @@ class SideMenuDialogFragment : DialogFragment() {
                                     }
 
                                     // 3) Build updated user (prefer copy from existing to preserve fields)
-                                    val base = user ?: Users(
-                                        userId = SessionManager.userId,
-                                        firstName = SessionManager.firstName,
-                                        lastName = SessionManager.lastName,
-                                        emailId = SessionManager.emailId,
-                                        phoneNumber = SessionManager.phoneNumber,
-                                        isPinSet = SessionManager.isPinSet,
-                                        status = "ACTIVE",
-                                        userCode = Converters.generateUserCode(firstName, lastName)
-                                    )
-                                    val updatedUser = base.copy(
+                                    val now = System.currentTimeMillis()
+
+                                    if (user == null) {
+                                        showToast(getString(R.string.error_user_not_found_re_login))
+                                        return@launch
+                                    }
+
+                                    val updatedUser = user.copy(
                                         firstName = firstName,
                                         lastName = lastName,
                                         emailId = email,
-                                        phoneNumber = phone
+                                        phoneNumber = phone,
+                                        updatedByUserId = SessionManager.userId,
+                                        updatedAt = now
                                     )
 
                                     // 4) Disable button while saving
@@ -327,5 +329,12 @@ class SideMenuDialogFragment : DialogFragment() {
 
         builder.setNegativeButton(getString(R.string.text_cancel_button)) { dialog, _ -> dialog.cancel() }
         builder.show()
+    }
+
+    private fun showToast(
+        message: String,
+        duration: Int = Toast.LENGTH_SHORT
+    ) {
+        Toast.makeText(requireContext(), message, duration).show()
     }
 }

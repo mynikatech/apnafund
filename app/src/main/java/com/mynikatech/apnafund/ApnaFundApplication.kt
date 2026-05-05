@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund
 
 import android.app.Application
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.MemoryCacheSettings
@@ -101,6 +102,7 @@ class ApnaFundApplication : Application() {
         )
         CoroutineScope(Dispatchers.IO).launch {
             bootStrapData = userRolesRepository.getBootStrapData()
+            Log.d("Application", "reached here")
             rolePrivilegesMap = bootStrapData.rolePrivileges
             rolesMap = bootStrapData.roles
             typeMap = bootStrapData.types

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 077-upsert-user-by-email-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/077-upsert-user-by-email-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

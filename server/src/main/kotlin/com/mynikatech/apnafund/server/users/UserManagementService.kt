@@ -4,6 +4,7 @@ import com.mynikatech.apnafund.net.api.ValidationException
 import com.mynikatech.apnafund.net.dto.RegisterOrUpdateUserRequest
 import com.mynikatech.apnafund.net.dto.SaveOrUpdateUserResponse
 import com.mynikatech.apnafund.net.dto.UserSaveSource
+import com.mynikatech.apnafund.server.auth.FirebaseGroupService
 import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
 import com.mynikatech.apnafund.server.common.messaging.factories.UserNotificationFactory
 import com.mynikatech.apnafund.server.groups.GroupsSql
@@ -30,16 +31,16 @@ class UserManagementService(
     fun saveOrUpdateUser(req: RegisterOrUpdateUserRequest): SaveOrUpdateUserResponse {
 
         val user = req.user
+        val requestorId = req.requestorId
 
-        val userId: Int = usersSql.upsertUserByEmail(user)
+        val userId: Int = usersSql.upsertUserByEmail(user,requestorId )
 
         var emailVerified = false
         var expiresOtpAtMillis: Long? = null
 
         when (req.source) {
 
-            UserSaveSource.SELF_REGISTER,
-            UserSaveSource.MODERATOR_REGISTER -> {
+            UserSaveSource.SELF_REGISTER -> {
                 // insert into password history if present and diff from existing
                 val newHash = req.user.passwordHash
                 if (!newHash.isNullOrBlank()) {
@@ -52,6 +53,7 @@ class UserManagementService(
                     }
                 }
                 handleGroup(userId, req.groupId)
+                ensureMemberRole(userId)
                 if (emailVerificationEnabled) {
                     expiresOtpAtMillis = emailVerificationService.sendVerificationEmail(
                         userId = userId,
@@ -86,8 +88,9 @@ class UserManagementService(
 
             UserSaveSource.ADMIN_CREATE -> {
                 handleGroup(userId, req.groupId)
+                ensureMemberRole(userId)
                 val group = groupsSql.getGroup(req.groupId).firstOrNull()
-                if(null != group) {
+                if (null != group) {
                     val moderatorId = group.moderator
                     val moderatorUser = moderatorId?.let {
                         usersSql.getUser(it).firstOrNull()
@@ -108,7 +111,38 @@ class UserManagementService(
 
             }
 
+            UserSaveSource.MODERATOR_CREATE -> {
+                handleGroup(userId, req.groupId)
+                ensureMemberRole(userId)
+                val group = groupsSql.getGroup(req.groupId).firstOrNull()
+                if (null != group) {
+                    val moderatorId = group.moderator
+                    val moderatorUser = moderatorId?.let {
+                        usersSql.getUser(it).firstOrNull()
+                    }
+                    val invitedByName = moderatorUser?.fullName ?: "Group Moderator"
+                    // INVITE EMAIL
+                    logger.info("Sending email joining invite")
+                    eventDispatchService.dispatchUser(
+                        UserNotificationFactory.inviteNotice(
+                            userId = userId,
+                            email = user.emailId,
+                            userName = "${user.firstName} ${user.lastName}",
+                            invitedBy = invitedByName, // moderator name
+                            groupName = group.groupName
+                        )
+                    )
+                }
+                emailVerified = false
+            }
+
             UserSaveSource.ADMIN_UPDATE -> {
+                handleGroup(userId, req.groupId)
+                // explicitly NO EMAIL
+                emailVerified = true
+            }
+
+            UserSaveSource.MODERATOR_UPDATE -> {
                 handleGroup(userId, req.groupId)
                 // explicitly NO EMAIL
                 emailVerified = true
@@ -144,6 +178,10 @@ class UserManagementService(
         )
     }
 
+    private fun ensureMemberRole(userId: Int) {
+        addUserRole(userId, "MEMBER")
+    }
+
     fun handleGroup(userId: Int, groupId: Int) {
         if (groupId > 0) {
             // Get group member and if not present add.
@@ -152,6 +190,7 @@ class UserManagementService(
             if (groupMember.isEmpty()) {
                 groupsSql.addGroupMember(userId, groupId, getCurrentDate())
             }
+            FirebaseGroupService.addMemberToGroup(groupId, userId)
         }
     }
 

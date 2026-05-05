@@ -6,6 +6,7 @@ import com.mynikatech.apnafund.net.dto.PendingModeratorRequestDto
 import com.mynikatech.apnafund.net.dto.RolesDto
 import com.mynikatech.apnafund.net.dto.UserProfileDto
 import com.mynikatech.apnafund.net.dto.UserRolesDto
+import com.mynikatech.apnafund.net.dto.UserStatusResponse
 import kotlinx.coroutines.flow.Flow
 
 interface UserRolesApi {
@@ -23,5 +24,6 @@ interface UserRolesApi {
     suspend fun getUserProfile(userId: Int): List<UserProfileDto>
     suspend fun getPendingModeratorRequests(): List<PendingModeratorRequestDto>
     suspend fun getBootStrapData(): BootstrapData
+    suspend fun checkUserStatus(email: String): UserStatusResponse
 
 }

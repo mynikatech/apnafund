@@ -8,6 +8,7 @@ import com.mynikatech.apnafund.data.model.FundMembers
 import com.mynikatech.apnafund.data.model.FundWithDetails
 import com.mynikatech.apnafund.data.model.Funds
 import com.mynikatech.apnafund.data.model.Users
+import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.util.ApnaBankDate
 
 
@@ -63,7 +64,8 @@ class FundViewModel : ViewModel() {
             )
             fundRepository.updateFundAndDetails(fundToSave, updatedFundDetails)
         } else {
-            newFundId = fundRepository.saveFundAndDetails(fundToSave, fundDetailstoSave)
+            newFundId = fundRepository.saveFundAndDetails(fundToSave, fundDetailstoSave,
+                SessionManager.userId)
         }
         return newFundId
     }

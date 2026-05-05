@@ -31,48 +31,104 @@ object FirebaseGroupService {
             )
 
             createdByUserId?.let {
-                data["createdBy"] = "user_$it"
-                data["members"] = mapOf("user_$it" to true)
+                val uid = "user_$it"
+                data["createdBy"] = uid
+                data["members"] = mapOf(uid to true)
             }
 
             val result = groupRef(groupId).set(data).get()
-            println("🔥 Firestore group created at ${result.updateTime}")
+            println("Firestore group created at ${result.updateTime}")
 
         } catch (e: Exception) {
-            e.printStackTrace()   // 👈 THIS IS CRITICAL
-            throw e               // let your controller return 500
+            e.printStackTrace()
+            throw e
         }
     }
     /* ---------------- ADD MEMBER ---------------- */
 
     fun addMemberToGroup(groupId: Int, userId: Int) {
         val uid = "user_$userId"
+        val docRef = groupRef(groupId)
 
         try {
             logger.info("Firebase: Updating group={} user={}", groupId, uid)
+            val snapshot = docRef.get().get()
+            val members = snapshot.get("members")
+            when (members) {
 
-            groupRef(groupId).update(
-                "members.$uid", true
-            )
-            logger.info("Firebase: Member ={} added successfully", uid)
+                // CASE 1: Old array → convert to map
+                is List<*> -> {
+                    val newMap = members
+                        .filterNotNull()
+                        .associate { it.toString() to true }
+                        .toMutableMap()
+
+                    newMap[uid] = true
+
+                    docRef.update("members", newMap)
+
+                    logger.info("Firebase: Migrated array → map and added {}", uid)
+                }
+
+                // CASE 2: Already map → normal update
+                is Map<*, *> -> {
+                    docRef.update("members.$uid", true)
+
+                    logger.info("Firebase: Member {} added successfully", uid)
+                }
+
+                // CASE 3: Null or missing → create fresh map
+                else -> {
+                    docRef.update("members", mapOf(uid to true))
+
+                    logger.info("Firebase: Members initialized and added {}", uid)
+                }
+            }
 
         } catch (e: Exception) {
-            logger.error("Firebase: Failed to add member {}", e.message,e)
+            logger.error("Firebase: Failed to add member {}", e.message, e)
             throw e
         }
     }
 
     /* ---------------- REMOVE MEMBER (optional) ---------------- */
 
-    fun removeMemberFromGroup(
-        groupId: Int,
-        userId: Int
-    ) {
+    fun removeMemberFromGroup(groupId: Int, userId: Int) {
         val uid = "user_$userId"
+        val docRef = groupRef(groupId)
 
-        groupRef(groupId).update(
-            "members.$uid", FieldValue.delete()
-        )
+        try {
+            val snapshot = docRef.get().get()
+            val members = snapshot.get("members")
+
+            when (members) {
+
+                // Old array → convert to map then remove
+                is List<*> -> {
+                    val newMap = members
+                        .filterNotNull()
+                        .map { it.toString() }
+                        .filter { it != uid }
+                        .associateWith { true }
+                        .toMutableMap()
+
+                    docRef.update("members", newMap)
+                }
+
+                // Map → normal delete
+                is Map<*, *> -> {
+                    docRef.update("members.$uid", FieldValue.delete())
+                }
+
+                else -> {
+                    // nothing to remove
+                }
+            }
+
+        } catch (e: Exception) {
+            logger.error("Firebase: Failed to remove member {}", e.message, e)
+            throw e
+        }
     }
 
     fun addMembers(

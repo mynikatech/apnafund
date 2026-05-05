@@ -4,9 +4,11 @@ import com.mynikatech.apnafund.data.model.GroupMembers
 import com.mynikatech.apnafund.net.dto.GroupsDto
 import com.mynikatech.apnafund.net.dto.GroupMemberWithNameDto
 import com.mynikatech.apnafund.net.dto.GroupMembersDto
+import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
 
 interface GroupsApi {
     suspend fun getAllGroups(): List<GroupsDto>
+    suspend fun getAllGroupsWithModeratorIndo(): List<GroupsWithModeratorDto>
     suspend fun getGroup(id: Int): GroupsDto?
     suspend fun addGroup(dto: GroupsDto): GroupsDto
     suspend fun updateGroup(id: Int, dto: GroupsDto): Boolean

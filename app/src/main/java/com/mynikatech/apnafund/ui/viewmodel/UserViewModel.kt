@@ -1,7 +1,9 @@
 package com.mynikatech.apnafund.ui.viewmodel
 
 import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.mynikatech.apnafund.ApnaFundApplication
 import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.mappers.toDto
@@ -11,6 +13,7 @@ import com.mynikatech.apnafund.data.model.UserWithGroup
 import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.net.ApiException
 import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
+import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
 import com.mynikatech.apnafund.net.dto.LoginUserResponse
 import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
 import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
@@ -18,21 +21,37 @@ import com.mynikatech.apnafund.net.dto.RegisterOrUpdateUserRequest
 import com.mynikatech.apnafund.net.dto.SaveOrUpdateUserResponse
 import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
 import com.mynikatech.apnafund.net.dto.UserSaveSource
+import com.mynikatech.apnafund.net.dto.UserStatusResponse
 import com.mynikatech.apnafund.net.dto.UsersDto
+import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.util.Converters
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 class UserViewModel : ViewModel() {
 
     private val userRolesRepository = ApnaFundApplication.userRolesRepository
 
+    val userStatus = MutableLiveData<UserStatusResponse>()
+    val loading = MutableLiveData<Boolean>()
+    val userLiveData = MutableLiveData<UsersDto?>()
+    val refreshTrigger = MutableStateFlow(Unit)
+    val errorLiveData = MutableLiveData<ApiException>()
+
     /** Flow source for the table (Room) */
     fun usersFlow(isAdmin: Boolean, moderatorGroupId: Int): Flow<List<UserWithGroup>> =
-        if (isAdmin) userRolesRepository.getAllUsersWithGroup()
-        else userRolesRepository.getUserWithGroup(moderatorGroupId)
+
+        refreshTrigger.flatMapLatest {
+            if (isAdmin)
+                userRolesRepository.getAllUsersWithGroup()
+            else
+                userRolesRepository.getUserWithGroup(moderatorGroupId)
+        }
 
     /** Pull latest users from the server and cache into Room */
     suspend fun refreshUsersAndCache() {
@@ -73,7 +92,8 @@ class UserViewModel : ViewModel() {
             user = user.toDto(),
             source = userSaveSource,
             roleCode = ApnaBankConstants.ROLE_MEMBER,
-            groupId = groupId
+            groupId = groupId,
+            requestorId = SessionManager.userId
         )
 
         return userRolesRepository.registerOrUpdateUser(regUpdReq)
@@ -181,11 +201,50 @@ class UserViewModel : ViewModel() {
         return userRolesRepository.getFirebaseTokenForUser(userId)
     }
 
+    fun checkUserStatus(email: String) {
+        viewModelScope.launch {
+            loading.value = true
+            try {
+                //val user = userRolesRepository.getUserByEmail(email)
+                val result = userRolesRepository.checkUserStatus(email)
+                userStatus.value = result
+            } catch (e: Exception) {
+                // handle error (network etc.)
+            } finally {
+                loading.value = false
+            }
+        }
+    }
+
+    fun fetchUserByEmail(email: String) {
+        viewModelScope.launch {
+            try {
+                val response = userRolesRepository.getUserByEmail(email)
+                userLiveData.value = response?.user
+            } catch (e: ApiException){
+                errorLiveData.value = e
+            }
+        }
+    }
+
+    fun clearUser() {
+        userLiveData.value = null
+    }
+
     fun getGroupsForModeratorUser(userId: Int): Flow<List<Groups>> =
         flow {
             emit(userRolesRepository.getGroupsForModeratorUser(userId))
         }
             .map { dtos -> dtos.map { it.toEntity() } }
+            .catch { e ->
+                Log.e("UserViewModel", "Error fetching moderator groups", e)
+                emit(emptyList())
+            }
+
+    fun getGroupsForModeratorUserWithModInfo(userId: Int): Flow<List<GroupsWithModeratorDto>> =
+        flow {
+            emit(userRolesRepository.getGroupsForModeratorUserWithModInfo(userId))
+        }
             .catch { e ->
                 Log.e("UserViewModel", "Error fetching moderator groups", e)
                 emit(emptyList())

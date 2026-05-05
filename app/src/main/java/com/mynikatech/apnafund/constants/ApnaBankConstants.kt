@@ -37,6 +37,7 @@ object ApnaBankConstants {
     const val TEXT_LOAN = "LOAN"
     const val TEXT_LOAN_CLOSURE = "LOAN_CLOSURE"
     const val TEXT_EMAIL_VERIFY = "EMAIL_VERIFY"
+    const val TEXT_INVITE_VERIFY = "INVITE_VERIFY"
     const val TEXT_WEAK = "WEAK"
     const val TEXT_ADD_LOAN_DIALOG = "AddLoanDialog"
     const val TYPING_DEBOUNCE_MS = 2000L

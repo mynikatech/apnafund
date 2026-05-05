@@ -46,6 +46,7 @@
             android:layout_height="wrap_content"
             android:importantForAccessibility="no"
             android:padding="10dp"
+            app:tint="?attr/colorOnSurface"
             android:src="@drawable/ic_phone" />
 
         <TextView
@@ -70,6 +71,7 @@
             android:layout_height="wrap_content"
             android:importantForAccessibility="no"
             android:padding="10dp"
+            app:tint="?attr/colorOnSurface"
             android:src="@drawable/ic_email" />
 
         <TextView
@@ -109,7 +111,7 @@
             android:layout_height="wrap_content"
             android:padding="4dp"
             android:text="@string/asterik_heading"
-            android:textColor="@color/blue_dark"
+            android:textColor="?attr/colorPrimary"
             android:textStyle="italic" />
 
         <TextView
@@ -117,7 +119,7 @@
             android:layout_height="wrap_content"
             android:padding="4dp"
             android:text="@string/Disclaimer_message_1"
-            android:textColor="@color/black"
+            android:textColor="?attr/colorOnBackground"
             android:textStyle="italic" />
 
     </LinearLayout>
@@ -133,7 +135,7 @@
             android:layout_height="wrap_content"
             android:padding="4dp"
             android:text="@string/asterik_heading"
-            android:textColor="@color/blue_dark"
+            android:textColor="?attr/colorPrimary"
             android:textStyle="italic" />
 
         <TextView
@@ -141,7 +143,7 @@
             android:layout_height="wrap_content"
             android:padding="4dp"
             android:text="@string/disclaimer_message_2"
-            android:textColor="@color/black"
+            android:textColor="?attr/colorOnBackground"
             android:textStyle="italic" />
     </LinearLayout>
 

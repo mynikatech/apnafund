@@ -59,6 +59,9 @@ class GroupChatFragment : Fragment() {
     private var groupName: String = "Group"
     private var messageListener: ListenerRegistration? = null
     private var typingListener: ListenerRegistration? = null
+    private var retryCount = 0
+    private val maxRetries = 2
+    private var chatStarted = false
     private var permissionErrorHandled = false
     private val imagePicker =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -223,12 +226,28 @@ class GroupChatFragment : Fragment() {
     private fun startChat() {
         if (!isAdded || _binding == null) return
 
-        // 🔐 HARD GATE: Firebase must be ready
+        // HARD GATE: Firebase must be ready
         if (!SessionManager.isFirebaseSynced || SessionManager.firebaseUid.isBlank()) {
-            Log.w("GroupChat", "Chat blocked: Firebase not ready")
-            showNoAccessUI("Chat not ready. Please wait…")
+
+            if (retryCount >= maxRetries) {
+                Log.w("GroupChat", "Chat failed after retries")
+                showNoAccessUI("Chat not available. Try again.")
+                return
+            }
+
+            retryCount++
+
+            binding.root.postDelayed({
+                startChat()
+            }, 500)
+
             return
         }
+
+        retryCount = 0 // reset
+
+        if (chatStarted) return
+        chatStarted = true
 
         binding.textChatTitle.text = getString(R.string.chat_title, groupName)
 
@@ -580,7 +599,7 @@ class GroupChatFragment : Fragment() {
                 val binding = _binding ?: return@addSnapshotListener
                 if (snapshot == null) return@addSnapshotListener
 
-                // 🔥 Ignore local writes (important)
+                // Ignore local writes (important)
                 if (snapshot.metadata.hasPendingWrites()) return@addSnapshotListener
 
                 val now = System.currentTimeMillis()
@@ -630,6 +649,7 @@ class GroupChatFragment : Fragment() {
         typingRunnable?.let { typingHandler.removeCallbacks(it) }
         super.onDestroyView()
         _binding = null
+        chatStarted = false
     }
 
     override fun onResume() {

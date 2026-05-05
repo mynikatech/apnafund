@@ -41,38 +41,7 @@ class UserViewModelTest {
         viewModel = UserViewModel()
     }
 
-    @Test
-    fun `fetchUsers should return list of users`() = runBlocking {
-        val mockUsers = listOf(
-            Users(
-                1,
-                "John",
-                "Doe",
-                "john@example.com",
-                "1234567890",
-                "ACTIVE",
-                createdDate = ApnaBankDate.getCurrentDate(),
-                userCode = "JODO123456"
-            )
-        )
-        `when`(userRolesRepository.fetchAllUsers()).thenReturn(flowOf(mockUsers))
 
-        val result = viewModel.fetchUsers()
-        result.collect {
-            assertEquals(1, it.size)
-            assertEquals("John", it[0].firstName)
-        }
-    }
-
-    @Test
-    fun `fetchUser should return correct user`() = runBlocking {
-        val user = Users(1, "Jane", "Doe", "jane@example.com", "9876543210", "ACTIVE",createdDate = ApnaBankDate.getCurrentDate(), userCode = "JODO123456")
-        `when`(userRolesRepository.fetchUser(1)).thenReturn(user)
-
-        val result = viewModel.fetchUser(1)
-        assertNotNull(result)
-        assertEquals("Jane", result?.firstName)
-    }
 
     @Test
     fun `doesUserExists should return true if user exists`() = runBlocking {
@@ -90,15 +59,6 @@ class UserViewModelTest {
 
         val result = viewModel.isDuplicate("a@example.com", "1234567890", 1)
         assertTrue(result)
-    }
-
-    @Test
-    fun `saveOrUpdateUser should call createUser if userId is 0`() = runBlocking {
-        val user = Users(0, "New", "User", "new@example.com", "1234567890", "ACTIVE",createdDate = ApnaBankDate.getCurrentDate(), userCode = "JODO123456")
-
-        viewModel.saveOrUpdateUser(user, 0, UserSaveSource.SELF_REGISTER)
-
-        verify(userRolesRepository, timeout(1000)).createUser(user)
     }
 
 

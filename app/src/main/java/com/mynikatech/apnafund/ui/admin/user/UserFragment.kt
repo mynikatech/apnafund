@@ -3,34 +3,25 @@ package com.mynikatech.apnafund.ui.admin.user
 import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Color
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.InputFilter
 import android.text.InputType
 import android.text.Spannable
 import android.text.SpannableString
-import android.text.TextUtils
 import android.text.style.ForegroundColorSpan
 import android.util.Log
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.TableLayout
-import android.widget.TableRow
-import android.widget.TextView
 import android.widget.Toast
-import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.textfield.TextInputLayout
 import com.mynikatech.apnafund.BuildConfig
@@ -59,15 +50,11 @@ class UserFragment : Fragment() {
 
     private lateinit var binding: FragmentUserBinding
 
-    private lateinit var tableLayoutUserDetails: TableLayout
-
     private val userViewModel: UserViewModel by viewModels()
 
     private val groupViewModel: GroupViewModel by viewModels()
 
-    private lateinit var whiteBg: Drawable
-
-    private lateinit var grayBg: Drawable
+    private lateinit var adapter: UserAdapter
 
     val isAdmin = SessionManager.isAdmin()
     val moderatorGroupId = SessionManager.groupId ?: 0
@@ -99,85 +86,30 @@ class UserFragment : Fragment() {
                 Log.e("NET", "Echo failed", e)
             }
         }
-        tableLayoutUserDetails = binding.tableUserDetails
-        whiteBg =
-            ContextCompat.getDrawable(requireContext(), R.drawable.table_cell_border_white)!!
-        grayBg =
-            ContextCompat.getDrawable(requireContext(), R.drawable.table_cell_border_gray)!!
+        adapter = UserAdapter(
+            onEdit = { user ->
+                showAddUserDialog(requireContext(), 1, user)
+            },
+            onToggle = { user ->
+                showConfirmToggleUserStatus(user)
+            }
+        )
 
-        //fetchAllUsers()
+        binding.recyclerUsers.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerUsers.adapter = adapter
         observeUsers()
     }
 
     private fun observeUsers() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // Kick a server -> Room sync (don’t block UI)
-                launch {
-                    runCatching { userViewModel.refreshUsersAndCache() }
-                        .onFailure { e -> Log.e("NET", "User refresh failed", e) }
-                }
                 // Now collect Room and render
                 userViewModel.usersFlow(isAdmin, moderatorGroupId)
-                    .collectLatest { usersWithGroup -> populateUserTable(usersWithGroup) }
+                    .collectLatest { usersWithGroup -> adapter.updateList(usersWithGroup) }
             }
         }
     }
 
-
-    private fun fetchAllUsers() {
-        lifecycleScope.launch {
-            userViewModel.fetchUsersWithGroup(isAdmin, moderatorGroupId)
-                .collectLatest { usersWithGroup ->
-                    populateUserTable(usersWithGroup)
-                }
-        }
-    }
-
-    private fun populateUserTable(users: List<UserWithGroup>) {
-        cleanTable(tableLayoutUserDetails)
-        val noOfUsers: Int = users.size
-        for (i in 0 until noOfUsers) {
-            val tvNo = TextView(activity)
-            val user = users[i]
-            tvNo.text = "${i.plus(1)}"
-            tvNo.gravity = Gravity.CENTER
-            val tvFirstName = createTableCell(user.firstName, user.firstName)
-            val tvLastName = createTableCell(user.lastName, user.lastName)
-            val tvEmailId = createTableCell(user.emailId, user.emailId)
-            val phoneNumber = TextView(activity)
-            phoneNumber.text = user.phoneNumber
-            phoneNumber.gravity = Gravity.END
-            val groupName = createTableCell(user.groupName, user.groupName)
-            val btnEdit = createIconButton(R.drawable.icon_edit) {
-                showAddUserDialog(requireContext(), 1, user)
-            }
-            btnEdit.visibility =
-                if (Converters.userHasPrivilege(ApnaBankConstants.ADD_USER_PRIV)) View.VISIBLE else View.GONE
-            val status = user.status
-            // assuming a flag like this exists
-            val drawable =
-                if (status == ApnaBankConstants.STATUS_ACTIVE) R.drawable.ic_block else R.drawable.ic_check_circle
-
-            val btnToggleActive = createIconButton(drawable, status) {
-                showConfirmToggleUserStatus(user)
-            }
-            val newRow = TableRow(activity)
-            newRow.layoutParams =
-                TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT)
-            newRow.addView(tvNo, 0)
-            newRow.addView(tvFirstName, 1)
-            newRow.addView(tvLastName, 2)
-            newRow.addView(tvEmailId, 3)
-            newRow.addView(phoneNumber, 4)
-            newRow.addView(groupName, 5)
-            newRow.addView(btnEdit, 6)
-            newRow.addView(btnToggleActive, 7)
-            newRow.background = if (i % 2 == 0) whiteBg else grayBg
-            tableLayoutUserDetails.addView(newRow)
-        }
-
-    }
 
     fun TextInputLayout.setInfoDialog(
         titleRes: Int,
@@ -284,7 +216,6 @@ class UserFragment : Fragment() {
                     }",
                     Toast.LENGTH_SHORT
                 ).show()
-                observeUsers()
             } else {
                 Toast.makeText(
                     requireContext(),
@@ -418,6 +349,8 @@ class UserFragment : Fragment() {
 
         // Save or update user
         dialogBinding.buttonSaveUser.setOnClickListener {
+            dialogBinding.buttonSaveUser.isEnabled = false
+            dialogBinding.buttonSaveUser.text = getString(R.string.button_saving_progress)
             val email = dialogBinding.editTextEmail.text.toString().trim()
             val phone = dialogBinding.editTextPhone.text.toString().trim()
             val userId = existingUser?.userId ?: 0
@@ -427,46 +360,78 @@ class UserFragment : Fragment() {
             val lastName = dialogBinding.editTextLastName.text.toString().trim().toTitleCase()
             val selectedGroupId = groupMap[group]
             lifecycleScope.launch {
-                val isDuplicate = userViewModel.isDuplicate(email, phone, userId)
-                val existingUserFull = if (userId != 0) userViewModel.fetchUser(userId) else null
-                if (isDuplicate) {
-                    Toast.makeText(
-                        context,
-                        getString(R.string.text_existing_user_error_message), Toast.LENGTH_LONG
-                    ).show()
-                    return@launch
-                }
-                // if moderator selecting group is mandatory
-                if (!isAdmin && selectedGroupId == null) {
-                    Toast.makeText(
-                        context,
-                        getString(R.string.error_valid_group_selection), Toast.LENGTH_LONG
-                    ).show()
-                    return@launch
-                }
-                val userToSave = Users(
-                    userId = userId,
-                    firstName = firstName,
-                    lastName = lastName,
-                    emailId = email,
-                    phoneNumber = phone,
-                    status = existingUserFull?.status ?: ApnaBankConstants.STATUS_ACTIVE,
-                    isPinSet = existingUserFull?.isPinSet ?: false,
-                    passwordHash = existingUserFull?.passwordHash,
-                    firebaseUserId = existingUserFull?.firebaseUserId,
-                    hashPIN = existingUserFull?.hashPIN,
-                    createdDate = existingUserFull?.createdDate ?: ApnaBankDate.getCurrentDate(),
-                    userCode = existingUserFull?.userCode ?: Converters.generateUserCode(
-                        firstName,
-                        lastName
+                try {
+                    val isDuplicate = userViewModel.isDuplicate(email, phone, userId)
+                    val existingUserFull =
+                        if (userId != 0) userViewModel.fetchUser(userId) else null
+                    if (isDuplicate) {
+                        Toast.makeText(
+                            context,
+                            getString(R.string.text_existing_user_error_message), Toast.LENGTH_LONG
+                        ).show()
+                        dialogBinding.buttonSaveUser.isEnabled = true
+                        dialogBinding.buttonSaveUser.text = getString(R.string.text_save_button)
+                        return@launch
+                    }
+                    // if moderator selecting group is mandatory
+                    if (!isAdmin && selectedGroupId == null) {
+                        Toast.makeText(
+                            context,
+                            getString(R.string.error_valid_group_selection), Toast.LENGTH_LONG
+                        ).show()
+                        dialogBinding.buttonSaveUser.isEnabled = true
+                        dialogBinding.buttonSaveUser.text =
+                            getString(R.string.button_saving_progress)
+                        return@launch
+                    }
+                    val userSaveSource = if (!isAdmin) {
+                        UserSaveSource.MODERATOR_CREATE
+                    } else {
+                        UserSaveSource.ADMIN_CREATE
+                    }
+                    val now = System.currentTimeMillis()
+                    val userToSave = Users(
+                        userId = userId,
+                        firstName = firstName,
+                        lastName = lastName,
+                        emailId = email,
+                        phoneNumber = phone,
+                        status = existingUserFull?.status ?: ApnaBankConstants.STATUS_ACTIVE,
+                        isPinSet = existingUserFull?.isPinSet == true,
+                        passwordHash = existingUserFull?.passwordHash,
+                        firebaseUserId = existingUserFull?.firebaseUserId,
+                        hashPIN = existingUserFull?.hashPIN,
+                        createdDate = existingUserFull?.createdDate
+                            ?: ApnaBankDate.getCurrentDate(),
+                        userCode = existingUserFull?.userCode ?: Converters.generateUserCode(
+                            firstName,
+                            lastName
+                        ),
+                        isInvited = true,
+                        createdByUserId = SessionManager.userId,
+                        userSaveSource = userSaveSource,
+                        createdAt = now,
+                        updatedByUserId = null,
+                        updatedAt = null,
+                        createdByName = null
                     )
-                )
-                userViewModel.saveOrUpdateUser(
-                    userToSave, groupId = selectedGroupId ?: 0,
-                    UserSaveSource.ADMIN_CREATE
-                )
-                dialog.dismiss()
-                fetchAllUsers()
+                    userViewModel.saveOrUpdateUser(
+                        userToSave, groupId = selectedGroupId ?: 0,
+                        userSaveSource
+                    )
+                    dialog.dismiss()
+                    userViewModel.refreshTrigger.value = Unit
+                }catch (e: Exception) {
+                    Log.e("UserDialog", "Error saving user", e)
+
+                    Toast.makeText(
+                        context,
+                        getString(R.string.error_saving_user),
+                        Toast.LENGTH_LONG
+                    ).show()
+                    dialogBinding.buttonSaveUser.isEnabled = true
+                    dialogBinding.buttonSaveUser.text = getString(R.string.text_save_button)
+                }
             }
         }
 
@@ -475,42 +440,4 @@ class UserFragment : Fragment() {
         }
     }
 
-    private fun createTableCell(
-        text: String?,
-        tooltip: String?,
-        gravity: Int = Gravity.START
-    ): TextView {
-        return TextView(requireContext()).apply {
-            this.text = text
-            this.gravity = gravity
-            maxLines = 1
-            ellipsize = TextUtils.TruncateAt.END
-            maxWidth = (resources.displayMetrics.widthPixels * 0.25).toInt()
-            ViewCompat.setTooltipText(this, tooltip)
-        }
-    }
-
-    private fun createIconButton(
-        drawableRes: Int, tooltip: String? = null,
-        onClick: () -> Unit
-    ): ImageButton {
-        val sizeInPx = (19 * resources.displayMetrics.density).toInt()
-        return ImageButton(requireContext()).apply {
-            setImageResource(drawableRes)
-            layoutParams = TableRow.LayoutParams(sizeInPx, sizeInPx)
-            scaleType = ImageView.ScaleType.CENTER_INSIDE
-            background = null
-            ViewCompat.setTooltipText(this, tooltip)
-            setPadding(2, 2, 2, 2)
-            setOnClickListener { onClick() }
-        }
-    }
-
-    private fun cleanTable(table: TableLayout) {
-        val childCount = table.childCount
-        // Remove all rows except the first header row
-        if (childCount > 1) {
-            table.removeViews(1, childCount - 1)
-        }
-    }
 }

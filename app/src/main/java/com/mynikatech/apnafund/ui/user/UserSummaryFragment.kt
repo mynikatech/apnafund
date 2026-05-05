@@ -56,6 +56,7 @@ import com.mynikatech.apnafund.util.Converters.toTitleCase
 import com.mynikatech.apnafund.util.GroupInputValidator
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlin.compareTo
 
 class UserSummaryFragment : Fragment() {
 
@@ -212,8 +213,12 @@ class UserSummaryFragment : Fragment() {
             val hasGroup = (SessionManager.groupId ?: 0) > 0
             val isAdmin = roleCodes.contains("ADMIN")
             val isModerator = SessionManager.isModerator()
+            val pendingGroups = SessionManager.userPendingGroups ?: emptyList()
+            val activeGroups = SessionManager.userGroups ?: emptyList()
+            val hasActive = activeGroups.isNotEmpty()
+            val hasPending = pendingGroups.isNotEmpty()
 
-            val canAccessGroupTabs = hasGroup || isAdmin
+            val canAccessGroupTabs = hasActive || isAdmin
 
             bottomNav.menu.findItem(R.id.groupChatFragment)?.isVisible = canAccessGroupTabs
             bottomNav.menu.findItem(R.id.fundFragment)?.isVisible = canAccessGroupTabs
@@ -228,11 +233,18 @@ class UserSummaryFragment : Fragment() {
 
                 }
 
-            if (!hasGroup) {
+            if (!hasActive) {
 
+                // Show empty/pending container
                 binding.noGroupMessageContainer.visibility = View.VISIBLE
                 binding.GroupMessageContainer.visibility = View.GONE
 
+                // Toggle message inside container
+                binding.textViewNoGroupMessage.visibility =
+                    if (!hasPending) View.VISIBLE else View.GONE
+
+                binding.textViewPendingMessage.visibility =
+                    if (hasPending) View.VISIBLE else View.GONE
             } else {
 
                 binding.noGroupMessageContainer.visibility = View.GONE
@@ -240,15 +252,53 @@ class UserSummaryFragment : Fragment() {
 
                 lazyLoadContent()
             }
+            fun handleAddGroupClick() {
+
+                when {
+                    hasPending && pendingGroups.size >= 3 -> {
+                        Toast.makeText(
+                            requireContext(),
+                            getString(R.string.msg_pending_limit),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                    hasPending -> {
+                        showPendingWarningDialog {
+                            showAddGroupDialog(requireContext(), 0)
+                        }
+                    }
+
+                    else -> {
+                        showAddGroupDialog(requireContext(), 0)
+                    }
+                }
+            }
             binding.layoutAddGroup.setOnClickListener {
-                showAddGroupDialog(requireContext(), 0)
+                handleAddGroupClick()
             }
             binding.buttonAddGroupNone.setOnClickListener {
-
-                showAddGroupDialog(requireContext(), 0)
+                handleAddGroupClick()
             }
         }
 
+    }
+
+    fun showPendingWarningDialog(onContinue: () -> Unit) {
+        if (!isAdded) return
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.header_add_group))
+            .setMessage(getString(R.string.msg_pending_warning))
+            .setPositiveButton(getString(R.string.label_continue)) { dialog, _ ->
+                dialog.dismiss()
+                onContinue()
+            }
+            .setNegativeButton(getString(R.string.text_cancel_button)) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -615,7 +665,9 @@ class UserSummaryFragment : Fragment() {
         val userName = userProfiles.userName
 
         val groups = userProfiles.groups
+        val pendingGroups = userProfiles.pendingGroups
         SessionManager.userGroups = groups
+        SessionManager.userPendingGroups = pendingGroups
         if (groups.isEmpty()) {
             // Admin or user without group
             SessionManager.groupId = null

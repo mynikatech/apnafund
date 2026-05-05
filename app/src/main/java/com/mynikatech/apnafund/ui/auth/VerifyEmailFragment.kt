@@ -85,6 +85,12 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
                                 findNavController().navigate(action)
                             }
                         }
+                        "INVITE_VERIFY" -> {
+                            val action =
+                                VerifyEmailFragmentDirections
+                                    .actionVerifyEmailFragmentToSetPasswordFragment(userId)
+                            findNavController().navigate(action)
+                        }
 
                         "RESET_PASSWORD" -> {
                             val action =
@@ -152,6 +158,7 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
             binding.textResend.alpha = 0.5f
             lifecycleScope.launch {
                 try {
+                    if (!isAdded) return@launch
 
                     val resp = userViewModel.resendEmailVerification(
                         userId, email, userName, purpose
@@ -165,6 +172,10 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
                         Toast.LENGTH_SHORT
                     ).show()
                 } catch (e: ApiException) {
+                    if (!isAdded) return@launch
+
+                    binding.textResend.isEnabled = true
+                    binding.textResend.alpha = 1.0f
 
                     // Cooldown from server (HTTP 429)
                     if (e.code == 429) {
@@ -185,7 +196,45 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
                 }
             }
         }
-        startOtpFlow(emailOtpExpiresAt)
+        val now = System.currentTimeMillis()
+
+        if (emailOtpExpiresAt == 0L || emailOtpExpiresAt <= now) {
+            resendOtpOnLoad()
+        } else {
+            startOtpFlow(emailOtpExpiresAt)
+        }
+    }
+    private fun resendOtpOnLoad() {
+        binding.textResend.isEnabled = false
+        binding.textResend.alpha = 0.5f
+
+        lifecycleScope.launch {
+            try {
+                val resp = userViewModel.resendEmailVerification(
+                    userId, email, userName, purpose
+                )
+
+                emailOtpExpiresAt = resp.emailOtpExpiresAtMillis
+                startOtpFlow(emailOtpExpiresAt)
+
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.message_verification_code_resent),
+                    Toast.LENGTH_SHORT
+                ).show()
+
+            } catch (e: Exception) {
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.message_unable_to_send_code),
+                    Toast.LENGTH_SHORT
+                ).show()
+                Log.e("VerifyEmailFragment: Resend", e.message.toString() )
+                // Allow manual retry
+                binding.textResend.isEnabled = true
+                binding.textResend.alpha = 1.0f
+            }
+        }
     }
 
     private fun onOtpExpired() {
@@ -287,7 +336,7 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
             )
             .setPositiveButton(R.string.text_leave) { _, _ ->
                 findNavController().navigate(
-                    VerifyEmailFragmentDirections.actionVerifyEmailFragmentToChangePasswordFragment()
+                    VerifyEmailFragmentDirections.actionVerifyEmailFragmentToLoginFragment()
                 )
             }
             .setNegativeButton(R.string.text_stay, null)

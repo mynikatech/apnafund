@@ -16,6 +16,7 @@ fun UserProfile.toDto(): UserProfileDto = UserProfileDto(
 ).apply {
     roles = this@toDto.roles
     groups = this@toDto.groups
+    pendingGroups = this@toDto.pendingGroups
 }
 
 fun UserProfileDto.toEntity(): UserProfile = UserProfile(
@@ -31,6 +32,7 @@ fun UserProfileDto.toEntity(): UserProfile = UserProfile(
 ).apply {
     roles = this@toEntity.roles
     groups = this@toEntity.groups
+    pendingGroups = this@toEntity.pendingGroups
 }
 
 fun List<UserProfileDto>.toEntity(): List<UserProfile> = map { it.toEntity() }
