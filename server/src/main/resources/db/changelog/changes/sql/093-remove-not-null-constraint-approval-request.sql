@@ -1,0 +1,1 @@
+ALTER TABLE approval_requests ALTER COLUMN "approvalStatus" DROP NOT NULL;

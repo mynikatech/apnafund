@@ -18,12 +18,6 @@ interface GroupMembersDao {
     @Query("SELECT * from group_members WHERE groupId = :groupId ")
     suspend fun getAllMembersofGroup( groupId: Int): List<GroupMembers>
 
-    @Query("""SELECT gm.groupMemberId, gm.userId, gm.groupId, gm.joiningDate,
-            u.firstName, u.lastName, u.emailId
-            from group_members gm
-            INNER JOIN users as u on gm.userId = u.userId
-            WHERE groupId = :groupId """)
-    suspend fun getAllMembersofGroupWithNames( groupId: Int): List<GroupMemberWithName>
 
     @Update
     suspend fun updateGroupMember(groupMembers: GroupMembers)
@@ -31,15 +25,6 @@ interface GroupMembersDao {
     @Delete
     suspend fun deleteGroupMember(groupMembers: GroupMembers)
 
-    @Query("""
-    SELECT gm.groupMemberId, gm.userId, gm.groupId, gm.joiningDate,
-           u.firstName, u.lastName, u.emailId
-    FROM group_members AS gm
-    INNER JOIN funds AS f ON gm.groupId = f.groupId
-    INNER JOIN users AS u ON gm.userId = u.userId
-    WHERE f.fundId = :fundId
-""")
-    suspend fun getGroupMembersWithNamesForFund(fundId: Int): List<GroupMemberWithName>
 
     // Get GroupMembers for a given Fund
     @Query("""

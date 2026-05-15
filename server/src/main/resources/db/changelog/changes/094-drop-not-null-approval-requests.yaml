@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 094-approver-user-id-not-null-column
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/094-approver-user-id-not-null-column.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

@@ -10,6 +10,7 @@ import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.model.UserWithGroup
 import com.mynikatech.apnafund.databinding.ItemUserRowBinding
+import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.util.Converters
 
 class UserAdapter(
@@ -43,7 +44,7 @@ class UserAdapter(
             }
 
             binding.buttonEdit.visibility =
-                if (Converters.userHasPrivilege(ApnaBankConstants.ADD_USER_PRIV))
+                if (SessionManager.canManageUsers())
                     View.VISIBLE else View.GONE
 
             // Status toggle

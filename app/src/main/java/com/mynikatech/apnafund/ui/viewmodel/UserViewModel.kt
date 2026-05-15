@@ -85,7 +85,8 @@ class UserViewModel : ViewModel() {
     suspend fun saveOrUpdateUser(
         user: Users,
         groupId: Int = 0,
-        userSaveSource: UserSaveSource
+        userSaveSource: UserSaveSource,
+        groupRole: String? = null
     ): Result<SaveOrUpdateUserResponse> {
 
         val regUpdReq = RegisterOrUpdateUserRequest(
@@ -93,7 +94,8 @@ class UserViewModel : ViewModel() {
             source = userSaveSource,
             roleCode = ApnaBankConstants.ROLE_MEMBER,
             groupId = groupId,
-            requestorId = SessionManager.userId
+            requestorId = SessionManager.userId,
+            groupRole = groupRole
         )
 
         return userRolesRepository.registerOrUpdateUser(regUpdReq)
@@ -224,6 +226,34 @@ class UserViewModel : ViewModel() {
             } catch (e: ApiException){
                 errorLiveData.value = e
             }
+        }
+    }
+
+    suspend fun findExistingUserByEmail(
+        email: String
+    ): LoginUserResponse? {
+
+        return try {
+
+            userRolesRepository.getUserByEmail(email)
+
+        } catch (e: ApiException) {
+
+            null
+        }
+    }
+
+    suspend fun findExistingUserByPhone(
+        phone: String
+    ): LoginUserResponse? {
+
+        return try {
+
+            userRolesRepository.getUserByPhone(phone)
+
+        } catch (e: ApiException) {
+
+            null
         }
     }
 

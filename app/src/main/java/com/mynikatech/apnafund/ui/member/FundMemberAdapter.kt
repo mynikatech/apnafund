@@ -7,8 +7,7 @@ import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.databinding.ItemFundMemberBinding
 
 class FundMemberAdapter(
-    private val users: List<Users>,
-    private val selectedUsers: MutableSet<Int>
+    val items: MutableList<FundMemberSelection>
 ) : RecyclerView.Adapter<FundMemberAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -17,28 +16,51 @@ class FundMemberAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(users[position])
+        holder.bind(items[position])
     }
 
     override fun getItemCount(): Int {
-        return users.size
+        return items.size
     }
 
     inner class ViewHolder(private val binding: ItemFundMemberBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(user: Users) {
-            val fullName = "${user.firstName} ${user.lastName}"
-            binding.checkboxMember.text = fullName
-            binding.checkboxMember.isChecked = selectedUsers.contains(user.userId)
+        fun bind(item: FundMemberSelection) {
 
-            // Avoid triggering listener when programmatically setting isChecked
+            val fullName = item.displayName
+
+            // REMOVE old listeners first (very important)
             binding.checkboxMember.setOnCheckedChangeListener(null)
+            binding.checkboxModerator.setOnCheckedChangeListener(null)
 
+            // Set values
+            binding.checkboxMember.text = fullName
+            binding.checkboxMember.isChecked = item.isSelected
+            binding.checkboxModerator.isChecked = item.isModerator
+
+            // Enable moderator only if selected
+            binding.checkboxModerator.isEnabled = item.isSelected
+
+            // Member checkbox logic
             binding.checkboxMember.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) selectedUsers.add(user.userId)
-                else selectedUsers.remove(user.userId)
+                item.isSelected = isChecked
+
+                binding.checkboxModerator.isEnabled = isChecked
+
+                if (!isChecked) {
+                    binding.checkboxModerator.isChecked = false
+                    item.isModerator = false
+                }
+            }
+
+            // Moderator checkbox logic
+            binding.checkboxModerator.setOnCheckedChangeListener { _, isChecked ->
+                item.isModerator = isChecked
             }
         }
+    }
+    fun getSelectedMembers(): List<FundMemberSelection> {
+        return items.filter { it.isSelected }
     }
 }

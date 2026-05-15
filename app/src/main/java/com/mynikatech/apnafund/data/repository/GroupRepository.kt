@@ -79,14 +79,20 @@ class GroupRepository(
         api.addGroupMember(groupMembers)
     }
 
+    suspend fun updateGroupMember(groupMembers: GroupMembers) {
+        api.updateGroupMember(groupMembers)
+    }
+
     suspend fun fetchAllMembersforGroup(groupId: Int): List<GroupMembers> {
         return api.getAllMembersofGroup(groupId).toEntity()
     }
 
-    suspend fun fetchAllMembersofGroupWithNames(groupId: Int): List<GroupMemberWithName> {
-        return api.getAllMembersofGroupWithNames(groupId).toEntity()
+    suspend fun fetchAllMembersofGroupWithNames(
+        groupId: Int,
+        onlyActive: Boolean
+    ): List<GroupMemberWithName> {
+        return api.getAllMembersofGroupWithNames(groupId, onlyActive).toEntity()
     }
-
     suspend fun checkIfGroupMemberAlreadyAdded(userId: Int, groupId: Int): Boolean {
         return api.checkIfGroupMemberAlreadyAdded(userId, groupId)
     }

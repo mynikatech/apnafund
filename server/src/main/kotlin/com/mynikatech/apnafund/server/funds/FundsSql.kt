@@ -96,7 +96,7 @@ interface FundsSql {
     @SqlQuery("""SELECT * FROM get_fund_members(:fundId)""")
     fun getFundMembers(@Bind("fundId") fundId: Int): List<FundMembersDto>
 
-    @SqlQuery("""SELECT add_fund_member(:userId, :fundId, :joiningDate)""")
+    @SqlQuery("""SELECT add_fund_member(:userId, :fundId, :joiningDate, :role, :updatedBy)""")
     fun addFundMember(@BindKotlin m: FundMembersDto): Int
 
     @SqlQuery("""SELECT add_fund_members_batch(CAST(:itemsJson AS jsonb))""")
@@ -129,6 +129,14 @@ interface FundsSql {
     @SqlQuery("""SELECT * FROM get_available_fund_members(:groupId, :fundId)""")
     fun availableMembers(@Bind("groupId") groupId: Int, @Bind("fundId") fundId: Int): List<UsersDto>
 
+    @SqlQuery("""
+    SELECT * FROM get_available_fund_members(:groupId, :fundId)
+    """)
+    fun getAvailableFundMembers(
+        @Bind("groupId") groupId: Int,
+        @Bind("fundId") fundId: Int
+    ): List<AvailableFundMemberDto>
+
     @SqlQuery("""SELECT * FROM get_fund_members_with_names_for_fund(:fundId)""")
     fun getFundMembersWithNamesForFund(@Bind("fundId") fundId: Int): List<FundMemberWithNameDto>
 
@@ -153,6 +161,29 @@ interface FundsSql {
         @Bind("closedBy") closedBy: Int,
         @Bind("reason") reason: String
     ): Boolean
+
+    @SqlQuery("""
+    SELECT update_fund_member(
+        :fundMemberId,
+        :userId,
+        :fundId,
+        :joiningDate,
+        :role,
+        :status,
+        :updatedBy
+    )
+""")
+    fun updateFundMember(@BindKotlin m: FundMembersDto): Boolean
+
+    @SqlQuery(
+        """
+    SELECT *
+    FROM get_active_fund_moderators(:fundId)
+    """
+    )
+    fun getActiveFundModerators(
+        @Bind("fundId") fundId: Int
+    ): List<FundModeratorDto>
 
 
 }

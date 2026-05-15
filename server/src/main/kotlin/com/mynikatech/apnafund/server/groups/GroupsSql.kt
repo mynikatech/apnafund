@@ -71,11 +71,23 @@ interface GroupsSql {
     @SqlQuery("""SELECT * FROM get_group_members(:groupId)""")
     fun getAllMembersofGroup(@Bind("groupId") groupId: Int): List<GroupMembersDto>
 
-    @SqlQuery("""SELECT add_group_member(:userId, :groupId, CAST(:joiningDate AS date))""")
+    @SqlQuery("""
+    SELECT add_group_member(
+        :userId,
+        :groupId,
+        :joiningDate,
+        :role,
+        :actorUserId,
+        :status
+    )
+""")
     fun addGroupMember(
         @Bind("userId") userId: Int,
         @Bind("groupId") groupId: Int,
-        @Bind("joiningDate") joiningDate: String // yyyy-MM-dd
+        @Bind("joiningDate") joiningDate: String,
+        @Bind("role") role: String,
+        @Bind("actorUserId") actorUserId: Int,
+        @Bind("status") status: String
     ): Int
 
     // NOTE: this assumes update_group_member RETURNS boolean.
@@ -85,7 +97,10 @@ interface GroupsSql {
             :groupMemberId,
             :userId,
             :groupId,
-            CAST(:joiningDate AS date)
+            :joiningDate,
+            :role,
+            :status,
+            :updatedBy
         )
     """)
     fun updateGroupMember(@BindKotlin gm: GroupMembersDto): Boolean
@@ -93,8 +108,13 @@ interface GroupsSql {
     @SqlQuery("""SELECT delete_group_member(:groupMemberId, :userId, :groupId)""")
     fun deleteGroupMember(@BindKotlin gm: GroupMembersDto): Boolean
 
-    @SqlQuery("""SELECT * FROM get_group_members_with_names(:groupId)""")
-    fun getAllMembersofGroupWithNames(@Bind("groupId") groupId: Int): List<GroupMemberWithNameDto>
+    @SqlQuery("""
+    SELECT * FROM get_group_members_with_names(:groupId, :onlyActive)
+    """)
+    fun getAllMembersofGroupWithNames(
+        @Bind("groupId") groupId: Int,
+        @Bind("onlyActive") onlyActive: Boolean
+    ): List<GroupMemberWithNameDto>
 
     @SqlQuery("""SELECT group_member_exists(:userId, :groupId)""")
     fun checkIfGroupMemberAlreadyAdded(
@@ -127,4 +147,17 @@ interface GroupsSql {
     fun rejectGroup(
         @Bind("groupId") groupId: Int
     ): Boolean
+
+    @SqlQuery(
+        """
+    SELECT activate_group_memberships(
+        :groupId,
+        :actorUserId
+    )
+    """
+    )
+    fun activateGroupMemberships(
+        @Bind("groupId") groupId: Int,
+        @Bind("actorUserId") actorUserId: Int
+    ): Int
 }

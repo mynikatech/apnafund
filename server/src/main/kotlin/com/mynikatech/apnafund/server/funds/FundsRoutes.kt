@@ -215,8 +215,15 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
     get("members/get/with-names/{fundId}") {
         val fundId = call.parameters["fundId"]?.toIntOrNull()
             ?: return@get call.respond(HttpStatusCode.BadRequest, "fundId required")
-        val rows = sql.getFundMembersWithNamesForFund(fundId)
-        call.respondOk(rows)
+
+        call.safeRoute(
+            logMessage = "Error fetching fund members with name for fundId=$fundId",
+            clientMessage = "Unable to fetch fund members details"
+        ) {
+            val members = sql.getFundMembersWithNamesForFund(fundId)
+            call.respondOk(members)
+        }
+
     }
 
     post("members/add/one") {
@@ -272,6 +279,14 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
             }
         }
         call.respondOk(ids, HttpStatusCode.Created)
+    }
+
+    put("update/member") {
+        val fm = call.receive<FundMembersDto>()
+
+        sql.updateFundMember(fm)
+
+        call.respondOk(Unit, HttpStatusCode.NoContent)
     }
 
     delete("members/delete/{fundMemberId}") {
@@ -358,8 +373,13 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
                 "validation",
                 "fundId required"
             )
-        val rows: List<UsersDto> = sql.availableMembers(gid, fid)
-        call.respondOk(rows)
+
+        call.safeRoute(
+            logMessage = "Error fetching fund availability for fundId=$fid",
+            clientMessage = "Unable to fetch fund availability"
+        ) {
+            sql.getAvailableFundMembers(gid, fid)
+        }
     }
 
     // ---- Atomic multi-update ----
@@ -414,35 +434,88 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
         // One DB call that does both inserts atomically
         val json = Json { explicitNulls = false }
 
-        // Option A: pass explicit serializers (no extra import needed)
         val fundToSave = req.fund
         val fundDetailsToSave = req.details
-        val totalMembers = 1
+
+        val memberships = mutableListOf<FundMembersDto>()
+
+        // Add creator only if included
+        if (!req.excludeCreator) {
+
+            memberships.add(
+                FundMembersDto(
+                    userId = req.requestorId,
+                    fundId = 0, // temp, set later
+                    joiningDate = Converters.getCurrentDate(),
+                    role =
+                        if (fundToSave.moderator == req.requestorId)
+                            "PRIMARY_MODERATOR"
+                        else
+                            "MODERATOR",
+                    updatedBy = req.requestorId
+                )
+            )
+        }
+
+        // Add moderator if different
+        if (fundToSave.moderator != req.requestorId) {
+
+            memberships.add(
+                FundMembersDto(
+                    userId = fundToSave.moderator,
+                    fundId = 0, // temp, set later
+                    joiningDate = Converters.getCurrentDate(),
+                    role = "PRIMARY_MODERATOR",
+                    updatedBy = req.requestorId
+                )
+            )
+        }
+
+        val totalMembers = memberships.size
+
         val totalExpectedDeposit =
-            fundToSave.recurringDepositAmount * totalMembers * fundToSave.fundPeriod
+            fundToSave.recurringDepositAmount *
+                    totalMembers *
+                    fundToSave.fundPeriod
 
         val updatedFundDetails = fundDetailsToSave.copy(
             totalExpectedDeposit = totalExpectedDeposit,
             totalExpectedMaturityAmount = totalExpectedDeposit
         )
-        val fundJson = json.encodeToString(FundsDto.serializer(), fundToSave)
-        val detailsJson = json.encodeToString(FundDetailsDto.serializer(), updatedFundDetails)
-        val newId = jdbi.inTransaction<Int, Exception> { handle ->
 
-            val newFundId = sql.addFundWithDetails(fundJson, detailsJson)
-
-            val fundMember = FundMembersDto(
-                userId = fundToSave.moderator,
-                fundId = newFundId,
-                joiningDate = Converters.getCurrentDate()
+        val fundJson =
+            json.encodeToString(
+                FundsDto.serializer(),
+                fundToSave
             )
 
-            sql.addFundMember(fundMember)
+        val detailsJson =
+            json.encodeToString(
+                FundDetailsDto.serializer(),
+                updatedFundDetails
+            )
+
+        val newId = jdbi.inTransaction<Int, Exception> { handle ->
+
+            val newFundId =
+                sql.addFundWithDetails(
+                    fundJson,
+                    detailsJson
+                )
+
+            memberships.forEach { member ->
+
+                sql.addFundMember(
+                    member.copy(fundId = newFundId)
+                )
+            }
 
             newFundId
         }
+
         // Trigger fund created notification (async)
         call.application.launch {
+
             notificationService.notifyFundCreated(
                 fundId = newId,
                 fundName = req.fund.fundName,

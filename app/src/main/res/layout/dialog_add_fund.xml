@@ -9,7 +9,8 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="14dp">
+        android:padding="14dp"
+        android:paddingBottom="24dp">
 
         <!-- Fund Name -->
         <com.google.android.material.textfield.TextInputLayout
@@ -206,12 +207,39 @@
                 tools:ignore="LabelFor" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <LinearLayout
+            android:id="@+id/layout_exclude_creator"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@id/input_layout_moderator">
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/check_box_exclude_creator"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/msg_do_not_add_as_member" />
+
+            <ImageView
+                android:id="@+id/image_info_exclude_creator"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:padding="2dp"
+                android:src="@drawable/ic_info"
+                app:tint="?attr/colorPrimary" />
+
+        </LinearLayout>
+
         <!-- Save Button -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintTop_toBottomOf="@id/input_layout_moderator">
+            app:layout_constraintTop_toBottomOf="@id/layout_exclude_creator"
+            app:layout_constraintBottom_toBottomOf="parent">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_save_fund"

@@ -11,7 +11,11 @@ fun FundMemberWithNameDto.toEntity(): FundMemberWithName = FundMemberWithName(
     joiningDate = joiningDate,
     firstName = firstName,
     lastName = lastName,
-    emailId = emailId
+    emailId = emailId,
+    role = role,
+    status = status,
+    updatedAt = updatedAt,
+    updatedBy = updatedBy
 
 )
 
@@ -22,7 +26,11 @@ fun FundMemberWithName.toDto(): FundMemberWithNameDto = FundMemberWithNameDto(
     joiningDate = joiningDate,
     firstName = firstName,
     lastName = lastName,
-    emailId = emailId
+    emailId = emailId,
+    role = role,
+    status = status,
+    updatedAt = updatedAt,
+    updatedBy = updatedBy
 
 )
 

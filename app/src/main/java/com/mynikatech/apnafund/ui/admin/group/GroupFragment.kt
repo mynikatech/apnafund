@@ -71,7 +71,8 @@ class GroupFragment : Fragment() {
         binding = FragmentGroupBinding.inflate(inflater, container, false)
         val context = activity
         binding.fabAddGroup.visibility =
-            if (Converters.userHasPrivilege(ApnaBankConstants.ADD_GROUP_PRIV)) View.VISIBLE
+            if (Converters.userHasPrivilege(ApnaBankConstants.ADD_GROUP_PRIV)
+                || SessionManager.canManageGroups()) View.VISIBLE
             else View.GONE
         binding.fabAddGroup.setOnClickListener {
             if (context != null)
@@ -171,7 +172,7 @@ class GroupFragment : Fragment() {
                             showAddGroupDialog(requireContext(), 1, groups[i])
                         }
                         // If the user has the add/edit group privilege
-                        if (Converters.userHasPrivilege(ApnaBankConstants.ADD_GROUP_PRIV))
+                        if (Converters.userHasPrivilege(ApnaBankConstants.ADD_GROUP_PRIV) || SessionManager.canManageGroups())
                             btnEdit.visibility = View.VISIBLE
                         else
                             btnEdit.visibility = View.GONE

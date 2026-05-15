@@ -7,6 +7,7 @@ data class RegisterOrUpdateUserRequest(
     val user: UsersDto,
     val source: UserSaveSource,
     val groupId: Int = 0,
+    val groupRole: String? = null,
     val roleCode: String,
     val requestorId: Int
 )

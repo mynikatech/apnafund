@@ -29,6 +29,11 @@ class ApprovalService(
             approvalSql.getApprovalById(approvalId)
                 ?: error("Approval not found")
 
+        validateApprovalPermission(
+            approval,
+            approvedBy
+        )
+
         when (approval.entityType) {
 
             "LOAN" ->
@@ -55,6 +60,10 @@ class ApprovalService(
             approvalSql.getApprovalById(approvalId)
                 ?: error("Approval not found")
 
+        validateApprovalPermission(
+            approval,
+            rejectedBy
+        )
         when (approval.entityType) {
 
             "LOAN" ->
@@ -158,6 +167,7 @@ class ApprovalService(
             )
 
             groupsSql.activateGroup(groupId)
+            groupsSql.activateGroupMemberships(groupId,approvedBy)
 
         }
         val group = groupsSql.getGroup(groupId).firstOrNull() ?: error("Group not found")
@@ -176,9 +186,8 @@ class ApprovalService(
                 createdByUserId = group.moderator
             )
         } catch (e: Exception) {
-
             log.error(
-                "🔥 Firebase group creation failed for groupId=${group.groupId}",
+                "Firebase group creation failed for groupId=${group.groupId}",
                 e
             )
         }
@@ -277,5 +286,62 @@ class ApprovalService(
             rejectedByName = rejectedByUser.fullName,
             reason = reason
         )
+    }
+
+    private fun validateApprovalPermission(
+        approval: ApprovalInfoDto,
+        userId: Int
+    ) {
+
+        when (approval.entityType) {
+
+            "LOAN",
+            "LOAN_CLOSURE" -> {
+
+                val loan =
+                    loansSql.getLoanById(
+                        approval.entityId
+                    ) ?: error("Loan not found")
+
+                val moderators =
+                    fundSql.getActiveFundModerators(
+                        loan.fundId
+                    )
+
+                val isFundModerator =
+                    moderators.any {
+                        it.userId == userId
+                    }
+
+                if (!isFundModerator) {
+
+                    error(
+                        "User not authorized to approve loan workflow"
+                    )
+                }
+            }
+
+            "GROUP" -> {
+
+                val isAdmin =
+                    usersSql.getAdminUsers().any {
+                        it.userId == userId
+                    }
+
+                if (!isAdmin) {
+
+                    error(
+                        "User not authorized to approve group workflow"
+                    )
+                }
+            }
+
+            else -> {
+
+                error(
+                    "Unsupported approval type"
+                )
+            }
+        }
     }
 }

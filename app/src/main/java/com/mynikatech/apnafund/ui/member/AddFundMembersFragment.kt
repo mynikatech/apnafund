@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -14,14 +15,19 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.appbar.MaterialToolbar
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.databinding.FragmentAddFundMembersBinding
+import com.mynikatech.apnafund.net.dto.FundMembersDto
+import com.mynikatech.apnafund.session.SessionManager
+import com.mynikatech.apnafund.ui.viewmodel.FundSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.FundViewModel
+import com.mynikatech.apnafund.util.ApnaBankDate
 import kotlinx.coroutines.launch
+import kotlin.getValue
 
 class AddFundMembersFragment : Fragment() {
     private lateinit var adapter: FundMemberAdapter
     private lateinit var binding: FragmentAddFundMembersBinding
-    private val selectedUserIds = mutableSetOf<Int>()
     private val fundViewModel: FundViewModel by viewModels()
+    private val fundSharedViewModel: FundSharedViewModel by activityViewModels()
 
     override fun onCreateView(
 
@@ -51,22 +57,32 @@ class AddFundMembersFragment : Fragment() {
         toolbar.title = getString(R.string.text_add_fund_members)
 
         lifecycleScope.launch {
-            val users = fundViewModel.getAvailableFundMembers(groupId, fundId)
-            Log.d("AddFundMembersFragment", "The number of available users are: ${users.size}")
-            binding.recyclerFundMembers.layoutManager = LinearLayoutManager(requireContext())
-            adapter = FundMemberAdapter(users, selectedUserIds)
-            binding.recyclerFundMembers.adapter = adapter
+            try {
+                val users = fundViewModel.getAvailableFundMembers(groupId, fundId)
+
+                Log.d("AddFundMembersFragment", "The number of available users are: ${users.size}")
+                binding.recyclerFundMembers.layoutManager = LinearLayoutManager(requireContext())
+                val items = users.map {
+                    FundMemberSelection(
+                        userId = it.userId,
+                        displayName = "${it.firstName} ${it.lastName}"
+                    )
+                }.toMutableList()
+                adapter = FundMemberAdapter(items)
+                binding.recyclerFundMembers.adapter = adapter
+            } catch (e: Exception) {
+                Log.e("AddFundMembers", "Error", e)
+                Toast.makeText(context, "Failed to load members", Toast.LENGTH_SHORT).show()
+            }
 
             binding.checkboxSelectAll.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) {
-                    selectedUserIds.clear()
-                    selectedUserIds.addAll(users.map { it.userId })
-                } else {
-                    selectedUserIds.clear()
+
+                adapter.items.forEach {
+                    it.isSelected = isChecked
+                    if (!isChecked) it.isModerator = false
                 }
-                for (i in users.indices) {
-                    adapter.notifyItemChanged(i)
-                }
+
+                adapter.notifyDataSetChanged()
             }
 
             binding.buttonSaveFundMember.setOnClickListener {
@@ -74,14 +90,37 @@ class AddFundMembersFragment : Fragment() {
                 binding.buttonSaveFundMember.text = getString(R.string.button_saving_progress)
                 lifecycleScope.launch {
                     try {
-                        if (selectedUserIds.toList().isEmpty()) {
-                            Toast.makeText(context, getString(R.string.message_no_member_add), Toast.LENGTH_SHORT).show()
+                        val selectedMembers = adapter.getSelectedMembers()
+
+                        if (selectedMembers.isEmpty()) {
+                            Toast.makeText(
+                                context,
+                                getString(R.string.message_no_member_add),
+                                Toast.LENGTH_SHORT
+                            ).show()
                             return@launch
                         }
-                        fundViewModel.addFundMembers(fundId, selectedUserIds.toList())
-                        Toast.makeText(context, getString(R.string.message_member_added), Toast.LENGTH_SHORT).show()
+
+                        val payload = selectedMembers.map {
+                            FundMembersDto(
+                                userId = it.userId,
+                                fundId = fundId,
+                                joiningDate = ApnaBankDate.getCurrentDate(), // or your helper
+                                role = if (it.isModerator) "MODERATOR" else "MEMBER",
+                                updatedBy = SessionManager.userId
+                            )
+                        }
+
+                        fundViewModel.addFundMembersBatch(fundId, payload)
+                        fundSharedViewModel.refreshFunds()
+                        Toast.makeText(
+                            context,
+                            getString(R.string.message_member_added),
+                            Toast.LENGTH_SHORT
+                        ).show()
                         findNavController().navigateUp()
                     } catch (e: Exception) {
+
                         Log.e("FundMember", "Error saving fund member", e)
                         binding.buttonSaveFundMember.isEnabled = true
                         binding.buttonSaveFundMember.text = getString(R.string.text_save_button)

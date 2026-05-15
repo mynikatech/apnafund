@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 089-get_fund_members_wirh_names_fund_fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/089-get_fund_members_wirh_names_fund_fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

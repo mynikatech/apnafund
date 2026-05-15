@@ -7,5 +7,9 @@ data class FundMemberWithName(
     val joiningDate: String,
     val firstName: String,
     val lastName: String,
-    val emailId: String
+    val emailId: String,
+    val role: String = "MEMBER",
+    val status: String = "ACTIVE",
+    val updatedAt: Long? = null,
+    val updatedBy: Int? = null
 )

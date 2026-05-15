@@ -14,7 +14,9 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -33,6 +35,7 @@ import com.mynikatech.apnafund.ui.viewmodel.GroupSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.GroupViewModel
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
 import com.mynikatech.apnafund.util.Converters
+import com.mynikatech.apnafund.util.toUserGroupMembership
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -79,7 +82,7 @@ class GroupDetailsFragment : Fragment() {
                 }
             }
         }
-        if (Converters.userHasPrivilege(ApnaBankConstants.ADD_GROUP_MEMBERS_PRIV))
+        if (Converters.userHasPrivilege(ApnaBankConstants.ADD_GROUP_MEMBERS_PRIV) || SessionManager.canManageGroups())
             binding.groupDetailsFab.visibility = View.VISIBLE
         else
             binding.groupDetailsFab.visibility = View.GONE
@@ -130,6 +133,9 @@ class GroupDetailsFragment : Fragment() {
             binding.textViewModeratorValue.text =
                 "${moderatorUser?.firstName} ${moderatorUser?.lastName}"
 
+            val canManageGroup =
+                SessionManager.canManageGroup(groupId)
+
             for (i in groupMembers.indices) {
                 val member = groupMembers[i]
                 val user = userDeferredList[i].await()
@@ -148,11 +154,51 @@ class GroupDetailsFragment : Fragment() {
                     text = member.joiningDate
                     gravity = Gravity.START
                 }
+                val tvRole = TextView(requireContext()).apply {
+                    text = Converters.toDisplayRole(member.role)
+                    gravity = Gravity.CENTER
+                    setPadding(8, 4, 8, 4)
+                }
+
+                val tvStatus = TextView(requireContext()).apply {
+
+                    text = member.status
+                    gravity = Gravity.CENTER
+                    setPadding(8, 4, 8, 4)
+                }
+
+                val btnAction = TextView(requireContext()).apply {
+                    text = if (member.status == "ACTIVE") "Deactivate" else "Activate"
+                    setTextColor(ContextCompat.getColor(context, R.color.purple))
+                    setPadding(8, 4, 8, 4)
+                }
+                btnAction.setOnClickListener {
+                    handleStatusToggle(member, groupId)
+                }
+                val btnEdit = TextView(requireContext()).apply {
+                    text = "Edit"
+                    setTextColor(ContextCompat.getColor(context, R.color.purple))
+                    setPadding(8, 4, 8, 4)
+                }
+
+
+                btnEdit.setOnClickListener {
+                    showRoleChangeDialog(member, groupId)
+                }
+                btnEdit.visibility =
+                    if (canManageGroup) View.VISIBLE else View.GONE
+
+                btnAction.visibility =
+                    if (canManageGroup) View.VISIBLE else View.GONE
 
                 val newRow = TableRow(activity).apply {
                     addView(tvNo)
                     addView(tvMemberName)
                     addView(tvJoiningDate)
+                    addView(tvRole)
+                    addView(tvStatus)
+                    addView(btnAction)
+                    addView(btnEdit)
                 }
 
                 tableLayoutGroupMemberDetails = binding.tableGroupDetails
@@ -161,9 +207,80 @@ class GroupDetailsFragment : Fragment() {
         }
     }
 
+    private fun handleStatusToggle(member: GroupMembers, groupId: Int) {
+
+        if (member.role == "PRIMARY_MODERATOR") {
+            showToast("Cannot modify primary moderator")
+            return
+        }
+
+        val newStatus = if (member.status == "ACTIVE") "INACTIVE" else "ACTIVE"
+
+        val updatedMember = member.copy(
+            status = newStatus,
+            updatedBy = SessionManager.userId
+        )
+        lifecycleScope.launch {
+            groupViewModel.updateGroupMember(
+                updatedMember
+            )
+            if (member.userId == SessionManager.userId) {
+                SessionManager.updateGroupMembership(updatedMember.toUserGroupMembership())
+            }
+            fetchAllMembers(groupId)
+        }
+    }
+
     private fun cleanTable(table: TableLayout) {
         while (table.childCount > 1) {
             table.removeViewAt(1)
+        }
+    }
+
+    private fun showRoleChangeDialog(member: GroupMembers, groupId: Int) {
+
+        if (member.role == "PRIMARY_MODERATOR") {
+            showToast("Cannot modify primary moderator")
+            return
+        }
+
+        val isModerator = member.role == "MODERATOR"
+
+        val optionText = if (isModerator) {
+            "Demote to Member"
+        } else {
+            "Promote to Moderator"
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Update Role")
+            .setItems(arrayOf(optionText)) { _, _ ->
+                val newRole = if (isModerator) "MEMBER" else "MODERATOR"
+                handleRoleUpdate(member, groupId, newRole)
+            }
+            .show()
+    }
+
+    private fun handleRoleUpdate(member: GroupMembers, groupId: Int, newRole: String) {
+
+        // permission check
+        if (newRole == "MODERATOR" && !SessionManager.isPrimaryGroupModerator(groupId)) {
+            showToast("Only primary moderator can assign moderators")
+            return
+        }
+
+        val updatedMember = member.copy(
+            role = newRole,
+            updatedBy = SessionManager.userId
+        )
+        lifecycleScope.launch {
+            groupViewModel.updateGroupMember(
+                updatedMember
+            )
+            if (member.userId == SessionManager.userId) {
+                SessionManager.updateGroupMembership(updatedMember.toUserGroupMembership())
+            }
+            fetchAllMembers(groupId)
         }
     }
 
@@ -220,8 +337,11 @@ class GroupDetailsFragment : Fragment() {
                     val isMemberAlreadyAdded =
                         groupViewModel.checkIfGroupMemberAlreadyAdded(userId, groupId)
                     if (!isMemberAlreadyAdded) {
+                        val isModerator = dialogBinding.checkboxModerator.isChecked
+
+                        val role = if (isModerator) "MODERATOR" else "MEMBER"
                         runCatching {
-                            groupViewModel.createGroupMember(userId, groupId)
+                            groupViewModel.createGroupMember(userId, groupId, role, SessionManager.userId)
                         }.onSuccess {
                             dialog?.dismiss()
                             fetchAllMembers(groupId)
@@ -276,5 +396,9 @@ class GroupDetailsFragment : Fragment() {
 
         val activity = requireActivity() as AppCompatActivity
         activity.supportActionBar?.show()
+    }
+
+    private fun showToast(msg: String) {
+        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
     }
 }

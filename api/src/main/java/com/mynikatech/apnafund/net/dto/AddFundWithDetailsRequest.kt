@@ -6,5 +6,6 @@ import kotlinx.serialization.Serializable
 data class AddFundWithDetailsRequest(
     val fund: FundsDto,
     val details: FundDetailsDto,
-    val requestorId: Int
+    val requestorId: Int,
+    val excludeCreator: Boolean
 )

@@ -11,8 +11,10 @@ import com.mynikatech.apnafund.data.model.FundWithDetails
 import com.mynikatech.apnafund.data.model.Funds
 import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.net.FundsApi
+import com.mynikatech.apnafund.net.dto.AvailableFundMemberDto
 import com.mynikatech.apnafund.net.dto.CloseFundRequest
 import com.mynikatech.apnafund.net.dto.FundAvailabilityDto
+import com.mynikatech.apnafund.net.dto.FundMembersDto
 import com.mynikatech.apnafund.net.dto.FundUpdateRequestDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -56,8 +58,8 @@ class FundRepository(
         return api.getFund(fundId)?.toEntity()
     }
 
-    suspend fun saveFundAndDetails(fund: Funds, fundDetails: FundDetails, requestorId: Int): Int {
-        return api.addFundWithDetails(fund.toDto(), fundDetails.toDto(), requestorId)
+    suspend fun saveFundAndDetails(fund: Funds, fundDetails: FundDetails, requestorId: Int, excludeCreator: Boolean): Int {
+        return api.addFundWithDetails(fund.toDto(), fundDetails.toDto(), requestorId, excludeCreator)
     }
 
     suspend fun updateFundDetails(details: FundDetails) {
@@ -104,8 +106,8 @@ class FundRepository(
         return api.getAllFundMembers(fundId).toEntity()
     }
 
-    suspend fun getAvailableFundMembers(groupId: Int, fundId: Int): List<Users> {
-        val memberList: List<Users> = api.getAvailableFundMembers(groupId, fundId).toEntity()
+    suspend fun getAvailableFundMembers(groupId: Int, fundId: Int): List<AvailableFundMemberDto> {
+        val memberList: List<AvailableFundMemberDto> = api.getAvailableFundMembers(groupId, fundId)
         return memberList
     }
 
@@ -134,6 +136,10 @@ class FundRepository(
                 reason = reason
             )
         )
+    }
+
+    suspend fun updateFundMember(fundMember: FundMembersDto) {
+        api.updateFundMember(fundMember)
     }
 
 

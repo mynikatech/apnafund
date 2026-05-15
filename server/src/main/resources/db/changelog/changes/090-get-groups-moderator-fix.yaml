@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 090-get_groups-moderator-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/090-get_groups-moderator-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

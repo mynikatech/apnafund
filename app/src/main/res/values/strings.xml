@@ -151,7 +151,7 @@
     <string name="text_issued_date">Issued Date</string>
     <string name="text_interest_rate">Interest Rate</string>
     <string name="text_loan_period">Loan Period</string>
-    <string name="text_outstanding_amount">OutStanding Amount:</string>
+    <string name="text_outstanding_amount">OutStanding Amt:</string>
     <string name="text_original_emi">Original EMI:</string>
     <string name="text_current_emi">Current EMI:</string>
     <string name="text_interest_paid">Interest Paid:</string>
@@ -557,6 +557,23 @@
     An account has already been created for you by %1$s.\n\nYou have verified your account. Please continue to set your password.
     </string>
     <string name="text_your_moderator">your moderator</string>
+    <string name="check_box_add_moderator">Add as Moderator</string>
+    <string name="msg_do_not_add_as_member">Do not add me as a member</string>
+    <string name="title_exclude_creator_info">
+    Exclude Yourself from Fund
+    </string>
+
+    <string name="info_exclude_creator">
+    If selected, you will not be added as a member of this fund. You will lose edit and management permissions for the fund.
+    </string>
+    <string name="error_moderator_must_be_member"> Moderators must be fund members</string>
+    <string name="title_existing_user_found">Existing User Found</string>
+    <string name="error_user_already_in_group">This user already belongs to the selected group.</string>
+    <string name="message_existing_user_found_groups">This user already exists in the system.\n\nCurrent groups: %1$s\n\nWould you like to add this user to the selected group?</string>
+    <string name="error_adding_user_to_group">Error adding user to group</string>
+    <string name="msg_user_added_group_success">User added to group successfully</string>
+    <string name="label_primary_moderator_owner">Primary Moderator/Owner:</string>
+    <string name="label_primary_moderator_tilda">Primary Moderator ~</string>
 
 
 </resources>

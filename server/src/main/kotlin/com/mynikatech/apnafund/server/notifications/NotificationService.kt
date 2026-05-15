@@ -3,6 +3,7 @@ package com.mynikatech.apnafund.server.notifications
 import com.mynikatech.apnafund.net.dto.AdminUserDto
 import com.mynikatech.apnafund.net.dto.Channel
 import com.mynikatech.apnafund.net.dto.EmailPayload
+import com.mynikatech.apnafund.net.dto.FundModeratorDto
 import com.mynikatech.apnafund.net.dto.NotificationEvent
 import com.mynikatech.apnafund.net.dto.UserBasicDto
 import com.mynikatech.apnafund.net.dto.UserNotificationsDto
@@ -36,7 +37,7 @@ class NotificationService(
             logger.info("The group id is : $groupId")
 
             val groupMembers =
-                groupsSql.getAllMembersofGroupWithNames(groupId)
+                groupsSql.getAllMembersofGroupWithNames(groupId, true)
 
             logger.info("GroupId=$groupId, groupMembers count=${groupMembers.size}")
 
@@ -228,64 +229,96 @@ class NotificationService(
         fundId: Int,
         fundName: String,
         borrowerName: String,
-        moderator: UsersDto
+        moderators: List<FundModeratorDto>
     ) {
 
         try {
 
             val loan = loansSql.getLoanById(loanId) ?: run {
-                logger.error("Loan not found for loanId=$loanId")
+
+                logger.error(
+                    "Loan not found for loanId=$loanId"
+                )
+
                 return
             }
 
-            logger.info("Sending LOAN_REQUESTED to moderator ${moderator.userId}")
+            moderators.forEach { moderator ->
 
-            // ---------- IN APP ----------
-            sql.addUserNotification(
-                UserNotificationsDto(
-                    notificationType = "LOAN_REQUESTED",
-                    userId = moderator.userId!!,
-                    message =
-                        "$borrowerName has requested a loan of ₹${loan.loanAmount} in fund \"$fundName\".",
-                    publishedFlag = true,
-                    readFlag = false,
-                    isExpiredFlag = false,
-                    status = "ACTIVE"
-                )
-            )
+                try {
 
-            // ---------- EMAIL ----------
-            val event = NotificationEvent(
-                eventType = "LOAN_REQUESTED",
-                userId = moderator.userId.toString(),
-                channels = setOf(Channel.EMAIL),
-
-                email = EmailPayload(
-                    to = moderator.emailId,
-                    userName = moderator.fullName,
-                    data = mapOf(
-                        "borrowerName" to borrowerName,
-                        "fundName" to fundName,
-                        "loanId" to loanId.toString(),
-                        "loanAmount" to loan.loanAmount.toString(),
-                        "issueDate" to loan.issuedDate.toString(),
-                        "loanPeriod" to loan.period.toString()
+                    logger.info(
+                        "Sending LOAN_REQUESTED to moderator ${moderator.userId}"
                     )
-                ),
 
-                eventData = mapOf(
-                    "loanId" to loanId.toString(),
-                    "fundId" to fundId.toString(),
-                    "fundName" to fundName
-                )
+                    // ---------- IN APP ----------
+                    sql.addUserNotification(
+                        UserNotificationsDto(
+                            notificationType = "LOAN_REQUESTED",
+
+                            userId = moderator.userId,
+
+                            message =
+                                "$borrowerName has requested a loan of ₹${loan.loanAmount} in fund \"$fundName\".",
+
+                            publishedFlag = true,
+                            readFlag = false,
+                            isExpiredFlag = false,
+                            status = "ACTIVE"
+                        )
+                    )
+
+                    // ---------- EMAIL ----------
+                    val event = NotificationEvent(
+
+                        eventType = "LOAN_REQUESTED",
+
+                        userId = moderator.userId.toString(),
+
+                        channels = setOf(Channel.EMAIL),
+
+                        email = EmailPayload(
+                            to = moderator.emailId!!,
+                            userName = moderator.fullName(),
+
+                            data = mapOf(
+                                "borrowerName" to borrowerName,
+                                "fundName" to fundName,
+                                "loanId" to loanId.toString(),
+                                "loanAmount" to loan.loanAmount.toString(),
+                                "issueDate" to loan.issuedDate.toString(),
+                                "loanPeriod" to loan.period.toString()
+                            )
+                        ),
+
+                        eventData = mapOf(
+                            "loanId" to loanId.toString(),
+                            "fundId" to fundId.toString(),
+                            "fundName" to fundName
+                        )
+                    )
+
+                    eventDispatchService.dispatchUser(event)
+
+                } catch (e: Exception) {
+
+                    logger.error(
+                        "Error notifying moderator ${moderator.userId}",
+                        e
+                    )
+                }
+            }
+
+            logger.info(
+                "notifyLoanRequested completed"
             )
-
-            eventDispatchService.dispatchUser(event)
-
-            logger.info("notifyLoanRequested completed")
 
         } catch (e: Exception) {
-            logger.error("ERROR inside notifyLoanRequested", e)
+
+            logger.error(
+                "ERROR inside notifyLoanRequested",
+                e
+            )
         }
     }
 
@@ -435,60 +468,110 @@ class NotificationService(
         groupId: Int,
         groupName: String,
         requestorName: String,
-        approver: AdminUserDto
+        approvers: List<AdminUserDto>
     ) {
 
         try {
 
-            val group = groupsSql.getGroup(groupId).firstOrNull() ?: run {
-                logger.error("Loan not found for groupId=$groupId")
-                return
+            val group =
+                groupsSql.getGroup(groupId)
+                    .firstOrNull()
+                    ?: run {
+
+                        logger.error(
+                            "Group not found for groupId=$groupId"
+                        )
+
+                        return
+                    }
+
+            approvers.forEach { approver ->
+
+                try {
+
+                    logger.info(
+                        "Sending GROUP_REQUESTED to admin ${approver.userId}"
+                    )
+
+                    // ---------- IN APP ----------
+                    sql.addUserNotification(
+                        UserNotificationsDto(
+
+                            notificationType =
+                                "GROUP_REQUESTED",
+
+                            userId =
+                                approver.userId!!,
+
+                            message =
+                                "$requestorName has requested a new group: $groupName.",
+
+                            publishedFlag = true,
+                            readFlag = false,
+                            isExpiredFlag = false,
+                            status = "ACTIVE"
+                        )
+                    )
+
+                    // ---------- EMAIL ----------
+                    val event = NotificationEvent(
+
+                        eventType = "GROUP_REQUESTED",
+
+                        userId =
+                            approver.userId.toString(),
+
+                        channels =
+                            setOf(Channel.EMAIL),
+
+                        email = EmailPayload(
+                            to = approver.emailId,
+
+                            userName =
+                                approver.fullName,
+
+                            data = mapOf(
+                                "requestorName" to requestorName,
+
+                                "groupName" to groupName,
+
+                                "groupDescription" to
+                                        (
+                                                group.description
+                                                    ?: ""
+                                                )
+                            )
+                        ),
+
+                        eventData = mapOf(
+                            "groupId" to groupId.toString(),
+                            "groupName" to groupName
+                        )
+                    )
+
+                    eventDispatchService.dispatchUser(
+                        event
+                    )
+
+                } catch (e: Exception) {
+
+                    logger.error(
+                        "Error notifying admin ${approver.userId}",
+                        e
+                    )
+                }
             }
 
-            logger.info("Sending GROUP_REQUESTED to admin ${approver.userId}")
-
-            // ---------- IN APP ----------
-            sql.addUserNotification(
-                UserNotificationsDto(
-                    notificationType = "GROUP_REQUESTED",
-                    userId = approver.userId!!,
-                    message =
-                        "$requestorName has requested a new group: $groupName.",
-                    publishedFlag = true,
-                    readFlag = false,
-                    isExpiredFlag = false,
-                    status = "ACTIVE"
-                )
+            logger.info(
+                "notifyGroupRequested completed"
             )
-
-            // ---------- EMAIL ----------
-            val event = NotificationEvent(
-                eventType = "GROUP_REQUESTED",
-                userId = approver.userId.toString(),
-                channels = setOf(Channel.EMAIL),
-
-                email = EmailPayload(
-                    to = approver.emailId,
-                    userName = approver.fullName,
-                    data = mapOf(
-                        "requestorName" to requestorName,
-                        "groupName" to groupName,
-                        "groupDescription" to group.description.toString()
-                    )
-                ),
-
-                eventData = mapOf(
-                    "groupId" to groupId.toString(),
-                    "groupName" to groupName
-                )
-            )
-
-            eventDispatchService.dispatchUser(event)
-
-            logger.info("notifyGroupRequested completed")
 
         } catch (e: Exception) {
-            logger.error("ERROR inside notifyGroupRequested", e)
+
+            logger.error(
+                "ERROR inside notifyGroupRequested",
+                e
+            )
         }
     }
 
@@ -700,7 +783,7 @@ class NotificationService(
         fundId: Int,
         fundName: String,
         borrowerName: String,
-        moderator: UsersDto,
+        moderators: List<FundModeratorDto>,
         requestedAmount: Double?,
         remarks: String?
     ) {
@@ -712,52 +795,63 @@ class NotificationService(
                 return
             }
 
-            logger.info("Sending LOAN_CLOSURE_REQUESTED to moderator ${moderator.userId}")
+            logger.info("Sending LOAN_CLOSURE_REQUESTED to moderators")
+            moderators.forEach { moderator ->
 
-            // ---------- IN APP ----------
-            sql.addUserNotification(
-                UserNotificationsDto(
-                    notificationType = "LOAN_CLOSURE_REQUESTED",
-                    userId = moderator.userId!!,
-                    message =
-                        "$borrowerName has requested closure of loan (₹${loan.loanAmount}) in fund \"$fundName\".",
-                    publishedFlag = true,
-                    readFlag = false,
-                    isExpiredFlag = false,
-                    status = "ACTIVE"
-                )
-            )
-
-            // ---------- EMAIL ----------
-            val event = NotificationEvent(
-                eventType = "LOAN_CLOSURE_REQUESTED",
-                userId = moderator.userId.toString(),
-                channels = setOf(Channel.EMAIL),
-
-                email = EmailPayload(
-                    to = moderator.emailId,
-                    userName = moderator.fullName,
-                    data = mapOf(
-                        "borrowerName" to borrowerName,
-                        "fundName" to fundName,
-                        "loanId" to loanId.toString(),
-                        "loanAmount" to loan.loanAmount.toString(),
-                        "loanNumber" to loan.loanNumber,
-                        "issuedDate" to loan.issuedDate,
-                        "maturityDate" to loan.maturityDate,
-                        "requestedAmount" to (requestedAmount?.toString() ?: ""),
-                        "remarks" to (remarks ?: "")
+                try {
+                    // ---------- IN APP ----------
+                    sql.addUserNotification(
+                        UserNotificationsDto(
+                            notificationType = "LOAN_CLOSURE_REQUESTED",
+                            userId = moderator.userId!!,
+                            message =
+                                "$borrowerName has requested closure of loan (₹${loan.loanAmount}) in fund \"$fundName\".",
+                            publishedFlag = true,
+                            readFlag = false,
+                            isExpiredFlag = false,
+                            status = "ACTIVE"
+                        )
                     )
-                ),
+                    if (!moderator.emailId.isNullOrBlank()) {
+                        // ---------- EMAIL ----------
+                        val event = NotificationEvent(
+                            eventType = "LOAN_CLOSURE_REQUESTED",
+                            userId = moderator.userId.toString(),
+                            channels = setOf(Channel.EMAIL),
 
-                eventData = mapOf(
-                    "loanId" to loanId.toString(),
-                    "fundId" to fundId.toString(),
-                    "fundName" to fundName
-                )
-            )
+                            email = EmailPayload(
+                                to = moderator.emailId ?: "",
+                                userName = moderator.fullName!!,
+                                data = mapOf(
+                                    "borrowerName" to borrowerName,
+                                    "fundName" to fundName,
+                                    "loanId" to loanId.toString(),
+                                    "loanAmount" to loan.loanAmount.toString(),
+                                    "loanNumber" to loan.loanNumber,
+                                    "issuedDate" to loan.issuedDate,
+                                    "maturityDate" to loan.maturityDate,
+                                    "requestedAmount" to (requestedAmount?.toString() ?: ""),
+                                    "remarks" to (remarks ?: "")
+                                )
+                            ),
 
-            eventDispatchService.dispatchUser(event)
+                            eventData = mapOf(
+                                "loanId" to loanId.toString(),
+                                "fundId" to fundId.toString(),
+                                "fundName" to fundName
+                            )
+                        )
+
+                        eventDispatchService.dispatchUser(event)
+                    }
+                } catch (e: Exception) {
+
+                    logger.error(
+                        "Error notifying moderator ${moderator.userId}",
+                        e
+                    )
+                }
+            }
 
             logger.info("notifyLoanClosureRequested completed")
 

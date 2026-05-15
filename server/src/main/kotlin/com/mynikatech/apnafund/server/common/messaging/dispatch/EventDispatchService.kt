@@ -1,14 +1,17 @@
 package com.mynikatech.apnafund.server.common.messaging.dispatch
 
+import com.mynikatech.apnafund.net.dto.Channel
 import com.mynikatech.apnafund.net.dto.NotificationEvent
 import com.mynikatech.apnafund.net.dto.SupportEvent
 import com.mynikatech.apnafund.server.common.messaging.publishers.SupportMessagingPublisher
 import com.mynikatech.apnafund.server.common.messaging.publishers.UserMessagingPublisher
+import com.mynikatech.apnafund.server.users.UsersSql
 import org.slf4j.LoggerFactory
 
 class EventDispatchService(
     private val userPublisher: UserMessagingPublisher,
-    private val supportPublisher: SupportMessagingPublisher
+    private val supportPublisher: SupportMessagingPublisher,
+    private val userSql: UsersSql
 ) {
     private val logger = LoggerFactory.getLogger(EventDispatchService::class.java)
 
@@ -20,7 +23,58 @@ class EventDispatchService(
             event.userId,
             event.channels
         )
-        userPublisher.publish(event)
+        val user =
+            userSql.getUserById(
+                event.userId.toInt()
+            )
+
+        logger.info(
+            "Dispatching USER isEmailVerified={}",
+            user.emailVerified
+        )
+        val exemptEvents = setOf(
+            "INVITE_NOTICE",
+            "GROUP_INVITE",
+            "EMAIL_VERIFY",
+            "EMAIL_VERIFICATION",
+            "PASSWORD_RESET",
+            "SET_PASSWORD",
+            "GROUP_APPROVED",
+            "GROUP_REJECTED"
+        )
+
+        val canSendEmail =
+            !event.email?.to.isNullOrBlank() &&
+                    (
+                            user.emailVerified == true || event.eventType in exemptEvents
+                            )
+        val filteredChannels =
+            if (!canSendEmail) {
+
+                event.channels - Channel.EMAIL
+
+            } else {
+
+                event.channels
+            }
+
+        // No channels left
+        if (filteredChannels.isEmpty()) {
+
+            logger.info(
+                "Skipping notification dispatch. No eligible channels for userId={}",
+                event.userId
+            )
+
+            return
+        }
+
+        val updatedEvent =
+            event.copy(
+                channels = filteredChannels
+            )
+
+        userPublisher.publish(updatedEvent)
     }
 
     /** Internal support emails (feedback, contact-us, issues) */

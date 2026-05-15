@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 088-available-fund-members
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/088-available-fund-members.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

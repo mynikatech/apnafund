@@ -4,9 +4,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.databinding.FragmentHelpBinding
 
 class HelpFragment : Fragment() {
@@ -26,6 +29,21 @@ class HelpFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
+        // System back (same behavior)
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    findNavController().navigateUp()
+                }
+            }
+        )
+        binding.helpToolbar.title = getString(R.string.text_help)
+
+        binding.helpToolbar.setNavigationOnClickListener {
+            findNavController().navigateUp()
+        }
 
         val sections = HelpRepository.getSections()
 

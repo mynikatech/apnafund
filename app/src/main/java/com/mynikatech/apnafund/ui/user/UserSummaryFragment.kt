@@ -56,7 +56,6 @@ import com.mynikatech.apnafund.util.Converters.toTitleCase
 import com.mynikatech.apnafund.util.GroupInputValidator
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlin.compareTo
 
 class UserSummaryFragment : Fragment() {
 
@@ -86,35 +85,61 @@ class UserSummaryFragment : Fragment() {
 
     private val startUpViewModel: StartupViewModel by viewModels()
 
-    private val firebaseAuthListener = FirebaseAuth.AuthStateListener { auth ->
+    private val firebaseAuthListener =
+        FirebaseAuth.AuthStateListener { auth ->
 
-        val firebaseUser = auth.currentUser
+            val firebaseUser = auth.currentUser
 
-        if (firebaseUser != null) {
+            if (firebaseUser == null) {
+
+                Log.w(
+                    "FirebaseAuth",
+                    "Firebase user not ready yet"
+                )
+
+                return@AuthStateListener
+            }
 
             SessionManager.firebaseUid = firebaseUser.uid
 
-            Log.d(
-                "FirebaseAuth",
-                "Firebase UID ready: ${SessionManager.firebaseUid}"
-            )
+            if (SessionManager.userId <= 0) {
 
-            viewLifecycleOwner.lifecycleScope.launch {
-                userSummaryViewModel.syncFirebaseUidIfNeeded()
+                Log.w(
+                    "FirebaseAuth",
+                    "Skipping sync. Invalid userId"
+                )
+
+                return@AuthStateListener
             }
 
-        } else {
-            Log.w("FirebaseAuth", "Firebase user not ready yet")
+            if (SessionManager.isFirebaseSynced) {
+                return@AuthStateListener
+            }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+
+                try {
+
+                    userSummaryViewModel.syncFirebaseUidIfNeeded()
+
+                    SessionManager.isFirebaseSynced = true
+
+                } catch (e: Exception) {
+
+                    Log.e(
+                        "FirebaseAuth",
+                        "Firebase sync failed",
+                        e
+                    )
+                }
+            }
         }
-    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onResume() {
         super.onResume()
         Log.d("UserSummary", "On Resume called")
         Log.d("UserSummary", "The group name in session is ${SessionManager.groupName}")
-        /*binding.textViewWelcomeMessage.text =
-            getString(R.string.text_welcome_message, SessionManager.userName)*/
         refreshGroupChip()
     }
 
@@ -203,16 +228,7 @@ class UserSummaryFragment : Fragment() {
             val activity = activity ?: return@launch
             val bottomNav =
                 activity.findViewById<BottomNavigationView>(R.id.bottom_navigation_view)
-            val isOnlyMember =
-                roleCodes.contains("MEMBER") && roleCodes.size == 1
-
-            bottomNav.menu
-                .findItem(R.id.adminFragment)
-                ?.isVisible = !isOnlyMember
-
-            val hasGroup = (SessionManager.groupId ?: 0) > 0
             val isAdmin = roleCodes.contains("ADMIN")
-            val isModerator = SessionManager.isModerator()
             val pendingGroups = SessionManager.userPendingGroups ?: emptyList()
             val activeGroups = SessionManager.userGroups ?: emptyList()
             val hasActive = activeGroups.isNotEmpty()
@@ -222,9 +238,20 @@ class UserSummaryFragment : Fragment() {
 
             bottomNav.menu.findItem(R.id.groupChatFragment)?.isVisible = canAccessGroupTabs
             bottomNav.menu.findItem(R.id.fundFragment)?.isVisible = canAccessGroupTabs
+            Log.d("ADMIN_CHECK", "Roles=${SessionManager.roleNames}")
+
+            Log.d(
+                "ADMIN_CHECK",
+                "GroupMemberships=${SessionManager.userGroupMemberships}"
+            )
+
+            Log.d(
+                "ADMIN_CHECK",
+                "FundMemberships=${SessionManager.userFundMemberships}"
+            )
 
             bottomNav.menu.findItem(R.id.adminFragment)?.isVisible =
-                (isAdmin || isModerator) && canAccessGroupTabs
+                Converters.canAccessAdmin()
 
             findNavController().currentBackStackEntry
                 ?.savedStateHandle
@@ -335,7 +362,7 @@ class UserSummaryFragment : Fragment() {
                     }
                 },
                 onCloseLoanClick = { loan ->
-                    val isModerator = SessionManager.isModerator()
+                    val isModerator = SessionManager.canManageFund(loan.fundId)
 
                     if (isModerator) {
                         showDirectClosureConfirmation(loan)
@@ -373,7 +400,8 @@ class UserSummaryFragment : Fragment() {
         loanViewModel.closeLoanResult.observe(viewLifecycleOwner) { result ->
 
             result.onSuccess {
-                Toast.makeText(requireContext(), "Loan closed successfully", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Loan closed successfully", Toast.LENGTH_SHORT)
+                    .show()
             }
 
             result.onFailure {
@@ -529,13 +557,20 @@ class UserSummaryFragment : Fragment() {
 
     private fun showDirectClosureConfirmation(loan: LoanDetailsWithMemberNames) {
 
-        val message = getString(R.string.message_close_loan_direct, loan.loanNumber,  Converters.formatCurrency(loan.currPrincipal))
+        val message = getString(
+            R.string.message_close_loan_direct,
+            loan.loanNumber,
+            Converters.formatCurrency(loan.currPrincipal)
+        )
 
         AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.title_close_loan_moderator))
             .setMessage(message)
             .setPositiveButton(getString(R.string.text_close_loan)) { _, _ ->
-                loanViewModel.closeLoanDirect(loan.loanId ?: return@setPositiveButton, SessionManager.userId)
+                loanViewModel.closeLoanDirect(
+                    loan.loanId ?: return@setPositiveButton,
+                    SessionManager.userId
+                )
             }
             .setNegativeButton(getString(R.string.text_cancel_button), null)
             .show()
@@ -668,6 +703,8 @@ class UserSummaryFragment : Fragment() {
         val pendingGroups = userProfiles.pendingGroups
         SessionManager.userGroups = groups
         SessionManager.userPendingGroups = pendingGroups
+        SessionManager.userGroupMemberships = userProfiles.groupMemberships
+        SessionManager.userFundMemberships = userProfiles.fundMemberships
         if (groups.isEmpty()) {
             // Admin or user without group
             SessionManager.groupId = null
@@ -727,7 +764,7 @@ class UserSummaryFragment : Fragment() {
     private fun updateLoanAddVisibility(fundStatus: String?) {
         val canAddLoan =
             fundStatus != null &&
-                    Converters.userHasPrivilege(ApnaBankConstants.ADD_APPLY_LOAN_PRIV) &&
+                    (Converters.userHasPrivilege(ApnaBankConstants.ADD_APPLY_LOAN_PRIV) || SessionManager.canManageLoanEmi()) &&
                     fundStatus != ApnaBankConstants.INACTIVE_STATUS &&
                     fundStatus != ApnaBankConstants.STATUS_CLOSED
 
@@ -1067,7 +1104,7 @@ class UserSummaryFragment : Fragment() {
         }
         updateFundExpandUI()
 
-        // 👇 IMPORTANT: use funds directly (not userFunds)
+        // IMPORTANT: use funds directly (not userFunds)
         binding.layoutFundSelector.setOnClickListener {
             if (funds.isEmpty()) return@setOnClickListener
 
@@ -1097,6 +1134,7 @@ class UserSummaryFragment : Fragment() {
                 .show()
         }
     }
+
     private fun raiseLoanClosureRequest(loan: LoanDetailsWithMemberNames) {
         loan.loanId?.let { loanId ->
             loanViewModel.requestLoanClosure(
@@ -1106,6 +1144,7 @@ class UserSummaryFragment : Fragment() {
             )
         }
     }
+
     private fun setupObservers() {
 
         loanViewModel.closureRequestStatus.observe(viewLifecycleOwner) { result ->

@@ -1,0 +1,1 @@
+ALTER TABLE approval_requests ALTER COLUMN "approverUserId" DROP NOT NULL;

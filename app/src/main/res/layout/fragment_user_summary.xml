@@ -229,7 +229,7 @@
                             android:layout_height="wrap_content"
                             android:paddingStart="4dp"
                             android:paddingEnd="4dp"
-                            android:text="@string/text_moderator"
+                            android:text="@string/label_primary_moderator_owner"
                             android:textSize="14sp"
                             android:textStyle="bold" />
 
@@ -242,6 +242,31 @@
                             android:textSize="12sp"
                             android:textStyle="italic"
                             tools:text="Moderator Name" />
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="4dp">
+
+                        <TextView
+                            android:id="@+id/view_user_deposits"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingStart="2dp"
+                            android:paddingEnd="16dp"
+                            android:text="@string/text_view_fund_deposits"
+                            android:textAppearance="?attr/textAppearanceBody2"
+                            android:textColor="@color/link_colour" />
+
+                        <TextView
+                            android:id="@+id/view_fund_summary"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/text_detailed_fund_summary"
+                            android:textAlignment="textEnd"
+                            android:textAppearance="?attr/textAppearanceBody2"
+                            android:textColor="@color/link_colour" />
                     </LinearLayout>
                     <!-- Fund Details as collapsible section-->
 
@@ -432,31 +457,7 @@
                                 tools:text="22000" />
                         </GridLayout>
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:padding="4dp">
 
-                            <TextView
-                                android:id="@+id/view_user_deposits"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:paddingStart="2dp"
-                                android:paddingEnd="16dp"
-                                android:text="@string/text_view_fund_deposits"
-                                android:textAppearance="?attr/textAppearanceBody2"
-                                android:textColor="@color/link_colour" />
-
-                            <TextView
-                                android:id="@+id/view_fund_summary"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/text_detailed_fund_summary"
-                                android:textAlignment="textEnd"
-                                android:textAppearance="?attr/textAppearanceBody2"
-                                android:textColor="@color/link_colour" />
-                        </LinearLayout>
                     </LinearLayout>
 
                     <!-- Divider for Loans -->

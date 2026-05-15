@@ -3,6 +3,10 @@ package com.mynikatech.apnafund.util
 import android.util.Base64
 import androidx.room.TypeConverter
 import com.mynikatech.apnafund.ApnaFundApplication
+import com.mynikatech.apnafund.data.model.FundMembers
+import com.mynikatech.apnafund.data.model.GroupMembers
+import com.mynikatech.apnafund.net.dto.UserFundMembership
+import com.mynikatech.apnafund.net.dto.UserGroupMembership
 import com.mynikatech.apnafund.session.SessionManager
 import java.security.MessageDigest
 import java.util.Date
@@ -49,7 +53,7 @@ object Converters {
 
     fun userHasPrivilege(privilegeCode: String): Boolean {
 
-        val roleIds = SessionManager.roleIds // however you're storing it
+        val roleIds = SessionManager.roleIds
         roleIds.forEach { roleId ->
             val privileges = ApnaFundApplication.rolePrivilegesMap[roleId]
             if (privileges != null && privilegeCode in privileges) {
@@ -117,4 +121,72 @@ object Converters {
             else -> "$months m"
         }
     }
+
+    fun toDisplayRole(role: String): String {
+        return role
+            .lowercase()
+            .split("_")
+            .joinToString(" ") { word ->
+                word.replaceFirstChar { it.uppercase() }
+            }
+    }
+
+    fun canManageFunds(member: GroupMembers?): Boolean {
+        return member?.status == "ACTIVE" &&
+                member.role in listOf("PRIMARY_MODERATOR", "MODERATOR")
+    }
+
+    private fun hasModeratorAccess(
+        memberships: List<out Any>?,
+        roleSelector: (Any) -> String,
+        statusSelector: (Any) -> String
+    ): Boolean {
+        return memberships?.any {
+            statusSelector(it) == "ACTIVE" &&
+                    roleSelector(it) in listOf("PRIMARY_MODERATOR", "MODERATOR")
+        } == true
+    }
+
+    fun canAccessAdmin(): Boolean {
+
+        // 1) Global ADMIN
+        if (SessionManager.roleNames?.contains("ADMIN") == true) return true
+
+        // 2) Group moderator access
+        val groupAccess = hasModeratorAccess(
+            SessionManager.userGroupMemberships,
+            roleSelector = { (it as UserGroupMembership).role },
+            statusSelector = { (it as UserGroupMembership).status }
+        )
+
+        if (groupAccess) return true
+
+        // 3) Fund moderator access
+        val fundAccess = hasModeratorAccess(
+            SessionManager.userFundMemberships,
+            roleSelector = { (it as UserFundMembership).role },
+            statusSelector = { (it as UserFundMembership).status }
+        )
+
+        return fundAccess
+    }
+
+    fun canAddFundMembers(fundId: Int): Boolean {
+
+        // 1) Global Admin
+        if (SessionManager.roleNames?.contains("ADMIN") == true) return true
+
+        // 2) Fund moderator
+        val fundAccess = SessionManager.userFundMemberships?.any {
+            it.fundId == fundId &&
+                    it.status == "ACTIVE" &&
+                    (it.role == "PRIMARY_MODERATOR" || it.role == "MODERATOR")
+        } == true
+
+        if (fundAccess) return true
+        else return false
+
+
+    }
+
 }

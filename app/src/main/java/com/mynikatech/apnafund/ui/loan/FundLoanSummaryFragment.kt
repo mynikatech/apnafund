@@ -232,7 +232,7 @@ class FundLoanSummaryFragment : Fragment() {
         val closeButton = Button(requireContext()).apply {
             isAllCaps = false
             textSize = 12f
-            text = if (SessionManager.isModerator()) getString(R.string.text_close_loan) else getString(R.string.label_close_loan_request)
+            text = if (SessionManager.canManageFund(loan.fundId)) getString(R.string.text_close_loan) else getString(R.string.label_close_loan_request)
         }
 
         // Disable if already closed
@@ -247,7 +247,7 @@ class FundLoanSummaryFragment : Fragment() {
                     getString(R.string.error_loan_already_closed), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            if (SessionManager.isModerator()) {
+            if (SessionManager.canManageFund(loan.fundId)) {
                 showDirectClosureConfirmation(loan.toEntity())
             } else {
                 checkPendingAndProceed(loan.toEntity())

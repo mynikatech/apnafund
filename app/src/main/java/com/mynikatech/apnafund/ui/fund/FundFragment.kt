@@ -22,6 +22,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
@@ -30,6 +31,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.model.FundDetails
+import com.mynikatech.apnafund.data.model.FundMembers
 import com.mynikatech.apnafund.data.model.FundWithDetails
 import com.mynikatech.apnafund.data.model.Funds
 import com.mynikatech.apnafund.data.model.LoanDetailsWithMemberNames
@@ -47,6 +49,7 @@ import com.mynikatech.apnafund.ui.viewmodel.UserSummaryViewModel
 import com.mynikatech.apnafund.util.ApnaBankDate
 import com.mynikatech.apnafund.util.Converters
 import com.mynikatech.apnafund.util.FundInputValidator
+import com.mynikatech.apnafund.util.toUserFundMembership
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -90,15 +93,7 @@ class FundFragment : Fragment() {
     ): View {
         // Inflate the layout for this fragment
         binding = FragmentFundBinding.inflate(layoutInflater, container, false)
-        val context = activity
-        if (Converters.userHasPrivilege(ApnaBankConstants.ADD_FUND_PRIV))
-            binding.fundFab.visibility = View.VISIBLE
-        else
-            binding.fundFab.visibility = View.GONE
-        binding.fundFab.setOnClickListener {
-            if (context != null)
-                showAddFundDialog(context)
-        }
+
         return binding.root
     }
 
@@ -106,6 +101,13 @@ class FundFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         super.onViewCreated(view, savedInstanceState)
+        val context = activity
+
+        groupViewModel.fetchCurrentUserGroupMember(moderatorGroupId)
+        binding.fundFab.setOnClickListener {
+            if (context != null)
+                showAddFundDialog(context)
+        }
 
         adapter = FundAdapter(
             onFundClick = { fund ->
@@ -168,6 +170,14 @@ class FundFragment : Fragment() {
 
                     binding.noFundMessageContainer.visibility =
                         if (it.isEmpty()) View.VISIBLE else View.GONE
+                }
+            }
+        }
+        lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                groupViewModel.currentUserGroupMember.collect { member ->
+                    binding.fundFab.visibility =
+                        if (Converters.canManageFunds(member)) View.VISIBLE else View.GONE
                 }
             }
         }
@@ -243,6 +253,25 @@ class FundFragment : Fragment() {
         dialog.show()
         var groupId = -1
         var moderator = -1
+        fun updateCreatorMembershipUiState(
+            moderatorId: Int
+        ) {
+
+            val isSelfModerator =
+                moderatorId == SessionManager.userId
+
+            if (isSelfModerator) {
+
+                dialogBinding.checkBoxExcludeCreator.apply {
+                    isChecked = false
+                    isEnabled = false
+                }
+
+            } else {
+
+                dialogBinding.checkBoxExcludeCreator.isEnabled = true
+            }
+        }
         dialogBinding.buttonSaveFund.isEnabled = false
         dialogBinding.setupForm()
         if (existingFund != null) {
@@ -255,6 +284,7 @@ class FundFragment : Fragment() {
             dialogBinding.editTextLoanIntRate.setText(existingFund.loanInterestRate.toString())
             dialogBinding.editTextLateFeeRate.setText(existingFund.lateFeeRate.toString())
             dialogBinding.editTextDepositLastDate.setText(existingFund.monthlyDepDateBy.toString())
+            dialogBinding.checkBoxExcludeCreator.visibility = View.GONE
             moderator = existingFund.moderator
             groupId = existingFund.groupId
 
@@ -309,12 +339,16 @@ class FundFragment : Fragment() {
                         // Now setup dropdown WITH data
                         setupModeratorDropdown(dialogBinding, members) { selectedId ->
                             moderator = selectedId
+                            updateCreatorMembershipUiState(
+                                moderator
+                            )
                             dialogBinding.buttonSaveFund.isEnabled =
                                 validateInputs(dialogBinding, groupId, moderator)
                         }
                         // 🔥 set default moderator properly
                         if (preselectedId != null) {
                             moderator = preselectedId
+                            updateCreatorMembershipUiState(moderator)
                             updateSaveButtonState(dialogBinding, groupId, moderator)
                         }
                     }
@@ -338,9 +372,10 @@ class FundFragment : Fragment() {
                                 dialogBinding.buttonSaveFund.isEnabled =
                                     validateInputs(dialogBinding, groupId, moderator)
                             }
-                            // 🔥 set default moderator properly
+                            // set default moderator properly
                             if (preselectedId != null) {
                                 moderator = preselectedId
+                                updateCreatorMembershipUiState(moderator)
                                 updateSaveButtonState(dialogBinding, groupId, moderator)
                             }
                         }
@@ -378,6 +413,7 @@ class FundFragment : Fragment() {
                         // set default moderator properly
                         if (preselectedId != null) {
                             moderator = preselectedId
+                            updateCreatorMembershipUiState(moderator)
                             updateSaveButtonState(dialogBinding, groupId, moderator)
                         }
                     }
@@ -420,6 +456,19 @@ class FundFragment : Fragment() {
         dialogBinding.editTextDepositLastDate.addTextChangedListener {
             updateSaveButtonState(dialogBinding, groupId, moderator)
         }
+        dialogBinding.imageInfoExcludeCreator.setOnClickListener {
+
+            AlertDialog.Builder(requireContext())
+                .setTitle(getString(R.string.title_exclude_creator_info))
+                .setMessage(
+                    getString(R.string.info_exclude_creator)
+                )
+                .setPositiveButton(
+                    getString(R.string.text_button_ok),
+                    null
+                )
+                .show()
+        }
 
         dialogBinding.buttonSaveFund.setOnClickListener {
             dialogBinding.buttonSaveFund.isEnabled = false
@@ -432,6 +481,25 @@ class FundFragment : Fragment() {
                         dialogBinding.editTextFundStartDate.text.toString().trim(),
                         dialogBinding.editTextPeriod.text.toString().trim().toDouble()
                     )
+                    val excludeCreator =
+                        dialogBinding.checkBoxExcludeCreator.isChecked
+                    if (
+                        moderator == SessionManager.userId &&
+                        excludeCreator
+                    ) {
+
+                        Toast.makeText(
+                            requireContext(),
+                            getString(R.string.error_moderator_must_be_member),
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        dialogBinding.buttonSaveFund.isEnabled = true
+                        dialogBinding.buttonSaveFund.text =
+                            getString(R.string.text_save_button)
+
+                        return@launch
+                    }
                     var recalculateFinance = false
                     // check if fund period or deposit amount has been updated, if so recalculate everything
                     val fundPeriod = dialogBinding.editTextPeriod.text.toString().trim().toDouble()
@@ -481,7 +549,8 @@ class FundFragment : Fragment() {
                             fundToSave,
                             fundDetailsToSave,
                             groupId,
-                            recalculateFinance
+                            recalculateFinance,
+                            excludeCreator
                         )
                     }
                     fundSharedViewModel.refreshFunds()
@@ -493,16 +562,52 @@ class FundFragment : Fragment() {
                             Toast.LENGTH_LONG
                         ).show()
                     } else {
-                        AlertDialog.Builder(requireContext())
-                            .setTitle(getString(R.string.title_fund_update_created_success))
-                            .setMessage(getString(R.string.message_want_add_update_members_now))
-                            .setPositiveButton(getString(R.string.text_yes)) { _, _ ->
-                                val action = FundFragmentDirections
-                                    .actionFundFragmentToFundMemberDetailsFragment(fundId = newFundId)
-                                findNavController().navigate(action)
-                            }
-                            .setNegativeButton(getString(R.string.text_cancel_button), null)
-                            .show()
+                        if (!excludeCreator) {
+
+                            val role =
+                                if (moderator == SessionManager.userId) {
+                                    ApnaBankConstants.ROLE_PRIMARY_MODERATOR
+                                } else {
+                                    ApnaBankConstants.ROLE_MODERATOR
+                                }
+
+                            SessionManager.addFundMembership(
+                                FundMembers(
+                                    userId = SessionManager.userId,
+                                    fundId = newFundId,
+                                    role = role,
+                                    status = ApnaBankConstants.STATUS_ACTIVE,
+                                    joiningDate = ApnaBankDate.getCurrentDate(),
+                                    updatedBy = SessionManager.userId
+                                ).toUserFundMembership()
+                            )
+
+                            AlertDialog.Builder(requireContext())
+                                .setTitle(getString(R.string.title_fund_update_created_success))
+                                .setMessage(getString(R.string.message_want_add_update_members_now))
+                                .setPositiveButton(getString(R.string.text_yes)) { _, _ ->
+
+                                    val action = FundFragmentDirections
+                                        .actionFundFragmentToFundMemberDetailsFragment(
+                                            fundId = newFundId
+                                        )
+
+                                    findNavController().navigate(action)
+                                }
+                                .setNegativeButton(
+                                    getString(R.string.text_cancel_button),
+                                    null
+                                )
+                                .show()
+
+                        } else {
+
+                            Toast.makeText(
+                                requireContext(),
+                                getString(R.string.title_fund_update_created_success),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     }
                     dialog.dismiss()
                 } catch (e: Exception) {
@@ -750,7 +855,7 @@ class FundFragment : Fragment() {
 
             val members: List<UserDisplay> = if (existingFund == null) {
                 // ADD → group members
-                groupViewModel.fetchGroupMembersforGrpWithNames(groupId)
+                groupViewModel.fetchGroupMembersforGrpWithNames(groupId, true)
                     .map {
                         UserDisplay(
                             userId = it.userId,

@@ -243,9 +243,13 @@ fun Route.usersRoutes(
             val userRoles = userRoles.getRolesOfUser(id)
             val userGroups = users.getBasicGroupsForUser(id)
             val pendingGroups = users.getBasicPendingGroupsForUser(id)
+            val groupMemberships = users.getUserGroupMemberships(id)
+            val fundMemberships = users.getUserFundMemberships(id)
             rows.groups = userGroups
             rows.roles = userRoles
             rows.pendingGroups = pendingGroups
+            rows.groupMemberships = groupMemberships
+            rows.fundMemberships = fundMemberships
             rows
         }
     }

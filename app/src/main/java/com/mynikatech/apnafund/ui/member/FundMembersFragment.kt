@@ -11,6 +11,8 @@ import android.view.ViewGroup
 import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -21,12 +23,15 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.model.FundMembers
+import com.mynikatech.apnafund.data.model.GroupMembers
 import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.databinding.FragmentFundMembersBinding
+import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.FundViewModel
 import com.mynikatech.apnafund.ui.viewmodel.GroupViewModel
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
 import com.mynikatech.apnafund.util.Converters
+import com.mynikatech.apnafund.util.toUserFundMembership
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -72,7 +77,7 @@ class FundMembersFragment : Fragment() {
             // Fallback to something to be implemented
 
         }
-        if (Converters.userHasPrivilege(ApnaBankConstants.ADD_FUND_MEMBERS_PRIV))
+        if (Converters.canAddFundMembers(fundId))
             binding.fundMembersFab.visibility = View.VISIBLE
         else
             binding.fundMembersFab.visibility = View.GONE
@@ -148,7 +153,8 @@ class FundMembersFragment : Fragment() {
                 moderatorUser?.firstName.orEmpty(),
                 moderatorUser?.lastName.orEmpty()
             )
-
+            val canManageFund =
+                SessionManager.canManageFund(fundId)
             val table = binding.tableFundMembersDetails
 
             fundMembers.forEachIndexed { index, member ->
@@ -165,14 +171,125 @@ class FundMembersFragment : Fragment() {
                     text = member.joiningDate
                     gravity = Gravity.START
                 }
+                val tvRole = TextView(activity).apply {
+                    text = Converters.toDisplayRole(member.role)
+                    gravity = Gravity.START
+                }
+
+                val tvStatus = TextView(activity).apply {
+                    text = member.status
+                    gravity = Gravity.START
+                }
+
+                val btnEdit = TextView(activity).apply {
+                    text = "Edit"
+                    setTextColor(resources.getColor(R.color.purple))
+                    setPadding(10, 5, 10, 5)
+                }
+
+                val btnToggle = TextView(activity).apply {
+                    text = if (member.status == "ACTIVE") "Deactivate" else "Activate"
+                    setTextColor(resources.getColor(R.color.red))
+                    setPadding(10, 5, 10, 5)
+                }
+
+
+                btnToggle.setOnClickListener {
+                    handleStatusToggle(member, fundId)
+                }
+
+                btnEdit.setOnClickListener {
+                    showRoleChangeDialog(member, fundId)
+                }
+
+                btnEdit.visibility =
+                    if (canManageFund) View.VISIBLE else View.GONE
+
+                btnToggle.visibility =
+                    if (canManageFund) View.VISIBLE else View.GONE
 
                 val row = TableRow(activity).apply {
                     addView(tvNo)
                     addView(tvMemberName)
                     addView(tvJoiningDate)
+                    addView(tvRole)
+                    addView(tvStatus)
+                    addView(btnToggle)
+                    addView(btnEdit)
                 }
                 table.addView(row)
             }
+        }
+    }
+
+    private fun handleStatusToggle(member: FundMembers, fundId: Int) {
+
+        if (member.role == "PRIMARY_MODERATOR") {
+            showToast("Cannot modify primary moderator")
+            return
+        }
+
+        val newStatus = if (member.status == "ACTIVE") "INACTIVE" else "ACTIVE"
+
+        val updatedMember = member.copy(
+            status = newStatus,
+            updatedBy = SessionManager.userId
+        )
+        lifecycleScope.launch {
+            fundViewModel.updateFundMember(
+                updatedMember
+            )
+            if (member.userId == SessionManager.userId) {
+                SessionManager.updateFundMembership(updatedMember.toUserFundMembership())
+            }
+            fetchAllMembers(groupId)
+        }
+    }
+
+    private fun showRoleChangeDialog(member: FundMembers, fundId: Int) {
+
+        if (member.role == "PRIMARY_MODERATOR") {
+            showToast("Cannot modify primary moderator")
+            return
+        }
+
+        val isModerator = member.role == "MODERATOR"
+
+        val optionText = if (isModerator) {
+            "Demote to Member"
+        } else {
+            "Promote to Moderator"
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Update Role")
+            .setItems(arrayOf(optionText)) { _, _ ->
+                val newRole = if (isModerator) "MEMBER" else "MODERATOR"
+                handleRoleUpdate(member, fundId, newRole)
+            }
+            .show()
+    }
+
+    private fun handleRoleUpdate(member: FundMembers, fundId: Int, newRole: String) {
+
+        // permission check
+        if (newRole == "MODERATOR" &&  !SessionManager.isPrimaryFundModerator(fundId)) {
+            showToast("Only primary moderator can assign moderators")
+            return
+        }
+
+        val updatedMember = member.copy(
+            role = newRole,
+            updatedBy = SessionManager.userId
+        )
+        lifecycleScope.launch {
+            fundViewModel.updateFundMember(
+                updatedMember
+            )
+            if (member.userId == SessionManager.userId) {
+                SessionManager.updateFundMembership(updatedMember.toUserFundMembership())
+            }
+            fetchAllMembers(fundId)
         }
     }
 
@@ -214,5 +331,9 @@ class FundMembersFragment : Fragment() {
 
         val activity = requireActivity() as AppCompatActivity
         activity.supportActionBar?.show()
+    }
+
+    private fun showToast(msg: String) {
+        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
     }
 }

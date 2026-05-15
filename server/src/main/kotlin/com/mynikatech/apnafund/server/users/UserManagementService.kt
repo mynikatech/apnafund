@@ -32,7 +32,7 @@ class UserManagementService(
 
         val user = req.user
         val requestorId = req.requestorId
-
+        val groupRole = req.groupRole
         val userId: Int = usersSql.upsertUserByEmail(user,requestorId )
 
         var emailVerified = false
@@ -52,7 +52,7 @@ class UserManagementService(
                         )
                     }
                 }
-                handleGroup(userId, req.groupId)
+                handleGroup(userId, req.groupId, groupRole, requestorId)
                 ensureMemberRole(userId)
                 if (emailVerificationEnabled) {
                     expiresOtpAtMillis = emailVerificationService.sendVerificationEmail(
@@ -87,7 +87,7 @@ class UserManagementService(
             }
 
             UserSaveSource.ADMIN_CREATE -> {
-                handleGroup(userId, req.groupId)
+                handleGroup(userId, req.groupId, groupRole, requestorId)
                 ensureMemberRole(userId)
                 val group = groupsSql.getGroup(req.groupId).firstOrNull()
                 if (null != group) {
@@ -112,7 +112,7 @@ class UserManagementService(
             }
 
             UserSaveSource.MODERATOR_CREATE -> {
-                handleGroup(userId, req.groupId)
+                handleGroup(userId, req.groupId, groupRole, requestorId)
                 ensureMemberRole(userId)
                 val group = groupsSql.getGroup(req.groupId).firstOrNull()
                 if (null != group) {
@@ -137,13 +137,13 @@ class UserManagementService(
             }
 
             UserSaveSource.ADMIN_UPDATE -> {
-                handleGroup(userId, req.groupId)
+                handleGroup(userId, req.groupId, groupRole, requestorId)
                 // explicitly NO EMAIL
                 emailVerified = true
             }
 
             UserSaveSource.MODERATOR_UPDATE -> {
-                handleGroup(userId, req.groupId)
+                handleGroup(userId, req.groupId, groupRole, requestorId)
                 // explicitly NO EMAIL
                 emailVerified = true
             }
@@ -182,13 +182,15 @@ class UserManagementService(
         addUserRole(userId, "MEMBER")
     }
 
-    fun handleGroup(userId: Int, groupId: Int) {
+    fun handleGroup(userId: Int, groupId: Int, groupRole: String? = null, requestorId: Int,
+                    membershipStatus: String = "ACTIVE") {
         if (groupId > 0) {
             // Get group member and if not present add.
 
             val groupMember = usersSql.getGroupMember(userId, groupId)
             if (groupMember.isEmpty()) {
-                groupsSql.addGroupMember(userId, groupId, getCurrentDate())
+                val finalRole = groupRole ?: "MEMBER"
+                groupsSql.addGroupMember(userId, groupId, getCurrentDate(), finalRole, requestorId, membershipStatus)
             }
             FirebaseGroupService.addMemberToGroup(groupId, userId)
         }

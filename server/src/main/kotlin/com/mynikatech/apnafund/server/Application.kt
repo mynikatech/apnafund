@@ -201,20 +201,30 @@ fun Application.module() {
 
     val eventDispatchService = EventDispatchService(
         UserMessagingPublisher(userEventsArn),
-        SupportMessagingPublisher(supportEventsArn)
+        SupportMessagingPublisher(supportEventsArn),
+        usersDao
     )
     val emailVerificationEnabled: Boolean = isEmailVerificationEnabled()
     val emailOtpExpiryMinutes =
         System.getenv("EMAIL_OTP_EXPIRY_MINUTES")?.toLongOrNull() ?: 60
     val emailVerificationService =
         EmailVerificationService(usersDao, eventDispatchService, emailOtpExpiryMinutes)
+    val notificationService =
+        NotificationService(
+            notificationsDao,
+            groupsDao,
+            fundDao,
+            usersDao,
+            loansDao,
+            eventDispatchService
+        )
     val moderatorRegistrationService = ModeratorRegistrationService(
         usersDao,
         userRolesDao,
         roleDao,
         groupsDao,
         emailVerificationService,
-        eventDispatchService,
+        notificationService,
         emailVerificationEnabled,
         passwordHistoryDao,
         approvalDao
@@ -250,15 +260,7 @@ fun Application.module() {
         groupHandler, depositHandler, loanEMIHandler
     )
 
-    val notificationService =
-        NotificationService(
-            notificationsDao,
-            groupsDao,
-            fundDao,
-            usersDao,
-            loansDao,
-            eventDispatchService
-        )
+
 
     val approvalService = ApprovalService(
         approvalDao,

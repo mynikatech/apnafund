@@ -237,7 +237,7 @@ class UsersApiKtor(
 
     override suspend fun getGroupsForModeratorUserWithModInfo(userId: Int): List<GroupsWithModeratorDto> =
         try {
-            client.get("/users/get/groups-for-moderator-user//moderator-info/$userId").unwrap()
+            client.get("/users/get/groups-for-moderator-user/moderator-info/$userId").unwrap()
         } catch (_: Exception) {
             emptyList()
         }

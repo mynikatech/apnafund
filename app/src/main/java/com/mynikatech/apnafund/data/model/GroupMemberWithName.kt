@@ -7,5 +7,7 @@ data class GroupMemberWithName(
     val joiningDate: String,
     val firstName: String,
     val lastName: String,
-    val emailId: String
+    val emailId: String,
+    val role: String,
+    val status: String
 )

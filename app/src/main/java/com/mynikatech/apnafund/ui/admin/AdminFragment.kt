@@ -45,14 +45,13 @@ class AdminFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val isAdmin = SessionManager.isAdmin()
-        val isModerator = SessionManager.isModerator()
         val allTabs = listOf(
             getString(R.string.text_user),
             getString(R.string.text_group),
             getString(R.string.text_pending_approval),
             getString(R.string.text_deposits),
             getString(R.string.text_loan_emi),
-            getString(R.string.text_loan_emi)
+            getString(R.string.tab_feedback)
         )
 
         val moderatorTabs = listOf(
@@ -63,10 +62,30 @@ class AdminFragment : Fragment() {
             getString(R.string.text_loan_emi)
         )
 
-        val tabsToShow = when {
-            isAdmin -> allTabs
-            isModerator -> moderatorTabs
-            else -> emptyList()
+        val tabsToShow = mutableListOf<String>()
+
+        if (SessionManager.canManageUsers()) {
+            tabsToShow.add(getString(R.string.text_user))
+        }
+
+        if (SessionManager.canManageGroups()) {
+            tabsToShow.add(getString(R.string.text_group))
+        }
+
+        if (SessionManager.canViewPendingApprovals()) {
+            tabsToShow.add(getString(R.string.text_pending_approval))
+        }
+
+        if (SessionManager.canManageDeposits()) {
+            tabsToShow.add(getString(R.string.text_deposits))
+        }
+
+        if (SessionManager.canManageLoanEmi()) {
+            tabsToShow.add(getString(R.string.text_loan_emi))
+        }
+
+        if (SessionManager.canManageFeedback()) {
+            tabsToShow.add(getString(R.string.tab_feedback))
         }
         adminPagerAdapter = PagerAdapter(this, tabsToShow)
         binding.adminPager.adapter = adminPagerAdapter

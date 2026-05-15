@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 092-get-pending-approval-by-role
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/092-get-pending-approval-by-role.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

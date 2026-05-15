@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 093-remove-not-null-constraint-approval-request
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/093-remove-not-null-constraint-approval-request.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

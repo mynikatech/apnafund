@@ -2,13 +2,17 @@ package com.mynikatech.apnafund.data.mappers
 
 import com.mynikatech.apnafund.data.model.GroupMembers
 import com.mynikatech.apnafund.net.dto.GroupMembersDto
+import kotlin.String
 
 fun GroupMembersDto.toEntity(): GroupMembers = GroupMembers(
     groupId = groupId,
     groupMemberId = groupMemberId ?: 0,
     userId = userId,
     joiningDate = joiningDate,
-
+    role = role,
+    status = status,
+    updatedAt = updatedAt,
+    updatedBy = updatedBy
     )
 
 fun GroupMembers.toDto(): GroupMembersDto = GroupMembersDto(
@@ -16,6 +20,10 @@ fun GroupMembers.toDto(): GroupMembersDto = GroupMembersDto(
     groupMemberId = groupMemberId ?: 0,
     userId = userId,
     joiningDate = joiningDate,
+    role = role,
+    status = status,
+    updatedAt = updatedAt,
+    updatedBy = updatedBy
 )
 
 fun List<GroupMembersDto>.toEntity(): List<GroupMembers> = map { it.toEntity() }

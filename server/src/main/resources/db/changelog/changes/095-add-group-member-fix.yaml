@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 095-add-group-member-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/095-add-group-member-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

@@ -170,18 +170,17 @@ fun Route.loansRoutes(
                             "Fund not found"
                         )
 
-                val moderatorId = fund.moderator
-
-                val moderatorUser =
-                    users.getUserById(moderatorId)
-                        ?: error("Moderator user not found")
+                val moderators =
+                    fundSql.getActiveFundModerators(fundId)
 
                 val borrowerUser =
                     users.getUserById(borrowerId)
                         ?: error("Borrower user not found")
 
                 val isModeratorApplying =
-                    requesterUserId == moderatorId
+                    moderators.any {
+                        it.userId == requesterUserId
+                    }
 
                 val workflowStatus =
                     if (isModeratorApplying)
@@ -228,15 +227,16 @@ fun Route.loansRoutes(
                     approvalSql.createLoanApproval(
                         loanId,
                         requesterUserId,
-                        moderatorId
+                        null
                     )
+
 
                     notificationService.notifyLoanRequested(
                         loanId,
                         fundId,
                         fund.fundName,
                         borrowerUser.fullName,
-                        moderatorUser
+                        moderators = moderators
                     )
                 }
 
@@ -596,6 +596,10 @@ fun Route.loansRoutes(
 
             val borrowerUser = users.getUserById(loanDetails.borrowerId)
             val moderatorUser = users.getUserById(fund.moderator)
+            val moderators =
+                fundSql.getActiveFundModerators(
+                    fund.fundId!!
+                )
             // Already closed
             if (loanDetails.status == "CLOSED") {
                 return@post call.respondError(
@@ -608,7 +612,7 @@ fun Route.loansRoutes(
             val success = approvalSql.createLoanClosureApproval(
                 loanId = loanId,
                 requestedBy = loanDetails.borrowerId,
-                approver = fund.moderator,
+                approver = null,
                 closureType = "FORECLOSURE",
                 requestedAmount = req.requestedAmount,
                 remarks = req.remarks
@@ -627,7 +631,7 @@ fun Route.loansRoutes(
                 fundId = fund.fundId!!,
                 fundName = fund.fundName,
                 borrowerName = borrowerUser.fullName,
-                moderator = moderatorUser,
+                moderators = moderators,
                 requestedAmount = req.requestedAmount,
                 remarks = req.remarks
             )

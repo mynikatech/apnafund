@@ -1,15 +1,21 @@
 package com.mynikatech.apnafund.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.mynikatech.apnafund.ApnaFundApplication
+import com.mynikatech.apnafund.data.mappers.toDto
 import com.mynikatech.apnafund.data.model.FundDetails
 import com.mynikatech.apnafund.data.model.FundMemberWithName
 import com.mynikatech.apnafund.data.model.FundMembers
 import com.mynikatech.apnafund.data.model.FundWithDetails
 import com.mynikatech.apnafund.data.model.Funds
 import com.mynikatech.apnafund.data.model.Users
+import com.mynikatech.apnafund.net.dto.AvailableFundMemberDto
+import com.mynikatech.apnafund.net.dto.FundMembersDto
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.util.ApnaBankDate
+import kotlinx.coroutines.launch
 
 
 class FundViewModel : ViewModel() {
@@ -43,7 +49,8 @@ class FundViewModel : ViewModel() {
         fundToSave: Funds,
         fundDetailstoSave: FundDetails,
         groupId: Int,
-        recalculateFinance: Boolean = false
+        recalculateFinance: Boolean = false,
+        excludeCreator: Boolean = false
     ): Int {
         // For now only allow Fund Name and Group to Edit post a first deposit is completed.
         // Later will work on allowing to update the other fields like period, deposit amount, start date etc
@@ -65,7 +72,7 @@ class FundViewModel : ViewModel() {
             fundRepository.updateFundAndDetails(fundToSave, updatedFundDetails)
         } else {
             newFundId = fundRepository.saveFundAndDetails(fundToSave, fundDetailstoSave,
-                SessionManager.userId)
+                SessionManager.userId, excludeCreator )
         }
         return newFundId
     }
@@ -79,8 +86,8 @@ class FundViewModel : ViewModel() {
         return fundRepository.getFundMembersWithNamesForFund(fundId)
     }
 
-    suspend fun getAvailableFundMembers(groupId: Int, fundId: Int): List<Users> {
-        val memberList: List<Users> = fundRepository.getAvailableFundMembers(groupId, fundId)
+    suspend fun getAvailableFundMembers(groupId: Int, fundId: Int): List<AvailableFundMemberDto> {
+        val memberList: List<AvailableFundMemberDto> = fundRepository.getAvailableFundMembers(groupId, fundId)
         return memberList
     }
 
@@ -125,6 +132,68 @@ class FundViewModel : ViewModel() {
         }
     }
 
+    suspend fun addFundMembersBatch(
+        fundId: Int,
+        members: List<FundMembersDto>
+    ) {
+        if (members.isEmpty()) return
+
+        // Existing count
+        val existingMembers = fundRepository.fetchAllMembersforFund(fundId)
+        val existingCount = existingMembers.size
+
+        val existingFundDetails = fundRepository.getFundDetails(fundId)
+        val existingFund = fundRepository.getFund(fundId)!!
+
+        // Convert DTO → Entity
+        val listOfNewFundMembers = members.map {
+            FundMembers(
+                userId = it.userId,
+                fundId = fundId,
+                joiningDate = it.joiningDate ?: ApnaBankDate.getCurrentDate(),
+                role = it.role ?: "MEMBER",
+                status = "ACTIVE",
+                updatedBy = it.updatedBy
+            )
+        }
+
+        // Save (batch)
+        fundRepository.addFundMembers(listOfNewFundMembers)
+
+        // Updated count (only count ACTIVE if needed later)
+        val updatedCount = existingCount + members.size
+
+        // Recalculate totals
+        val updatedTotalExpectedDeposit =
+            existingFund.recurringDepositAmount *
+                    updatedCount *
+                    existingFund.fundPeriod
+
+        if (existingFundDetails != null) {
+
+            val updatedFundDetails = existingFundDetails.copy(
+                totalExpectedDeposit = updatedTotalExpectedDeposit,
+                totalExpectedMaturityAmount = updatedTotalExpectedDeposit
+            )
+
+            fundRepository.updateFundDetails(updatedFundDetails)
+
+        } else {
+
+            val newFundDetails = FundDetails(
+                fundId = fundId,
+                totalExpectedDeposit = updatedTotalExpectedDeposit,
+                totalCurrentDeposit = 0.0,
+                totalCurrentLateFee = 0.0,
+                totalCurrentInterestCollected = 0.0,
+                totalExpectedMaturityAmount = updatedTotalExpectedDeposit,
+                totalCurrAmount = 0.0
+            )
+
+            fundRepository.insertFundDetails(newFundDetails)
+        }
+    }
+
     suspend fun getFundDetails(fundId: Int): FundWithDetails {
         return fundRepository.getFundWithDetails(fundId)
     }
@@ -151,6 +220,16 @@ class FundViewModel : ViewModel() {
         } catch (e: Exception) {
         }
 
+    }
+
+    fun updateFundMember(fundMember: FundMembers) {
+        viewModelScope.launch {
+            try {
+                fundRepository.updateFundMember(fundMember.toDto())
+            } catch (e: Exception) {
+                Log.e("FundViewModel", "Error updating fund member", e)
+            }
+        }
     }
 
 }

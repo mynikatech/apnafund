@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 087-add_multi_mod_privilege_changes
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/087-add_multi_mod_privilege_changes.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

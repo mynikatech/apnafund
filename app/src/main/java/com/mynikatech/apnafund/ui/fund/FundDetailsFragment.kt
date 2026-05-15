@@ -62,20 +62,12 @@ class FundDetailsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         super.onViewCreated(view, savedInstanceState)
-        /*(requireActivity() as AppCompatActivity).supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
-            setDisplayShowHomeEnabled(true)
-            title = "Fund Detailed Summary"  // Optional
-        }*/
         val fundId = args.fundId
         lifecycleScope.launch {
             val fundDetails = userSummaryViewModel.getFundDetails(fundId)
             fetchAllFundDetails(fundDetails)
         }
         val toolbar = view.findViewById<MaterialToolbar>(R.id.fund_details_toolbar)
-       // (activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
-       // (activity as? AppCompatActivity)?.supportActionBar?.setDisplayShowTitleEnabled(false)
-
         // Enable back arrow
         val navController = findNavController()
         toolbar.setNavigationIcon(R.drawable.ic_back_arrow) // your back icon
@@ -117,7 +109,7 @@ class FundDetailsFragment : Fragment() {
                 }
                 // Build table row
                 var applyLoanPriv = false
-                if (Converters.userHasPrivilege(ApnaBankConstants.APPROVE_APPLY_LOAN_PRIV))
+                if (SessionManager.canManageLoanEmi())
                     applyLoanPriv = true
                 val viewHolder = FundDetailsTableRowViewHolder(requireContext(), applyLoanPriv)
                 viewHolder.tvNo.text = serialCounter.toString()

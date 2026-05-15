@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 097-get_users-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/097-get_users-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

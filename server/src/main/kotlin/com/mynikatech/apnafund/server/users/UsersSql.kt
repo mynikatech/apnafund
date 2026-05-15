@@ -10,7 +10,9 @@ import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
 import com.mynikatech.apnafund.net.dto.UserBasicDto
 import com.mynikatech.apnafund.net.dto.UserDetailsDto
 import com.mynikatech.apnafund.net.dto.UserFundDetailsDto
+import com.mynikatech.apnafund.net.dto.UserFundMembership
 import com.mynikatech.apnafund.net.dto.UserGroup
+import com.mynikatech.apnafund.net.dto.UserGroupMembership
 import com.mynikatech.apnafund.net.dto.UserProfileDto
 import com.mynikatech.apnafund.net.dto.UserWithGroupDto
 import com.mynikatech.apnafund.net.dto.UsersDto
@@ -46,6 +48,9 @@ interface UsersSql {
 
     @SqlQuery("""SELECT * FROM get_admin_user()""")
     fun getAdminUser(): AdminUserDto
+
+    @SqlQuery("""SELECT * FROM get_active_admin_users()""")
+    fun getAdminUsers(): List<AdminUserDto>
 
     @SqlQuery(
         """
@@ -130,6 +135,12 @@ interface UsersSql {
 
     @SqlQuery("""SELECT * FROM get_user_profile(:userId)""")
     fun getUserProfile(@Bind("userId") userId: Int): List<UserProfileDto>
+
+    @SqlQuery("""SELECT * FROM get_user_group_memberships(:userId)""")
+    fun getUserGroupMemberships(@Bind("userId") userId: Int): List<UserGroupMembership>
+
+    @SqlQuery("""SELECT * FROM get_user_fund_memberships(:userId)""")
+    fun getUserFundMemberships(@Bind("userId") userId: Int): List<UserFundMembership>
 
     // ---- NEW: aggregates / extras ----
     @SqlQuery("""SELECT * FROM get_group_for_user(:userId)""")

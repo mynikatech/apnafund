@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 086-add_multi_mod_fund_support
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/086-add_multi_mod_fund_support.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

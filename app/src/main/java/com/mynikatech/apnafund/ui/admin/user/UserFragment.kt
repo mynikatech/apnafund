@@ -32,6 +32,7 @@ import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.databinding.DialogAddUserBinding
 import com.mynikatech.apnafund.databinding.FragmentUserBinding
 import com.mynikatech.apnafund.net.HttpClientProvider
+import com.mynikatech.apnafund.net.dto.LoginUserResponse
 import com.mynikatech.apnafund.net.dto.UserSaveSource
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.GroupViewModel
@@ -65,7 +66,7 @@ class UserFragment : Fragment() {
     ): View {
         binding = FragmentUserBinding.inflate(inflater, container, false)
 
-        if (Converters.userHasPrivilege(ApnaBankConstants.ADD_USER_PRIV))
+        if (SessionManager.canManageUsers())
             binding.fab.visibility = View.VISIBLE
         else
             binding.fab.visibility = View.GONE
@@ -236,7 +237,88 @@ class UserFragment : Fragment() {
         dialog.setContentView(dialogBinding.root)
         dialog.show()
         dialogBinding.setupForm()
+        var detectedExistingUser: Users? = null
         val groupMap = mutableMapOf<String, Int>()
+        fun checkExistingUser(
+            email: String? = null,
+            phone: String? = null
+        ) {
+
+            lifecycleScope.launch {
+
+                val existingResponse =
+                    when {
+                        !email.isNullOrEmpty() ->
+                            userViewModel.findExistingUserByEmail(email)
+
+                        !phone.isNullOrEmpty() ->
+                            userViewModel.findExistingUserByPhone(phone)
+
+                        else -> null
+                    }
+
+                val selectedGroup =
+                    dialogBinding.editTextGroup.text.toString()
+
+                val selectedGroupId =
+                    groupMap[selectedGroup]
+
+                val result = determineExistingUserState(
+                    response = existingResponse,
+                    selectedGroupId = selectedGroupId,
+                    currentUserId = existingUser?.userId ?: 0
+                )
+
+                val isModerator =
+                    dialogBinding.checkboxModerator.isChecked
+
+                val groupRole =
+                    if (isModerator) {
+                        "MODERATOR"
+                    } else {
+                        "MEMBER"
+                    }
+
+                handleExistingUserDetected(
+                    result = result,
+                    dialogBinding = dialogBinding,
+                    dialog = dialog,
+                    selectedGroupId = selectedGroupId,
+                    groupRole = groupRole
+                )
+            }
+        }
+        dialogBinding.editTextEmail.setOnFocusChangeListener { _, hasFocus ->
+
+            if (!hasFocus) {
+
+                val email =
+                    dialogBinding.editTextEmail.text
+                        .toString()
+                        .trim()
+
+                if (email.isNotEmpty()) {
+
+                    checkExistingUser(email = email)
+                }
+            }
+        }
+
+        dialogBinding.editTextPhone.setOnFocusChangeListener { _, hasFocus ->
+
+            if (!hasFocus) {
+
+                val phone =
+                    dialogBinding.editTextPhone.text
+                        .toString()
+                        .trim()
+
+                if (phone.length == 10) {
+
+                    checkExistingUser(phone = phone)
+                }
+            }
+        }
         if (isAdmin) {
             lifecycleScope.launch {
                 groupViewModel.fetchAllGroups().collectLatest { groupList ->
@@ -361,18 +443,85 @@ class UserFragment : Fragment() {
             val selectedGroupId = groupMap[group]
             lifecycleScope.launch {
                 try {
-                    val isDuplicate = userViewModel.isDuplicate(email, phone, userId)
+                    val isModerator = dialogBinding.checkboxModerator.isChecked
+
+                    val groupRole = if (isModerator) {
+                        "MODERATOR"
+                    } else {
+                        "MEMBER"
+                    }
+                    val existingResponse = when {
+
+                        email.isNotEmpty() ->
+                            userViewModel.findExistingUserByEmail(
+                                email
+                            )
+
+                        phone.length == 10 ->
+                            userViewModel.findExistingUserByPhone(
+                                phone
+                            )
+
+                        else -> null
+                    }
+
+                    val existingCheckResult =
+                        determineExistingUserState(
+                            response = existingResponse,
+                            selectedGroupId = selectedGroupId,
+                            currentUserId = userId
+                        )
+                    when (existingCheckResult.state) {
+
+                        ExistingUserState.ALREADY_IN_GROUP -> {
+
+                            Toast.makeText(
+                                context,
+                                getString(
+                                    R.string.error_user_already_in_group
+                                ),
+                                Toast.LENGTH_LONG
+                            ).show()
+
+                            dialogBinding.buttonSaveUser.isEnabled = true
+
+                            dialogBinding.buttonSaveUser.text =
+                                getString(
+                                    R.string.text_save_button
+                                )
+
+                            return@launch
+                        }
+
+                        ExistingUserState.EXISTS_IN_OTHER_GROUP -> {
+
+                            val response =
+                                existingCheckResult.response
+                                    ?: return@launch
+
+                            showExistingUserGroupAdditionDialog(
+                                response = response,
+                                dialog = dialog,
+                                selectedGroupId = selectedGroupId,
+                                groupRole = groupRole
+                            )
+
+                            dialogBinding.buttonSaveUser.isEnabled = true
+
+                            dialogBinding.buttonSaveUser.text =
+                                getString(
+                                    R.string.text_save_button
+                                )
+
+                            return@launch
+                        }
+
+                        ExistingUserState.NEW_USER -> {
+                            // continue normal flow
+                        }
+                    }
                     val existingUserFull =
                         if (userId != 0) userViewModel.fetchUser(userId) else null
-                    if (isDuplicate) {
-                        Toast.makeText(
-                            context,
-                            getString(R.string.text_existing_user_error_message), Toast.LENGTH_LONG
-                        ).show()
-                        dialogBinding.buttonSaveUser.isEnabled = true
-                        dialogBinding.buttonSaveUser.text = getString(R.string.text_save_button)
-                        return@launch
-                    }
                     // if moderator selecting group is mandatory
                     if (!isAdmin && selectedGroupId == null) {
                         Toast.makeText(
@@ -415,13 +564,40 @@ class UserFragment : Fragment() {
                         updatedAt = null,
                         createdByName = null
                     )
-                    userViewModel.saveOrUpdateUser(
-                        userToSave, groupId = selectedGroupId ?: 0,
-                        userSaveSource
+                    val result = userViewModel.saveOrUpdateUser(
+                        userToSave,
+                        groupId = selectedGroupId ?: 0,
+                        userSaveSource,
+                        groupRole
                     )
+                    if (result.isSuccess) {
+
+                        val response = result.getOrNull()
+
+                        Toast.makeText(
+                            context,
+                            "User saved successfully",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        dialog.dismiss()
+                        userViewModel.refreshTrigger.value = Unit
+
+                    } else {
+
+                        val error = result.exceptionOrNull()
+
+                        Toast.makeText(
+                            context,
+                            error?.message ?: getString(R.string.error_saving_user),
+                            Toast.LENGTH_LONG
+                        ).show()
+                        dialogBinding.buttonSaveUser.isEnabled = true
+                        dialogBinding.buttonSaveUser.text = getString(R.string.text_save_button)
+                    }
                     dialog.dismiss()
                     userViewModel.refreshTrigger.value = Unit
-                }catch (e: Exception) {
+                } catch (e: Exception) {
                     Log.e("UserDialog", "Error saving user", e)
 
                     Toast.makeText(
@@ -439,5 +615,177 @@ class UserFragment : Fragment() {
             dialog.dismiss()
         }
     }
+
+    private fun showExistingUserGroupAdditionDialog(
+        response: LoginUserResponse,
+        dialog: BottomSheetDialog,
+        selectedGroupId: Int?,
+        groupRole: String
+    ) {
+
+        val existingUser = response.user ?: return
+
+        val groupNames = response.groups
+            .joinToString { it.groupName }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(
+                getString(
+                    R.string.title_existing_user_found
+                )
+            )
+            .setMessage(
+                getString(
+                    R.string.message_existing_user_found_groups,
+                    groupNames
+                )
+            )
+            .setPositiveButton(
+                getString(R.string.label_continue)
+            ) { _, _ ->
+
+                lifecycleScope.launch {
+
+                    try {
+
+                        groupViewModel.createGroupMember(
+                            memberId = existingUser.userId!!,
+                            groupId = selectedGroupId ?: 0,
+                            role = groupRole,
+                            requestorId = SessionManager.userId
+                        )
+
+                        Toast.makeText(
+                            requireContext(),
+                            getString(
+                                R.string.msg_user_added_group_success
+                            ),
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        dialog.dismiss()
+
+                        userViewModel.refreshTrigger.value = Unit
+
+                    } catch (e: Exception) {
+
+                        Log.e(
+                            "UserDialog",
+                            "Error adding existing user to group",
+                            e
+                        )
+
+                        Toast.makeText(
+                            requireContext(),
+                            e.message
+                                ?: getString(
+                                    R.string.error_adding_user_to_group
+                                ),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+            .setNegativeButton(
+                getString(R.string.text_cancel_button),
+                null
+            )
+            .show()
+    }
+
+    private fun determineExistingUserState(
+        response: LoginUserResponse?,
+        selectedGroupId: Int?,
+        currentUserId: Int = 0
+    ): ExistingUserCheckResult {
+
+        val existingUser = response?.user
+
+        // CASE 1
+        if (existingUser == null) {
+            return ExistingUserCheckResult(
+                ExistingUserState.NEW_USER
+            )
+        }
+
+        // Ignore self during edit
+        if (
+            currentUserId != 0 &&
+            existingUser.userId == currentUserId
+        ) {
+            return ExistingUserCheckResult(
+                ExistingUserState.NEW_USER
+            )
+        }
+
+        val alreadyInGroup = response.groups.any {
+            it.groupId == selectedGroupId
+        }
+
+        // CASE 2
+        if (alreadyInGroup) {
+
+            return ExistingUserCheckResult(
+                ExistingUserState.ALREADY_IN_GROUP,
+                response
+            )
+        }
+
+        // CASE 3
+        return ExistingUserCheckResult(
+            ExistingUserState.EXISTS_IN_OTHER_GROUP,
+            response
+        )
+    }
+
+    private fun handleExistingUserDetected(
+        result: ExistingUserCheckResult,
+        dialogBinding: DialogAddUserBinding,
+        dialog: BottomSheetDialog,
+        selectedGroupId: Int?,
+        groupRole: String
+    ) {
+
+        when (result.state) {
+
+            ExistingUserState.NEW_USER -> {
+                // do nothing
+            }
+
+            ExistingUserState.ALREADY_IN_GROUP -> {
+
+                AlertDialog.Builder(requireContext())
+                    .setTitle(
+                        getString(
+                            R.string.title_existing_user_found
+                        )
+                    )
+                    .setMessage(
+                        getString(
+                            R.string.error_user_already_in_group
+                        )
+                    )
+                    .setPositiveButton(
+                        getString(R.string.text_button_ok),
+                        null
+                    )
+                    .show()
+            }
+
+            ExistingUserState.EXISTS_IN_OTHER_GROUP -> {
+
+                val response = result.response ?: return
+
+                showExistingUserGroupAdditionDialog(
+                    response = response,
+                    dialog = dialog,
+                    selectedGroupId = selectedGroupId,
+                    groupRole = groupRole
+                )
+            }
+
+        }
+    }
+
 
 }

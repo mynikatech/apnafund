@@ -881,6 +881,39 @@
     </string>
 
     <string name="text_your_moderator">आपके मॉडरेटर</string>
+    <string name="check_box_add_moderator">मॉडरेटर जोड़ें</string>
 
+    <string name="msg_do_not_add_as_member">
+    मुझे सदस्य के रूप में न जोड़ें
+    </string>
+
+    <string name="title_exclude_creator_info">
+    स्वयं को फंड से बाहर रखें
+    </string>
+
+    <string name="info_exclude_creator">
+    यदि चयन किया गया, तो आपको इस फंड का सदस्य नहीं बनाया जाएगा। आप फंड के संपादन और प्रबंधन की अनुमति खो देंगे।
+    </string>
+
+    <string name="error_moderator_must_be_member">
+    मॉडरेटर को फंड का सदस्य होना आवश्यक है
+    </string>
+
+    <string name="title_existing_user_found">
+    मौजूदा उपयोगकर्ता मिला
+    </string>
+
+    <string name="error_user_already_in_group">
+    यह उपयोगकर्ता पहले से ही चयनित समूह का सदस्य है।
+    </string>
+
+    <string name="message_existing_user_found_groups">
+    यह उपयोगकर्ता पहले से सिस्टम में मौजूद है।\n\nवर्तमान समूह: %1$s\n\nक्या आप इस उपयोगकर्ता को चयनित समूह में जोड़ना चाहते हैं?
+    </string>
+
+    <string name="error_adding_user_to_group">उपयोगकर्ता को समूह में जोड़ने में त्रुटि</string>
+    <string name="msg_user_added_group_success">उपयोगकर्ता सफलतापूर्वक समूह में जोड़ दिया गया</string>
+    <string name="label_primary_moderator_owner">मुख्य मॉडरेटर / मालिक:</string>
+    <string name="label_primary_moderator_tilda">मुख्य मॉडरेटर ~</string>
 
 </resources>

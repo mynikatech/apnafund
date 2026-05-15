@@ -1,5 +1,7 @@
 package com.mynikatech.apnafund.net
 
+import com.mynikatech.apnafund.data.model.FundMembers
+import com.mynikatech.apnafund.net.dto.AvailableFundMemberDto
 import com.mynikatech.apnafund.net.dto.CloseFundRequest
 import com.mynikatech.apnafund.net.dto.FundAvailabilityDto
 import com.mynikatech.apnafund.net.dto.FundDetailsDto
@@ -27,7 +29,7 @@ interface FundsApi {
     suspend fun updateFund(id: Int, dto: FundsDto)
     suspend fun deleteFund(id: Int): Boolean
     suspend fun getRateOfInterestforFund(fundId: Int): Double
-    suspend fun addFundWithDetails(dto: FundsDto, details: FundDetailsDto, requestorId: Int): Int
+    suspend fun addFundWithDetails(dto: FundsDto, details: FundDetailsDto, requestorId: Int, excludeCreator: Boolean): Int
 
     // Members
     suspend fun getAllFundMembers(fundId: Int): List<FundMembersDto>
@@ -36,6 +38,7 @@ interface FundsApi {
     suspend fun addFundMembers(fundMembers: List<FundMembersDto>): List<Int>
     suspend fun removeFundMember(fundMemberId: Int): Boolean
     suspend fun checkIfFundMemberAlreadyAdded(userId: Int, fundId: Int): Boolean
+    suspend fun updateFundMember(fundMember: FundMembersDto)
 
     // Details
     suspend fun insertFundDetails(details: FundDetailsDto)
@@ -43,7 +46,7 @@ interface FundsApi {
     suspend fun upsertDetails(dto: FundDetailsDto): Int
     suspend fun getAvailableFundAmount(fundId: Int): Double?
     suspend fun getTotalAvailableFundAmount(fundId: Int): FundAvailabilityDto?
-    suspend fun getAvailableFundMembers(groupId: Int, fundId: Int): List<UsersDto>
+    suspend fun getAvailableFundMembers(groupId: Int, fundId: Int): List<AvailableFundMemberDto>
     suspend fun updateFundWithDetails(fundUpdatereq: FundUpdateRequestDto)
     suspend fun closeFund(fundId: Int, request: CloseFundRequest )
 }

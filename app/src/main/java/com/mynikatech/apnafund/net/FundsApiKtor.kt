@@ -1,7 +1,9 @@
 package com.mynikatech.apnafund.net
 
 import android.util.Log
+import com.mynikatech.apnafund.data.model.FundMembers
 import com.mynikatech.apnafund.net.dto.AddFundWithDetailsRequest
+import com.mynikatech.apnafund.net.dto.AvailableFundMemberDto
 import com.mynikatech.apnafund.net.dto.CloseFundRequest
 import com.mynikatech.apnafund.net.dto.FundAvailabilityDto
 import com.mynikatech.apnafund.net.dto.FundDetailsDto
@@ -175,11 +177,17 @@ class FundsApiKtor(
         }
     }
 
-    override suspend fun getAvailableFundMembers(groupId: Int, fundId: Int): List<UsersDto> =
+//    override suspend fun getAvailableFundMembers(groupId: Int, fundId: Int): List<UsersDto> =
+//        client.get("/funds/available-members/get") {
+//            parameter("groupId", groupId)
+//            parameter("fundId", fundId)
+//        }.unwrap<List<UsersDto>>()
+
+    override suspend fun getAvailableFundMembers(groupId: Int, fundId: Int): List<AvailableFundMemberDto> =
         client.get("/funds/available-members/get") {
             parameter("groupId", groupId)
             parameter("fundId", fundId)
-        }.unwrap<List<UsersDto>>()
+        }.unwrap<List<AvailableFundMemberDto>>()
 
     override suspend fun updateFundWithDetails(fundUpdateReq: FundUpdateRequestDto) {
         client.put("/funds/update/with-details") {
@@ -199,11 +207,12 @@ class FundsApiKtor(
     override suspend fun addFundWithDetails(
         fund: FundsDto,
         details: FundDetailsDto,
-        requestorId: Int
+        requestorId: Int,
+        excludeCreator: Boolean
     ): Int =
         client.post("/funds/add/with-details") {
             contentType(ContentType.Application.Json)
-            setBody(AddFundWithDetailsRequest(fund = fund, details = details, requestorId = requestorId ))
+            setBody(AddFundWithDetailsRequest(fund = fund, details = details, requestorId = requestorId, excludeCreator = excludeCreator ))
         }.unwrap<Int>()
 
     override suspend fun closeFund(
@@ -217,6 +226,13 @@ class FundsApiKtor(
             contentType(ContentType.Application.Json)
             setBody(request)
         }
+    }
+
+    override suspend fun updateFundMember(fundMember: FundMembersDto) {
+        client.put("/funds/update/member") {
+            contentType(ContentType.Application.Json)
+            setBody(fundMember)
+        }.body<Unit>()
     }
 
 }

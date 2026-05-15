@@ -7,5 +7,9 @@ data class GroupMembersDto(
     val groupMemberId: Int? = null,
     val userId: Int,
     val groupId: Int,
-    val joiningDate: String
+    val joiningDate: String,
+    val role: String = "MEMBER",
+    val status: String = "ACTIVE",
+    val updatedAt: Long? = null,
+    val updatedBy: Int? = null
 )

@@ -109,10 +109,11 @@ class FundAdapter(
 
                     val isActive = !isClosed
                     // add check if moderator for the fund
-                    val canEdit = Converters.userHasPrivilege(ApnaBankConstants.ADD_FUND_PRIV) && isModerator
+                    val canEdit = Converters.userHasPrivilege(ApnaBankConstants.ADD_FUND_PRIV)
+                            ||  SessionManager.canManageFund(fundWithDetails.fundId)
                     val canApplyLoan = Converters.userHasPrivilege(
                         ApnaBankConstants.APPROVE_APPLY_LOAN_PRIV
-                    ) || isModerator
+                    ) || isModerator || SessionManager.canManageLoanEmi()
                     // Edit → only if active + moderator/admin
                     popup.menu.findItem(R.id.menu_edit).isVisible =
                         isActive && canEdit

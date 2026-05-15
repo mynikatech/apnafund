@@ -19,7 +19,7 @@ interface ApprovalSql {
     fun createLoanApproval(
         @Bind("loanId") loanId: Int,
         @Bind("requestedBy") requestedBy: Int,
-        @Bind("approver") approver: Int
+        @Bind("approver") approver: Int?
     ): Boolean
 
     @SqlQuery(
@@ -37,7 +37,7 @@ interface ApprovalSql {
     fun createLoanClosureApproval(
         @Bind("loanId") loanId: Int,
         @Bind("requestedBy") requestedBy: Int,
-        @Bind("approver") approver: Int,
+        @Bind("approver") approver: Int?,
         @Bind("closureType") closureType: String,
         @Bind("requestedAmount") requestedAmount: Double?,
         @Bind("remarks") remarks: String?
@@ -53,9 +53,9 @@ interface ApprovalSql {
         """
     )
     fun createGroupApproval(
-        @Bind("groupId") loanId: Int,
+        @Bind("groupId") groupId: Int,
         @Bind("requestedBy") requestedBy: Int,
-        @Bind("approver") approver: Int
+        @Bind("approver") approver: Int?
     ): Boolean
 
     @SqlQuery(
@@ -71,7 +71,7 @@ interface ApprovalSql {
 
     @SqlQuery(
         """
-        SELECT approve_loan_request(
+        SELECT approve_approval_request(
             :approvalId,
             :approvedBy,
             :reason
@@ -86,7 +86,7 @@ interface ApprovalSql {
 
     @SqlQuery(
         """
-        SELECT reject_loan_request(
+        SELECT reject_approval_request(
             :approvalId,
             :rejectedBy,
             :reason

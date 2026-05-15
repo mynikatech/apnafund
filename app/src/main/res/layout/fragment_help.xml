@@ -6,6 +6,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.help.HelpFragment">
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/helpToolbar"
+        android:layout_width="0dp"
+        android:layout_height="?attr/actionBarSize"
+        style="@style/ApnaFund.Toolbar"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:navigationIcon="@drawable/ic_back_arrow"
+        app:title="@string/text_help" />
 
     <!-- Search Bar -->
     <com.google.android.material.textfield.TextInputLayout
@@ -14,7 +24,7 @@
         android:layout_height="wrap_content"
         android:hint="Search help..."
         app:startIconDrawable="@drawable/ic_search"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/helpToolbar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_margin="12dp">

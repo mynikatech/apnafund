@@ -14,8 +14,7 @@
         style="@style/ApnaFund.Toolbar"
         android:title="@string/text_fund_deposits"
         app:layout_constraintTop_toTopOf="parent"
-        app:navigationIconTint="@color/black"
-        app:titleTextColor="@color/white" />
+        app:navigationIconTint="@color/black"/>
 
     <TextView
         android:id="@+id/text_view_fund_name"

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 084-add_multi_mod_support
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/084-add_multi_mod_support.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

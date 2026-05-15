@@ -21,7 +21,7 @@ interface GroupsApi {
     suspend fun updateGroupMember(groupMembers: GroupMembers)
     suspend fun hasModerator(groupId: Int): Boolean
     suspend fun deleteGroupMember(groupMembers: GroupMembers): Boolean
-    suspend fun getAllMembersofGroupWithNames( groupId: Int): List<GroupMemberWithNameDto>
+    suspend fun getAllMembersofGroupWithNames( groupId: Int,  onlyActive: Boolean): List<GroupMemberWithNameDto>
     suspend fun getGroupMembersWithNamesForFund(fundId: Int): List<GroupMemberWithNameDto>
     suspend fun getGroupMembersForFund(fundId: Int): List<GroupMembersDto>
     suspend fun checkIfGroupMemberAlreadyAdded(userId: Int, groupId: Int): Boolean

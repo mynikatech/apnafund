@@ -15,6 +15,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import android.util.Log
+import com.mynikatech.apnafund.data.mappers.toDto
 import com.mynikatech.apnafund.net.dto.FirebaseSyncRequest
 import com.mynikatech.apnafund.net.dto.GroupCreationRequest
 import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
@@ -67,7 +68,9 @@ class GroupsApiKtor(
             setBody(
                 AddMemberRequest(
                     userId = groupMembers.userId,
-                    joiningDate = groupMembers.joiningDate.toString()
+                    joiningDate = groupMembers.joiningDate.toString(),
+                    role = groupMembers.role,
+                    requestorId = groupMembers.updatedBy ?: 1 // in case of any issue it will be updated by system
                 )
             )
         }.unwrap<Int>()
@@ -84,12 +87,17 @@ class GroupsApiKtor(
     override suspend fun updateGroupMember(groupMembers: GroupMembers) {
         client.put("/groups/update/member") {
             contentType(ContentType.Application.Json)
-            setBody(groupMembers)
+            setBody(groupMembers.toDto())
         }.body<Unit>()
     }
 
-    override suspend fun getAllMembersofGroupWithNames(groupId: Int): List<GroupMemberWithNameDto> =
-        client.get("/groups/get/members/with-names/$groupId").unwrap<List<GroupMemberWithNameDto>>()
+    override suspend fun getAllMembersofGroupWithNames(
+        groupId: Int,
+        onlyActive: Boolean
+    ): List<GroupMemberWithNameDto> =
+        client.get("/groups/get/members/with-names/$groupId") {
+            parameter("onlyActive", onlyActive)
+        }.unwrap()
 
     override suspend fun getGroupMembersWithNamesForFund(fundId: Int): List<GroupMemberWithNameDto> =
         client.get("/groups/get/members/fund/with-names/$fundId")

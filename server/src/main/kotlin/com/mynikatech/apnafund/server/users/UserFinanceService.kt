@@ -68,7 +68,7 @@ class UserFinanceService(
 
     fun getGroupMembersWithNamesForGroup(groupId: Int): List<GroupMemberWithNameDto> {
 
-        val fundMembers = groupService.getAllMembersofGroupWithNames(groupId)
+        val fundMembers = groupService.getAllMembersofGroupWithNames(groupId, false)
 
         return fundMembers
     }

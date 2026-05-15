@@ -105,7 +105,9 @@ val GroupMemberWithNameRowMapper = RowMapper<GroupMemberWithNameDto> { rs, _ ->
         joiningDate = rs.getDate("joiningDate").toString(),
         firstName = rs.getString("firstName"),
         lastName = rs.getString("lastName") ?: "",
-        emailId = rs.getString("emailId")
+        emailId = rs.getString("emailId"),
+        role = rs.getString("role"),
+        status = rs.getString("status")
     )
 }
 

@@ -85,7 +85,7 @@ fun Route.groupsRoutes(
             val moderatorId = dto.moderator ?: 0
             val joiningDate = LocalDate.now().toString()
             // add group member
-            groups.addGroupMember(moderatorId, groupId, joiningDate)
+            groups.addGroupMember(moderatorId, groupId, joiningDate, "PRIMARY_MODERATOR", request.requestorId, "INACTIVE")
 
             if (moderatorId == request.requestorId) {
 
@@ -98,27 +98,28 @@ fun Route.groupsRoutes(
                     val adminUser =
                         usersSql.getAdminUser()
                             ?: throw IllegalStateException("Admin user not found")
+                    val admins = usersSql.getAdminUsers()
 
                     approvalSql.createGroupApproval(
                         groupId,
                         request.requestorId,
-                        adminUser.userId!!
+                        null
                     )
 
-                    eventDispatchService.dispatchUser(
-                        UserNotificationFactory.adminGroupPendingApproval(
-                            moderatorName = moderatorUser.fullName,
-                            moderatorEmail = moderatorUser.emailId,
-                            groupName = group.groupName,
-                            groupId = groupId
-                        )
-                    )
+//                    eventDispatchService.dispatchUser(
+//                        UserNotificationFactory.adminGroupPendingApproval(
+//                            moderatorName = moderatorUser.fullName,
+//                            moderatorEmail = moderatorUser.emailId,
+//                            groupName = group.groupName,
+//                            groupId = groupId
+//                        )
+//                    )
 
                     notificationService.notifyGroupRequested(
                         groupId,
                         group.groupName,
                         moderatorUser.fullName,
-                        adminUser
+                        admins
                     )
 
                 } catch (e: Exception) {
@@ -257,7 +258,10 @@ fun Route.groupsRoutes(
             val newId = groups.addGroupMember(
                 body.userId,
                 groupId,
-                body.joiningDate
+                body.joiningDate,
+                body.role,
+                body.requestorId,
+                "ACTIVE"
             )
             FirebaseGroupService.addMemberToGroup(groupId, body.userId)
             newId
@@ -295,14 +299,20 @@ fun Route.groupsRoutes(
     // 12) GET /groups/get/members/with-names/{groupId}
     get("get/members/with-names/{groupId}") {
         val groupId = call.parameters["groupId"]?.toIntOrNull()
+        val onlyActive = call.request.queryParameters["onlyActive"]?.toBoolean() ?: false
+
         if (groupId == null) {
             call.respondError(
                 HttpStatusCode.BadRequest,
                 "validation",
                 "groupId required"
-            ); return@get
+            )
+            return@get
         }
-        call.respondOk(groups.getAllMembersofGroupWithNames(groupId))
+
+        call.respondOk(
+            groups.getAllMembersofGroupWithNames(groupId, onlyActive)
+        )
     }
 
     // 13) GET /groups/get/members/fund/with-names/{fundId}
@@ -384,10 +394,10 @@ fun Route.groupsRoutes(
                 continue
             }
 
-            // 2️⃣ Update Firestore
-            FirebaseChatService.addMemberToGroup(
+            // Update Firestore
+            FirebaseGroupService.addMemberToGroup(
                 groupId = groupId,
-                firebaseUid = req.firebaseUid
+                userId = req.userId
             )
 
             syncedGroups.add(groupId)
