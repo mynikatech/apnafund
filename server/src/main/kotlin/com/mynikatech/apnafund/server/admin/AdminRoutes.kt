@@ -7,6 +7,7 @@ import com.mynikatech.apnafund.server.api.respondError
 import com.mynikatech.apnafund.server.api.respondOk
 import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
 import com.mynikatech.apnafund.server.common.messaging.factories.UserNotificationFactory
+import com.mynikatech.apnafund.server.users.UsersSql
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.routing.Route
@@ -16,16 +17,21 @@ import io.ktor.server.routing.route
 
 
 
-fun Route.adminRoutes(sql: AdminSql, eventDispatchService: EventDispatchService) = route("/admin") {
+fun Route.adminRoutes(sql: AdminSql, eventDispatchService: EventDispatchService, userSql: UsersSql) = route("/admin") {
 
     // Approve moderator + group
     post("approve/moderator-and-group") {
         val req = call.receive<ApproveRejectReq>()
+        val moderator =
+            userSql.getUser(req.userId)
+                .firstOrNull()
+                ?: error("Moderator not found")
         sql.approveModeratorAndGroup(req.userId, req.roleId, req.groupId)
         val event = UserNotificationFactory.moderatorGroupApproved(
             moderatorUserId = req.userId.toString(),
             moderatorName = req.userName,
-            moderatorEmail = req.userEmail,
+            moderatorEmail = moderator.emailId,
+            moderatorPhone = moderator.phoneNumber,
             groupName = req.groupName
         )
         eventDispatchService.dispatchUser(event)
@@ -35,12 +41,17 @@ fun Route.adminRoutes(sql: AdminSql, eventDispatchService: EventDispatchService)
     // Reject moderator + group
     post("reject/moderator-and-group") {
         val req = call.receive<ApproveRejectReq>()
+        val moderator =
+            userSql.getUser(req.userId)
+                .firstOrNull()
+                ?: error("Moderator not found")
         sql.rejectModeratorAndGroup(req.userId, req.roleId, req.groupId)
 
         val event = UserNotificationFactory.moderatorGroupRejected(
             moderatorUserId = req.userId.toString(),
             moderatorName = req.userName,
-            moderatorEmail = req.userEmail,
+            moderatorEmail = moderator.emailId,
+            moderatorPhone = moderator.phoneNumber,
             groupName = req.groupName,
             reason = "" // optional field
         )

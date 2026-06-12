@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 113-app-usage-logs
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/113-app-usage-logs.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

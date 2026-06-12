@@ -38,11 +38,19 @@ class WhatsAppProcessorHandler : RequestHandler<SQSEvent, Unit> {
                     )
 
                 val message = WhatsAppRenderer.render(notification)
-
-                sender.sendText(
-                    to = wa.phone,
-                    message = message
-                )
+                val template = wa.template
+                if (!template.isNullOrBlank()) {
+                    sender.sendTemplate(
+                        to = wa.phone,
+                        templateName = template,
+                        params = wa.templateParams
+                    )
+                } else {
+                    sender.sendText(
+                        to = wa.phone,
+                        message = message
+                    )
+                }
 
             } catch (e: NonRetryableWhatsAppException) {
                 // IMPORTANT: swallow → message is ACKed

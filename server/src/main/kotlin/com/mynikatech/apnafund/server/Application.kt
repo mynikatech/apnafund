@@ -35,9 +35,11 @@ import com.mynikatech.apnafund.server.types.TypesSql
 import com.mynikatech.apnafund.server.userroles.UserRolesSql
 import com.mynikatech.apnafund.server.users.EmailVerificationService
 import com.mynikatech.apnafund.server.users.ModeratorRegistrationService
+import com.mynikatech.apnafund.server.users.OtpService
 import com.mynikatech.apnafund.server.users.UserFinanceService
 import com.mynikatech.apnafund.server.users.UserManagementService
 import com.mynikatech.apnafund.server.users.UsersSql
+import com.mynikatech.apnafund.server.users.WhatsAppOtpService
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -207,8 +209,12 @@ fun Application.module() {
     val emailVerificationEnabled: Boolean = isEmailVerificationEnabled()
     val emailOtpExpiryMinutes =
         System.getenv("EMAIL_OTP_EXPIRY_MINUTES")?.toLongOrNull() ?: 60
+    val otpExpiryMinutes =
+        System.getenv("EMAIL_OTP_EXPIRY_MINUTES")?.toLongOrNull() ?: 60
     val emailVerificationService =
         EmailVerificationService(usersDao, eventDispatchService, emailOtpExpiryMinutes)
+    val whatsAppVOtpService = WhatsAppOtpService(eventDispatchService)
+    val otpService = OtpService(usersDao, whatsAppVOtpService, otpExpiryMinutes)
     val notificationService =
         NotificationService(
             notificationsDao,
@@ -387,7 +393,8 @@ fun Application.module() {
             notificationService,
             approvalDao,
             approvalService,
-            aiService
+            aiService,
+            otpService
         )
     }
     println(">>> MODULE COMPLETED <<<")

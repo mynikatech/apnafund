@@ -1,5 +1,6 @@
 package com.mynikatech.apnafund.server.users
 
+import com.mynikatech.apnafund.net.dto.Channel
 import com.mynikatech.apnafund.net.util.HashUtil
 import com.mynikatech.apnafund.net.util.OtpGenerator
 import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
@@ -35,7 +36,7 @@ class EmailVerificationService(
         // 4️⃣ Persist verification token
         usersSql.createVerificationToken(
             userId = userId,
-            channel = "EMAIL",
+            channel = Channel.EMAIL.name,
             purpose = purpose,
             tokenHash = otpHash,
             expiresAtMillis = expiresAtMillis
@@ -67,7 +68,7 @@ class EmailVerificationService(
 
         val verifiedUserId = usersSql.verifyVerificationToken(
             tokenHash = tokenHash,
-            channel = "EMAIL",
+            channel = Channel.EMAIL.name,
             purpose = purpose,
             userId = userId
         ) ?: throw BadRequestException("Invalid or expired token")
@@ -88,15 +89,18 @@ class EmailVerificationService(
                         )
                         throw IllegalStateException("User not found after OTP verification")
                     }
+                val email = user.emailId
 
                 // ⚠️ OPTIONAL: welcome notification (see note below)
-                eventDispatchService.dispatchUser(
-                    UserNotificationFactory.userEmailVerifiedWelcome(
-                        userId = user.userId.toString(),
-                        email = user.emailId,
-                        userName = "${user.firstName} ${user.lastName}"
+                if (!email.isNullOrBlank()) {
+                    eventDispatchService.dispatchUser(
+                        UserNotificationFactory.userEmailVerifiedWelcome(
+                            userId = user.userId.toString(),
+                            email = email,
+                            userName = "${user.firstName} ${user.lastName}"
+                        )
                     )
-                )
+                }
             }
 
             "RESET_PASSWORD" -> {

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 115-fix-order-fund-summaries
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/115-fix-order-fund-summaries.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

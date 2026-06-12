@@ -54,6 +54,15 @@ mount -a || true
 # Fix directory ownership
 #############################################
 echo "$LOG Setting permissions..."
-chown -R ec2-user:ec2-user /opt/apnafund
+chown -R ec2-user:ec2-user /opt/apnafund/app
+chown -R ec2-user:ec2-user /opt/apnafund/config
+chown -R ec2-user:ec2-user /opt/apnafund/conf
+chown -R ec2-user:ec2-user /opt/apnafund/releases
+chown -R ec2-user:ec2-user /opt/apnafund/logs
+chown -R ec2-user:ec2-user /opt/apnafund/tmp
+
+if [ -d /opt/apnafund/postgres ]; then
+    chown -R postgres:postgres /opt/apnafund/postgres
+fi
 
 echo "$LOG Disk setup complete."

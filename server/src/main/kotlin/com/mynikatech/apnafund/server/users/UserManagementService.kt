@@ -13,7 +13,9 @@ import com.mynikatech.apnafund.server.security.PasswordHistorySql
 import com.mynikatech.apnafund.server.userroles.UserRolesSql
 import com.mynikatech.apnafund.server.util.Converters
 import org.slf4j.LoggerFactory
-import java.time.LocalDate
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class UserManagementService(
     private val usersSql: UsersSql,
@@ -26,14 +28,48 @@ class UserManagementService(
     private val passwordHistSql: PasswordHistorySql
 ) {
 
-    private val logger = LoggerFactory.getLogger(javaClass)
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     fun saveOrUpdateUser(req: RegisterOrUpdateUserRequest): SaveOrUpdateUserResponse {
 
         val user = req.user
         val requestorId = req.requestorId
         val groupRole = req.groupRole
-        val userId: Int = usersSql.upsertUserByEmail(user,requestorId )
+
+        val isDeactivating =
+
+            req.source in setOf(
+                UserSaveSource.ADMIN_UPDATE,
+                UserSaveSource.MODERATOR_UPDATE
+            ) &&
+
+                    user.status == "INACTIVE" || user.status == "InActive"
+        if (isDeactivating) {
+
+            val activeGroups =
+                usersSql.hasActiveGroups(user.userId ?: 0)
+
+            val activeFunds =
+                usersSql.hasActiveFunds(user.userId ?: 0)
+
+            if (activeGroups || activeFunds) {
+                logger.info("returning back with validation errors")
+                return SaveOrUpdateUserResponse(
+
+                    userId = user.userId ?: 0,
+
+                    success = false,
+
+                    validationCode =
+                        "ACTIVE_MEMBERSHIP_EXISTS",
+
+                    validationMessage =
+                        "Cannot deactivate user with active group/fund memberships."
+                )
+            }
+        }
+        val userId: Int = usersSql.upsertUserByEmail(user, requestorId)
+        val email = user.emailId
 
         var emailVerified = false
         var expiresOtpAtMillis: Long? = null
@@ -54,23 +90,28 @@ class UserManagementService(
                 }
                 handleGroup(userId, req.groupId, groupRole, requestorId)
                 ensureMemberRole(userId)
-                if (emailVerificationEnabled) {
+                if (emailVerificationEnabled && !email.isNullOrBlank()) {
                     expiresOtpAtMillis = emailVerificationService.sendVerificationEmail(
                         userId = userId,
-                        email = user.emailId,
+                        email = email,
                         userName = "${user.firstName} ${user.lastName}",
                         purpose = "EMAIL_VERIFY"
                     )
                     emailVerified = false
                 } else {
+
                     usersSql.markUserEmailVerified(userId)
-                    eventDispatchService.dispatchUser(
-                        UserNotificationFactory.devRegistrationNotice(
-                            userId = userId,
-                            email = user.emailId,
-                            userName = "${user.firstName} ${user.lastName}"
+
+                    if (!email.isNullOrBlank()) {
+                        eventDispatchService.dispatchUser(
+                            UserNotificationFactory.devRegistrationNotice(
+                                userId = userId,
+                                email = email,
+                                userName = "${user.firstName} ${user.lastName}"
+                            )
                         )
-                    )
+                    }
+
                     emailVerified = true
                 }
             }
@@ -102,6 +143,7 @@ class UserManagementService(
                         UserNotificationFactory.inviteNotice(
                             userId = userId,
                             email = user.emailId,
+                            phone = user.phoneNumber,
                             userName = "${user.firstName} ${user.lastName}",
                             invitedBy = invitedByName, // moderator name
                             groupName = group.groupName
@@ -127,6 +169,7 @@ class UserManagementService(
                         UserNotificationFactory.inviteNotice(
                             userId = userId,
                             email = user.emailId,
+                            phone = user.phoneNumber,
                             userName = "${user.firstName} ${user.lastName}",
                             invitedBy = invitedByName, // moderator name
                             groupName = group.groupName
@@ -156,7 +199,8 @@ class UserManagementService(
     }
 
     fun getCurrentDate(): String {
-        return LocalDate.now().toString()
+        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        return dateFormat.format(Date())
     }
 
     fun addUserRole(userId: Int, roleCode: String): Int {
@@ -182,15 +226,24 @@ class UserManagementService(
         addUserRole(userId, "MEMBER")
     }
 
-    fun handleGroup(userId: Int, groupId: Int, groupRole: String? = null, requestorId: Int,
-                    membershipStatus: String = "ACTIVE") {
+    fun handleGroup(
+        userId: Int, groupId: Int, groupRole: String? = null, requestorId: Int,
+        membershipStatus: String = "ACTIVE"
+    ) {
         if (groupId > 0) {
             // Get group member and if not present add.
 
             val groupMember = usersSql.getGroupMember(userId, groupId)
             if (groupMember.isEmpty()) {
                 val finalRole = groupRole ?: "MEMBER"
-                groupsSql.addGroupMember(userId, groupId, getCurrentDate(), finalRole, requestorId, membershipStatus)
+                groupsSql.addGroupMember(
+                    userId,
+                    groupId,
+                    getCurrentDate(),
+                    finalRole,
+                    requestorId,
+                    membershipStatus
+                )
             }
             FirebaseGroupService.addMemberToGroup(groupId, userId)
         }

@@ -10,9 +10,7 @@ import com.mynikatech.apnafund.server.api.respondError
 import com.mynikatech.apnafund.server.api.respondOk
 import com.mynikatech.apnafund.server.approval.ApprovalSql
 import com.mynikatech.apnafund.server.auth.FirebaseGroupService
-import com.mynikatech.apnafund.server.chat.FirebaseChatService
 import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
-import com.mynikatech.apnafund.server.common.messaging.factories.UserNotificationFactory
 import com.mynikatech.apnafund.server.notifications.NotificationService
 import com.mynikatech.apnafund.server.users.UsersSql
 import io.ktor.http.HttpStatusCode
@@ -85,7 +83,14 @@ fun Route.groupsRoutes(
             val moderatorId = dto.moderator ?: 0
             val joiningDate = LocalDate.now().toString()
             // add group member
-            groups.addGroupMember(moderatorId, groupId, joiningDate, "PRIMARY_MODERATOR", request.requestorId, "INACTIVE")
+            groups.addGroupMember(
+                moderatorId,
+                groupId,
+                joiningDate,
+                "PRIMARY_MODERATOR",
+                request.requestorId,
+                "INACTIVE"
+            )
 
             if (moderatorId == request.requestorId) {
 
@@ -291,28 +296,84 @@ fun Route.groupsRoutes(
 
     // 11) PUT /groups/update/member
     put("update/member") {
+
         val gm = call.receive<GroupMembersDto>()
-        groups.updateGroupMember(gm) // returns void/boolean depending on your DB fn; we ignore
-        call.respondOk(Unit, HttpStatusCode.NoContent)
+
+        try {
+
+            groups.updateGroupMember(gm)
+
+            call.respondOk(
+                Unit,
+                HttpStatusCode.NoContent
+            )
+
+        } catch (e: Exception) {
+
+            val sqlException =
+                e.cause as? org.postgresql.util.PSQLException
+
+            when (sqlException?.sqlState) {
+
+                "AP001" -> {
+
+                    call.respondError(
+                        HttpStatusCode.Conflict,
+                        "active_fund_membership",
+                        "User is active in one or more active funds. Deactivate from all funds first."
+                    )
+                }
+
+                else -> {
+
+                    call.respondError(
+                        HttpStatusCode.InternalServerError,
+                        "internal",
+                        "Failed to update group member"
+                    )
+                }
+            }
+        }
     }
 
     // 12) GET /groups/get/members/with-names/{groupId}
     get("get/members/with-names/{groupId}") {
-        val groupId = call.parameters["groupId"]?.toIntOrNull()
-        val onlyActive = call.request.queryParameters["onlyActive"]?.toBoolean() ?: false
 
-        if (groupId == null) {
-            call.respondError(
-                HttpStatusCode.BadRequest,
-                "validation",
-                "groupId required"
+        try {
+
+            val groupId = call.parameters["groupId"]?.toIntOrNull()
+            val onlyActive =
+                call.request.queryParameters["onlyActive"]?.toBoolean() ?: false
+
+            if (groupId == null) {
+                call.respondError(
+                    HttpStatusCode.BadRequest,
+                    "validation",
+                    "groupId required"
+                )
+                return@get
+            }
+
+            call.respondOk(
+                groups.getAllMembersofGroupWithNames(
+                    groupId,
+                    onlyActive
+                )
             )
-            return@get
-        }
 
-        call.respondOk(
-            groups.getAllMembersofGroupWithNames(groupId, onlyActive)
-        )
+        } catch (e: Exception) {
+
+            call.application.log.error(
+                "Failed to get group members with names. groupId=${call.parameters["groupId"]}",
+                e
+            )
+
+            call.respondError(
+                HttpStatusCode.InternalServerError,
+                "internal",
+                e.message ?: "Something went wrong"
+            )
+        }
     }
 
     // 13) GET /groups/get/members/fund/with-names/{fundId}

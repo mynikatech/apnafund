@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 100-recalculate-fund-financials
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/100-recalculate-fund-financials.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

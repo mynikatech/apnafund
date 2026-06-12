@@ -6,7 +6,7 @@ import com.mynikatech.apnafund.net.dto.FundDetailsDto
 import com.mynikatech.apnafund.net.dto.FundMembersDto
 import com.mynikatech.apnafund.net.dto.FundUpdateRequestDto
 import com.mynikatech.apnafund.net.dto.FundsDto
-import com.mynikatech.apnafund.net.dto.UsersDto
+import com.mynikatech.apnafund.net.dto.MonthlyFinancialSummaryResponseDto
 import com.mynikatech.apnafund.server.api.respondError
 import com.mynikatech.apnafund.server.api.respondOk
 import com.mynikatech.apnafund.server.db.Db.jdbi
@@ -35,8 +35,10 @@ data class UpdateWithDetailsRequest(
     val details: FundDetailsDto
 )
 
-fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
-                      userSql: UsersSql) = route("/funds") {
+fun Route.fundsRoutes(
+    sql: FundsSql, notificationService: NotificationService,
+    userSql: UsersSql
+) = route("/funds") {
 
     // ---- Funds (DTO/basic) ----
     get("get/all") { call.respondOk(sql.getAllFunds()) }
@@ -181,13 +183,26 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
     }
 
     get("get/with-details/{fundId}") {
+
         val fid = call.parameters["fundId"]?.toIntOrNull()
             ?: return@get call.respondError(
                 HttpStatusCode.BadRequest,
                 "validation",
                 "fundId required"
             )
-        call.respondOk(sql.getFundWithDetails(fid))
+
+        val fund = sql.getFundWithDetails(fid)
+
+        if (fund == null) {
+
+            return@get call.respondError(
+                HttpStatusCode.NotFound,
+                "not_found",
+                "Fund not found"
+            )
+        }
+
+        call.respondOk(fund)
     }
 
     // ---- Rate of interest ----
@@ -216,14 +231,121 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
         val fundId = call.parameters["fundId"]?.toIntOrNull()
             ?: return@get call.respond(HttpStatusCode.BadRequest, "fundId required")
 
+        val status =
+            call.request.queryParameters["status"]
+                ?: return@get call.respond(HttpStatusCode.BadRequest, "status required")
+
         call.safeRoute(
             logMessage = "Error fetching fund members with name for fundId=$fundId",
             clientMessage = "Unable to fetch fund members details"
         ) {
-            val members = sql.getFundMembersWithNamesForFund(fundId)
+            val members = sql.getFundMembersWithNamesForFund(fundId, status)
             call.respondOk(members)
         }
 
+    }
+
+    get("members/get/with-names/financial-summary/{fundId}") {
+        val fundId = call.parameters["fundId"]?.toIntOrNull()
+            ?: return@get call.respond(HttpStatusCode.BadRequest, "fundId required")
+
+
+        call.safeRoute(
+            logMessage = "Error fetching fund members financial summary for fundId=$fundId",
+            clientMessage = "Unable to fetch fund members financial details"
+        ) {
+            val memberFinancialSummary = sql.getFundMemberFinancialSummary(fundId)
+            call.respondOk(memberFinancialSummary)
+
+        }
+
+    }
+    get("members/get/with-names/monthly-financial-summary/{fundId}") {
+
+        val fundId = call.parameters["fundId"]?.toIntOrNull()
+            ?: return@get call.respond(
+                HttpStatusCode.BadRequest,
+                "fundId required"
+            )
+
+        val month = call.request.queryParameters["month"]?.toIntOrNull()
+            ?: return@get call.respond(
+                HttpStatusCode.BadRequest,
+                "month required"
+            )
+
+        val year = call.request.queryParameters["year"]?.toIntOrNull()
+            ?: return@get call.respond(
+                HttpStatusCode.BadRequest,
+                "year required"
+            )
+
+        call.safeRoute(
+
+            logMessage =
+                "Error fetching monthly financial summary " +
+                        "for fundId=$fundId month=$month year=$year",
+
+            clientMessage =
+                "Unable to fetch monthly financial summary"
+
+        ) {
+
+            val fund = sql.getFundWithDetails(fundId)
+                ?: return@safeRoute call.respond(
+                    HttpStatusCode.NotFound,
+                    "Fund not found"
+                )
+
+            val members = sql.getMonthlyFinancialSummary(
+                fundId = fundId,
+                month = month,
+                year = year
+            )
+
+            val response =
+                MonthlyFinancialSummaryResponseDto(
+
+                    fundId = fundId,
+
+                    fundName = fund.fundName,
+
+                    month = month,
+
+                    year = year,
+
+                    totalDepositAmount =
+                        members.sumOf {
+                            it.depositAmount ?: 0.0
+                        },
+
+                    totalLoanIssuedAmount =
+                        members.sumOf {
+                            it.loanIssuedAmount ?: 0.0
+                        },
+
+                    totalPrepaymentAmount =
+                        members.sumOf {
+                            it.loanPrepaymentAmount ?: 0.0
+                        },
+
+                    totalInterestPaidAmount =
+                        members.sumOf {
+                            it.interestPaidAmount ?: 0.0
+                        },
+
+                    totalFeesPaidAmount =
+                        members.sumOf {
+                            it.feesPaidAmount ?: 0.0
+                        },
+
+                    totalMembers = members.size,
+
+                    members = members
+                )
+
+            call.respondOk(response)
+        }
     }
 
     post("members/add/one") {
@@ -269,7 +391,7 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
 
         val fundId = items.first().fundId
         val fundDetails = sql.getFund(fundId).firstOrNull()
-        if( null != fundDetails) {
+        if (null != fundDetails) {
             call.application.launch {
                 notificationService.notifyFundMembersAdded(
                     fundId = items.first().fundId,
@@ -282,11 +404,46 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
     }
 
     put("update/member") {
+
         val fm = call.receive<FundMembersDto>()
 
-        sql.updateFundMember(fm)
+        try {
 
-        call.respondOk(Unit, HttpStatusCode.NoContent)
+            jdbi.useTransaction<Exception> { handle ->
+
+                val dao = handle.attach(FundsSql::class.java)
+
+                val updated = dao.updateFundMember(fm)
+
+                if (!updated) {
+                    throw Exception("Update failed")
+                }
+
+                val recalculated =
+                    dao.recalculateFundFinancials(fm.fundId)
+
+                if (!recalculated) {
+                    throw Exception(
+                        "Financial recalculation failed"
+                    )
+                }
+            }
+
+            call.respondOk(
+                Unit,
+                HttpStatusCode.NoContent
+            )
+
+        } catch (e: Exception) {
+
+            e.printStackTrace()
+
+            call.respondError(
+                HttpStatusCode.InternalServerError,
+                "internal",
+                e.message ?: "Something went wrong"
+            )
+        }
     }
 
     delete("members/delete/{fundMemberId}") {
@@ -570,15 +727,14 @@ fun Route.fundsRoutes(sql: FundsSql, notificationService: NotificationService,
                 userSql.getUserById(request.closedBy)
 
             // ---------- TRIGGER NOTIFICATIONS ----------
-            if( null != fund) {
+            if (null != fund) {
                 notificationService.notifyFundClosed(
                     fundId = fundId,
                     fundName = fund.fundName,
                     closedByName = closedByUser.fullName, // if required moderator
                     reason = request.reason
                 )
-            } else
-            {
+            } else {
                 // no fund to close.
             }
 

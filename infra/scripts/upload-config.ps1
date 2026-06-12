@@ -22,6 +22,9 @@ $ServiceFileLocal   = Join-Path $EnvFolder "apnafund.service"
 $EnvConfLocal       = Join-Path $EnvFolder "apnafund-env.conf"
 $SsmRefreshLocal    = Join-Path $EnvFolder "ssm-refresh.sh"
 $PostGreSqlLocal    = Join-Path $ScriptsFolder "postgres-install.sh"
+$PostgresBackupLocal = Join-Path $EnvFolder "postgres-backup.sh"
+$InstallBackupCronLocal = Join-Path $EnvFolder "install-postgres-backup-cron.sh"
+$CronInstallLocal = Join-Path $EnvFolder "cron-install.sh"
 
 
 
@@ -38,6 +41,9 @@ $ServiceFileKey   = "apnafund/$Env/apnafund.service"
 $EnvConfKey       = "apnafund/$Env/apnafund-env.conf"
 $SsmRefreshKey       = "apnafund/$Env/ssm-refresh.sh"
 $PostGreSqlKey       = "apnafund/$Env/postgres-install.sh"
+$PostgresBackupKey = "apnafund/$Env/postgres-backup.sh"
+$InstallBackupCronKey = "apnafund/$Env/install-postgres-backup-cron.sh"
+$CronInstallKey = "apnafund/$Env/cron-install.sh"
 
 function Assert-File($path) {
     if (-not (Test-Path $path)) {
@@ -74,6 +80,9 @@ Assert-File $ServiceFileLocal
 Assert-File $EnvConfLocal
 Assert-File $SsmRefreshLocal
 Assert-File $PostGreSqlLocal
+Assert-File $PostgresBackupLocal
+Assert-File $InstallBackupCronLocal
+Assert-File $CronInstallLocal
 
 # ---- Upload all ----
 Upload-And-Report -local $StartupLocal    -bucket $Bucket -key $StartupKey   -region $Region -profile $Profile -contentType "text/x-shellscript"
@@ -87,3 +96,6 @@ Upload-And-Report -local $ServiceFileLocal -bucket $Bucket -key $ServiceFileKey 
 Upload-And-Report -local $EnvConfLocal -bucket $Bucket -key $EnvConfKey -region $Region -profile $Profile -contentType "text/plain"
 Upload-And-Report -local $SsmRefreshLocal -bucket $Bucket -key $SsmRefreshKey -region $Region -profile $Profile -contentType "text/x-shellscript"
 Upload-And-Report -local $PostGreSqlLocal -bucket $Bucket -key $PostGreSqlKey -region $Region -profile $Profile -contentType "text/x-shellscript"
+Upload-And-Report -local $PostgresBackupLocal -bucket $Bucket -key $PostgresBackupKey -region $Region -profile $Profile -contentType "text/x-shellscript"
+Upload-And-Report -local $InstallBackupCronLocal -bucket $Bucket -key $InstallBackupCronKey -region $Region -profile $Profile -contentType "text/x-shellscript"
+Upload-And-Report -local $CronInstallLocal -bucket $Bucket -key $CronInstallKey -region $Region -profile $Profile -contentType "text/x-shellscript"

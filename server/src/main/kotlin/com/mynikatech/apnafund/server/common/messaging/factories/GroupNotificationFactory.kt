@@ -1,10 +1,10 @@
 package com.mynikatech.apnafund.server.common.messaging.factories
 
 import com.mynikatech.apnafund.net.dto.Channel
-import com.mynikatech.apnafund.net.dto.EmailPayload
 import com.mynikatech.apnafund.net.dto.FundMemberWithNameDto
 import com.mynikatech.apnafund.net.dto.GroupMemberWithNameDto
 import com.mynikatech.apnafund.net.dto.NotificationEvent
+import com.mynikatech.apnafund.server.common.messaging.NotificationHelper
 
 object GroupNotificationFactory {
 
@@ -21,8 +21,8 @@ object GroupNotificationFactory {
             userId = recipient.userId.toString(),
             channels = setOf(Channel.EMAIL),
 
-            email = EmailPayload(
-                to = recipient.emailId,
+            email = NotificationHelper.buildEmailPayload(
+                email = recipient.emailId,
                 userName = recipient.fullName,
                 data = mapOf(
                     "fundName" to fundName,
@@ -50,8 +50,8 @@ object GroupNotificationFactory {
             userId = recipient.userId.toString(),
             channels = setOf(Channel.EMAIL),
 
-            email = EmailPayload(
-                to = recipient.emailId,
+            email = NotificationHelper.buildEmailPayload(
+                email = recipient.emailId,
                 userName = recipient.fullName,
                 data = mapOf(
                     "fundName" to fundName,

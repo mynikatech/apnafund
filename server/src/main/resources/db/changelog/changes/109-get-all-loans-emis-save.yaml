@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 109-get-all-loan-emis-for-fund
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/109-get-all-loan-emis-for-fund.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

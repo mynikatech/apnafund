@@ -1,22 +1,23 @@
 package com.mynikatech.apnafund.server.users
 
+import com.mynikatech.apnafund.net.dto.AppUsageLogDto
 import com.mynikatech.apnafund.net.dto.ChangePasswordRequest
-import com.mynikatech.apnafund.net.dto.Channel
-import com.mynikatech.apnafund.net.dto.EmailPayload
 import com.mynikatech.apnafund.net.dto.FeedbackDto
 import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
 import com.mynikatech.apnafund.net.dto.LoginUserResponse
-import com.mynikatech.apnafund.net.dto.NotificationEvent
 import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
 import com.mynikatech.apnafund.net.dto.RegisterOrUpdateUserRequest
 import com.mynikatech.apnafund.net.dto.SendEmailVerificationReq
 import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
+import com.mynikatech.apnafund.net.dto.SendOtpReq
+import com.mynikatech.apnafund.net.dto.SendOtpResp
 import com.mynikatech.apnafund.net.dto.UserFundDetailsDto
 import com.mynikatech.apnafund.net.dto.UserPinHistoryDto
 import com.mynikatech.apnafund.net.dto.UserStatusResponse
 import com.mynikatech.apnafund.net.dto.UsersDto
 import com.mynikatech.apnafund.net.dto.ValidateUserRequest
 import com.mynikatech.apnafund.net.dto.VerifyEmailReq
+import com.mynikatech.apnafund.net.dto.VerifyOtpReq
 import com.mynikatech.apnafund.server.api.respondError
 import com.mynikatech.apnafund.server.api.respondOk
 import com.mynikatech.apnafund.server.auth.FirebaseTokenService
@@ -44,7 +45,7 @@ fun Route.usersRoutes(
     users: UsersSql, eventDispatchService: EventDispatchService,
     moderatorRegistrationService: ModeratorRegistrationService,
     userManagementService: UserManagementService,
-    emailVerificationService: EmailVerificationService, userRoles: UserRolesSql
+    emailVerificationService: EmailVerificationService, userRoles: UserRolesSql, otpService: OtpService
 ) = route("/users") {
 
     // ---- GETs ----
@@ -192,6 +193,144 @@ fun Route.usersRoutes(
             call.respondOk(
                 LoginUserResponse(
                     user = u,
+                    groups = userGroups,
+                    pendingGroups = pendingGroups,
+                    firebaseToken = firebaseToken
+                )
+            )
+        }
+    }
+
+    get("get/by-phone-email") {
+        val ip = call.clientIp()
+
+        if (!loginLimiter.allow("LOGIN_IP:$ip")) {
+            return@get call.respondError(
+                HttpStatusCode.TooManyRequests,
+                "rate_limit",
+                "Too many attempts. Please try later."
+            )
+        }
+
+        val email = call.request.queryParameters["email"]
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "email required"
+            )
+        val phone = call.request.queryParameters["phone"]
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "phone required"
+            )
+
+        call.application.log.info(" the email id received is: $email")
+        call.application.log.info(" the phone number received is: $phone")
+
+        call.safeRoute(
+            logMessage = "GET /users/get/by-phone-email failed for email =$email and phone =$phone",
+            clientMessage = "Failed to fetch user"
+        ) {
+            val user = users.getUserByPhoneAndEmail(email, phone).firstOrNull()
+
+            if (user == null) {
+                call.application.log.info("no users returned")
+                return@get call.respondOk(
+                    LoginUserResponse(
+                        user = null,
+                        groups = emptyList(),
+                        pendingGroups = emptyList(),
+                        firebaseToken = ""
+                    )
+                )
+            }
+
+            val userId = user.userId
+                ?: return@get call.respondError(
+                    HttpStatusCode.InternalServerError,
+                    "internal",
+                    "Invalid userId"
+                )
+            val userGroups = users.getBasicGroupsForUser(userId)
+            val pendingGroups = users.getBasicPendingGroupsForUser(userId)
+
+            val firebaseToken = FirebaseTokenService.generateFirebaseCustomToken(
+                userId = userId,
+                email = user.emailId,
+                groupId = null
+            )
+
+            call.respondOk(
+                LoginUserResponse(
+                    user = user,
+                    groups = userGroups,
+                    pendingGroups = pendingGroups,
+                    firebaseToken = firebaseToken
+                )
+            )
+
+        }
+    }
+
+    get("get/by-phone-group-code") {
+
+        val phone = call.request.queryParameters["phone"]
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "phone required"
+            )
+
+        val groupCode = call.request.queryParameters["groupCode"]
+            ?: return@get call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                "groupCode required"
+            )
+
+        call.safeRoute(
+            logMessage =
+                "GET /users/get/by-phone-group-code failed for phone=$phone groupCode=$groupCode",
+            clientMessage = "Failed to fetch user"
+        ) {
+
+            val user = users.getUserByPhoneAndGroupCode(
+                phone,
+                groupCode
+            ).firstOrNull()
+
+            if (user == null) {
+                return@get call.respondOk(
+                    LoginUserResponse(
+                        user = null,
+                        groups = emptyList(),
+                        pendingGroups = emptyList(),
+                        firebaseToken = ""
+                    )
+                )
+            }
+
+            val userId = user.userId
+                ?: return@get call.respondError(
+                    HttpStatusCode.InternalServerError,
+                    "internal",
+                    "Invalid userId"
+                )
+
+            val userGroups = users.getBasicGroupsForUser(userId)
+            val pendingGroups = users.getBasicPendingGroupsForUser(userId)
+
+            val firebaseToken =
+                FirebaseTokenService.generateFirebaseCustomToken(
+                    userId = userId,
+                    email = user.emailId,
+                    groupId = null
+                )
+
+            call.respondOk(
+                LoginUserResponse(
+                    user = user,
                     groups = userGroups,
                     pendingGroups = pendingGroups,
                     firebaseToken = firebaseToken
@@ -515,8 +654,8 @@ fun Route.usersRoutes(
     // ---- Mutations ----
     post("add") {
         val dto = call.receive<UsersDto>()
-        if (dto.emailId.isNullOrBlank()) {
-            call.respond(HttpStatusCode.BadRequest, "emailId required"); return@post
+        if (dto.phoneNumber.isNullOrBlank()) {
+            call.respond(HttpStatusCode.BadRequest, "phone Number required"); return@post
         }
         val id = users.upsertUserByEmail(dto, 1)
         try {
@@ -543,8 +682,8 @@ fun Route.usersRoutes(
             call.respond(HttpStatusCode.NotFound); return@put
         }
         val dto = call.receive<UsersDto>()
-        if (dto.emailId.isNullOrBlank()) {
-            call.respond(HttpStatusCode.BadRequest, "emailId required"); return@put
+        if (dto.phoneNumber.isNullOrBlank()) {
+            call.respond(HttpStatusCode.BadRequest, "Phone Number required"); return@put
         }
         users.upsertUserByEmail(dto, 1)
 
@@ -569,6 +708,27 @@ fun Route.usersRoutes(
         if (!exists) return@delete call.respondOk(false)
         users.deleteUser(id)
         call.respondOk(true)
+    }
+
+    post("add/usage/logs") {
+
+        val dto = call.receive<AppUsageLogDto>()
+
+        if (dto.userId <= 0) {
+
+            call.respond(
+                HttpStatusCode.BadRequest,
+                "valid userId required"
+            )
+
+            return@post
+        }
+
+        users.insertAppUsageLog(dto)
+
+        call.respond(
+            HttpStatusCode.Created
+        )
     }
 
     delete("delete/all") {
@@ -596,14 +756,11 @@ fun Route.usersRoutes(
 
         try {
             eventDispatchService.dispatchUser(
-                NotificationEvent(
-                    eventType = "PASSWORD_UPDATED",
+                UserNotificationFactory.passwordUpdated(
                     userId = user.userId.toString(),
-                    channels = setOf(Channel.EMAIL),
-                    email = EmailPayload(
-                        to = user.emailId,
-                        userName = user.fullName ?: "User"
-                    )
+                    email = user.emailId,
+                    phone = user.phoneNumber?.let { "91$it" },
+                    userName = user.fullName ?: "User"
                 )
             )
         } catch (ex: Exception) {
@@ -750,6 +907,54 @@ fun Route.usersRoutes(
         }
     }
 
+    post("/otp/send") {
+
+        var req: SendOtpReq? = null
+        val ip = call.clientIp()
+
+        try {
+
+            req = call.receive<SendOtpReq>()
+
+            if (
+                !RateLimiters.resendOtpLimiter.allow("OTP_IP:$ip") ||
+                !RateLimiters.resendOtpLimiter.allow("OTP_USER:${req.userId}")
+            ) {
+                return@post call.respondError(
+                    HttpStatusCode.TooManyRequests,
+                    "rate_limit",
+                    "Please wait before requesting another code."
+                )
+            }
+
+            val expiresAtMillis =
+                otpService.sendOtp(
+                    userId = req.userId,
+                    phoneNumber = req.phoneNumber,
+                    purpose = req.purpose
+                )
+
+            call.respondOk(
+                SendOtpResp(
+                    otpExpiresAtMillis = expiresAtMillis
+                )
+            )
+
+        } catch (e: Exception) {
+
+            call.application.log.error(
+                "otp send failed for userId=${req?.userId ?: "unknown"}",
+                e
+            )
+
+            call.respondError(
+                HttpStatusCode.InternalServerError,
+                "internal",
+                "Failed to send OTP"
+            )
+        }
+    }
+
     get("/is-email-verified/{userId}") {
         val userId = call.parameters["userId"]?.toIntOrNull()
             ?: return@get call.respondError(
@@ -794,6 +999,44 @@ fun Route.usersRoutes(
             )
         }
     }
+
+    post("/otp/verify") {
+
+        try {
+
+            val req = call.receive<VerifyOtpReq>()
+
+            otpService.verifyOtp(
+                otp = req.otp,
+                userId = req.userId,
+                purpose = req.purpose,
+                channel = req.channel
+            )
+
+            call.respondOk(true)
+
+        } catch (e: BadRequestException) {
+
+            call.respondError(
+                HttpStatusCode.BadRequest,
+                "validation",
+                e.message ?: "Invalid or expired OTP"
+            )
+
+        } catch (e: Exception) {
+
+            call.application.log.error(
+                "otp verify failed",
+                e
+            )
+
+            call.respondError(
+                HttpStatusCode.InternalServerError,
+                "internal",
+                "OTP verification failed"
+            )
+        }
+    }
     post("/firebase-uid/{id}") {
         val id = call.parameters["id"]?.toIntOrNull()
         if (id == null) {
@@ -822,7 +1065,10 @@ fun Route.usersRoutes(
         )
 
         // Reuse existing UPSERT
-        users.upsertUserByEmail(updatedDto, 1) // update is done by the system hence hardcoding to 1 for now.
+        users.upsertUserByEmail(
+            updatedDto,
+            1
+        ) // update is done by the system hence hardcoding to 1 for now.
 
         call.respond(HttpStatusCode.NoContent)
     }

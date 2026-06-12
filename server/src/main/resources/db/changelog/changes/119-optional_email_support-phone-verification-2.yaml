@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 119-email-optional-support-phone-verification-2
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/119-email-optional-support-phone-verification-2.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

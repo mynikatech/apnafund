@@ -17,6 +17,7 @@ class EventDispatchService(
 
     /** User-facing notifications (welcome, deposits, loans, etc.) */
     fun dispatchUser(event: NotificationEvent) {
+
         logger.info(
             "Dispatching USER eventType={}, userId={}, channels={}",
             event.eventType,
@@ -32,8 +33,7 @@ class EventDispatchService(
             "Dispatching USER isEmailVerified={}",
             user.emailVerified
         )
-        val exemptEvents = setOf(
-            "INVITE_NOTICE",
+        var exemptEvents = mutableSetOf(
             "GROUP_INVITE",
             "EMAIL_VERIFY",
             "EMAIL_VERIFICATION",
@@ -42,6 +42,14 @@ class EventDispatchService(
             "GROUP_APPROVED",
             "GROUP_REJECTED"
         )
+        if (
+            isEmailEnabled("INVITE_NOTICE")
+        ) {
+
+            exemptEvents.add(
+                "INVITE_NOTICE"
+            )
+        }
 
         val canSendEmail =
             !event.email?.to.isNullOrBlank() &&
@@ -85,5 +93,13 @@ class EventDispatchService(
             event.subject
         )
         supportPublisher.publish(event)
+    }
+
+    fun isEmailEnabled(verificationKey: String): Boolean {
+
+        return userSql
+            .getAppConfigBoolean(
+                verificationKey
+            )
     }
 }

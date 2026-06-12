@@ -23,10 +23,9 @@ object InviteEmail {
             To get started:
             <ol>
                 <li>Download the <strong>Apna Fund</strong> app from the Play Store</li>
-                <li>Click on Register Here</li>
-                <li>Enter this email address</li>
-                <li>Set your password and verify your email</li>
-            </ol>
+                <li>Click on Received an Invite link</li>
+                <li>Enter this email address and your Phone Number</li>
+                <li>Verify your Email and set your Password</li>
         </p>
         <p>
             Note: You do not need to register again.

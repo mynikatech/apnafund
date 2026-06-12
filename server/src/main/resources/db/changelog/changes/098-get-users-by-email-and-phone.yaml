@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 098-get_users-by-email-and-phone
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/098-get_users-by-email-and-phone.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

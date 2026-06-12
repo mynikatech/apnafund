@@ -173,6 +173,31 @@ else
   log "WARNING: SUPPORT_EVENTS_TOPIC_ARN not found in SSM"
 fi
 
+OPENAI_API_KEY_VAL=$(printf '%s' "$secret_json" | jq -r '
+  .openai_api_key // empty
+')
+
+if [ -n "$OPENAI_API_KEY_VAL" ] && [ "$OPENAI_API_KEY_VAL" != "null" ]; then
+  log "Injecting OPENAI_API_KEY into env file ($ENV_PATH)"
+
+  upsert_env_key "$ENV_PATH" "OPENAI_API_KEY" "$OPENAI_API_KEY_VAL"
+else
+  log "WARNING: openai_api_key not found in secret JSON"
+fi
+
+
+GEMINI_API_KEY_VAL=$(printf '%s' "$secret_json" | jq -r '
+  .gemini_api_key // empty
+')
+
+if [ -n "$GEMINI_API_KEY_VAL" ] && [ "$GEMINI_API_KEY_VAL" != "null" ]; then
+  log "Injecting GEMINI_API_KEY into env file ($ENV_PATH)"
+
+  upsert_env_key "$ENV_PATH" "GEMINI_API_KEY" "$GEMINI_API_KEY_VAL"
+else
+  log "WARNING: gemini_api_key not found in secret JSON"
+fi
+
 # 3) Download systemd unit if present
 SERVICE_UPDATED=0
 log "Checking for service unit s3://$APP_BUCKET/$SERVICE_KEY"

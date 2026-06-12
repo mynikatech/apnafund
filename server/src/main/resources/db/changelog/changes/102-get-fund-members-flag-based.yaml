@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 102-get-fund-members-all-changes
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/102-get-fund-members-all-changes.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

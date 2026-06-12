@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 112-get_monthly_financial_summary
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/112-get_monthly_financial_summary.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

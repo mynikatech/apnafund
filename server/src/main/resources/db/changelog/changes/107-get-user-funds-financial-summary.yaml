@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 107-get-user-fund-financial-summary
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/107-get-user-fund-financial-summary.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

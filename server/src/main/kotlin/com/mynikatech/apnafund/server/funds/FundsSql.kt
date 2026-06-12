@@ -86,7 +86,7 @@ interface FundsSql {
     fun allWithDetailsForGroup(@Bind("groupId") groupId: Int): List<FundWithDetailsDto>
 
     @SqlQuery("""SELECT * FROM get_fund_with_details(:fundId)""")
-    fun getFundWithDetails(@Bind("fundId") fundId: Int): FundWithDetailsDto
+    fun getFundWithDetails(@Bind("fundId") fundId: Int): FundWithDetailsDto?
 
     // ---- Interest ----
     @SqlQuery("""SELECT get_rate_of_interest_for_fund(:fundId)""")
@@ -137,8 +137,8 @@ interface FundsSql {
         @Bind("fundId") fundId: Int
     ): List<AvailableFundMemberDto>
 
-    @SqlQuery("""SELECT * FROM get_fund_members_with_names_for_fund(:fundId)""")
-    fun getFundMembersWithNamesForFund(@Bind("fundId") fundId: Int): List<FundMemberWithNameDto>
+    @SqlQuery("""SELECT * FROM get_fund_members_with_names_for_fund(:fundId, :status)""")
+    fun getFundMembersWithNamesForFund(@Bind("fundId") fundId: Int, @Bind("status") status: String = "ACTIVE"): List<FundMemberWithNameDto>
 
     @SqlQuery("""SELECT check_fund_member_exists(:userId, :fundId)""")
     fun checkIfFundMemberAlreadyAdded(
@@ -172,7 +172,7 @@ interface FundsSql {
         :status,
         :updatedBy
     )
-""")
+    """)
     fun updateFundMember(@BindKotlin m: FundMembersDto): Boolean
 
     @SqlQuery(
@@ -185,5 +185,42 @@ interface FundsSql {
         @Bind("fundId") fundId: Int
     ): List<FundModeratorDto>
 
+    @SqlQuery("""
+    SELECT recalculate_fund_financials(:fundId)
+    """)
+    fun recalculateFundFinancials(
+        @Bind("fundId") fundId: Int
+    ): Boolean
+
+    @SqlQuery("""
+    SELECT *
+    FROM get_fund_member_financial_summary(:fundId)
+    """)
+    fun getFundMemberFinancialSummary(
+        @Bind("fundId") fundId: Int
+    ): List<FundMemberFinancialSummaryDto>
+
+    @SqlQuery(
+        """
+    SELECT *
+    FROM get_monthly_financial_summary(
+        :fundId,
+        :month,
+        :year
+    )
+    """
+    )
+    fun getMonthlyFinancialSummary(
+
+        @Bind("fundId")
+        fundId: Int,
+
+        @Bind("month")
+        month: Int,
+
+        @Bind("year")
+        year: Int
+
+    ): List<MonthlyMemberFinancialSummaryDto>
 
 }

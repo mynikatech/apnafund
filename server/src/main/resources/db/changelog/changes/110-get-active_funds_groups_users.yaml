@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 110-get-groups-funds-active-user
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/110-get-groups-funds-active-user.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

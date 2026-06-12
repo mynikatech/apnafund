@@ -3,9 +3,6 @@ package com.mynikatech.apnafund.server.users
 import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
 import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
 import com.mynikatech.apnafund.server.approval.ApprovalSql
-import com.mynikatech.apnafund.server.auth.FirebaseGroupService
-import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
-import com.mynikatech.apnafund.server.common.messaging.factories.UserNotificationFactory
 import com.mynikatech.apnafund.server.db.Db.jdbi
 import com.mynikatech.apnafund.server.groups.GroupsSql
 import com.mynikatech.apnafund.server.notifications.NotificationService
@@ -25,9 +22,10 @@ class ModeratorRegistrationService(
     private val emailVerificationEnabled: Boolean,
     private val passwordHistSql: PasswordHistorySql,
     private val approvalSql: ApprovalSql
+
 ) {
 
-    private val logger = LoggerFactory.getLogger(javaClass)
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     fun registerModeratorAndGroup(
         req: RegisterModeratorRequest
@@ -39,7 +37,7 @@ class ModeratorRegistrationService(
         val safeRequestorId =
             if (requestorId >= 0) requestorId else 1
 
-        val txnResult  =
+        val txnResult =
             jdbi.inTransaction<RegistrationTxnResult, Exception> { handle ->
 
                 val usersSql =
@@ -119,13 +117,13 @@ class ModeratorRegistrationService(
 
                 val emailVerified: Boolean
                 val expiresAtMillis: Long?
-
-                if (emailVerificationEnabled) {
+                val email = user.emailId
+                if (emailVerificationEnabled && !email.isNullOrBlank()) {
 
                     expiresAtMillis =
                         emailVerificationService.sendVerificationEmail(
                             userId = userId,
-                            email = user.emailId,
+                            email = email,
                             userName = "${user.firstName} ${user.lastName}",
                             purpose = "EMAIL_VERIFY"
                         )
@@ -225,6 +223,12 @@ class ModeratorRegistrationService(
                 groupName = req.group.groupName,
                 requestorName = "${user.firstName} ${user.lastName}",
                 approvers = admins
+            )
+            notificationService.notifyModeratorRegistrationSubmitted(
+                userId = txnResult.response.userId,
+                userName = "${user.firstName} ${user.lastName}",
+                phoneNumber = user.phoneNumber,
+                groupName = req.group.groupName
             )
 
         } catch (ex: Exception) {

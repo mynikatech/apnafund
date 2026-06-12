@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 111-get-loans-for-fund-sort-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/111-get-loans-for-fund-sort-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

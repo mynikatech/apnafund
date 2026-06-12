@@ -228,7 +228,7 @@ resource "aws_ebs_volume" "pg_data" {
   size              = 20
   type              = "gp3"
   encrypted         = true
-  tags = { Name = "apnafund-dev-pg-data", Env = "dev" }
+  tags = { Name = "apnafund-dev-pg-data", Env = "dev", App = "ApnaFund", Backup = "weekly", BackupType = "postgres" }
 
   lifecycle {
     prevent_destroy = true
@@ -706,6 +706,14 @@ module "assets" {
   source      = "../../modules/assets"
   bucket_name = "apnafund-assets"
   env         = "dev"
+}
+
+# backup module
+module "dlm_role" {
+  source   = "../../modules/iam/dlm-role"
+
+  app_name = "apnafund"
+  env      = "dev"
 }
 
 # Give user-data access to its config (via instance tags → NOT used in script; bucket/key are hard-coded above)

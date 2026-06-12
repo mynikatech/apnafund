@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 120-get-group-members-email-phone-opt
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/120-get-group-members-email-phone-opt.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

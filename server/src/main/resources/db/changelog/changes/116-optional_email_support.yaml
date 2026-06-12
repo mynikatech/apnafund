@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 116-email-optional-support
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/116-email-optional-support.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

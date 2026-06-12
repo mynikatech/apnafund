@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 103-update-group-member-update
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/103-update-group-member-update.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

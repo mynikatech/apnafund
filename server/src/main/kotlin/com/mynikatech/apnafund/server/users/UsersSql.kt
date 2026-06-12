@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund.server.users
 
 import com.mynikatech.apnafund.net.dto.AdminUserDto
+import com.mynikatech.apnafund.net.dto.AppUsageLogDto
 import com.mynikatech.apnafund.net.dto.FeedbackDto
 import com.mynikatech.apnafund.net.dto.FeedbackWithUserGroupDto
 import com.mynikatech.apnafund.net.dto.FundsDto
@@ -71,6 +72,20 @@ interface UsersSql {
 
     @SqlQuery("""SELECT * FROM get_user_by_phone(:phone)""")
     fun getUserByPhone(@Bind("phone") phone: String): List<UsersDto>
+
+    @SqlQuery("""SELECT * FROM get_user_by_email_and_phone(:email, :phone)""")
+    fun getUserByPhoneAndEmail(@Bind("email") email: String, @Bind("phone") phone: String ): List<UsersDto>
+
+    @SqlQuery("""
+    SELECT * FROM get_user_by_phone_and_group_code(
+        :phone,
+        :groupCode
+    )
+    """)
+    fun getUserByPhoneAndGroupCode(
+        @Bind("phone") phone: String,
+        @Bind("groupCode") groupCode: String
+    ): List<UsersDto>
 
     @SqlQuery("""SELECT * FROM get_user_with_group(:groupId)""")
     fun getUserWithGroup(@Bind("groupId") groupId: Int): List<UserWithGroupDto>
@@ -241,6 +256,18 @@ interface UsersSql {
     @SqlQuery("""SELECT is_email_verified(:userId)""")
     fun isEmailVerified(@Bind("userId") userId: Int): Boolean
 
+    @SqlUpdate(
+        """
+    SELECT * from mark_user_phone_verified(:userId)
+    """
+    )
+    fun markUserPhoneVerified(
+        @Bind("userId") userId: Int
+    )
+
+    @SqlQuery("""SELECT is_phone_verified(:userId)""")
+    fun isPhoneVerified(@Bind("userId") userId: Int): Boolean
+
     @SqlQuery("""
     SELECT * FROM get_users_basic_by_ids(:userIds)
     """)
@@ -269,4 +296,44 @@ interface UsersSql {
         @Bind("createdByUserId") createdByUserId: Int?,
         @Bind("updatedByUserId") updatedByUserId: Int?
     )
+
+    @SqlQuery("""
+    SELECT get_app_config_boolean(:configKey)
+    """)
+    fun getAppConfigBoolean(
+        @Bind("configKey") configKey: String
+    ): Boolean
+
+    @SqlQuery(
+        """
+    SELECT has_active_groups(:userId)
+    """
+    )
+    fun hasActiveGroups(
+        @Bind("userId") userId: Int
+    ): Boolean
+
+    @SqlQuery(
+        """
+    SELECT has_active_funds(:userId)
+    """
+    )
+    fun hasActiveFunds(
+        @Bind("userId") userId: Int
+    ): Boolean
+
+    @SqlQuery(
+        """
+    SELECT insert_app_usage_log(
+        :userId,
+        :eventType,
+        :screenName,
+        :details,
+        :deviceInfo
+    )
+    """
+    )
+    fun insertAppUsageLog(
+        @BindKotlin usage: AppUsageLogDto
+    ): Long
 }

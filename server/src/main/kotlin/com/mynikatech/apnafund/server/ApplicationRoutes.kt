@@ -39,6 +39,7 @@ import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchSer
 import com.mynikatech.apnafund.server.notifications.NotificationService
 import com.mynikatech.apnafund.server.users.EmailVerificationService
 import com.mynikatech.apnafund.server.users.ModeratorRegistrationService
+import com.mynikatech.apnafund.server.users.OtpService
 import com.mynikatech.apnafund.server.users.UserManagementService
 import com.mynikatech.apnafund.server.users.UsersSql
 
@@ -56,10 +57,10 @@ fun Application.registerRoutes(
     emailVerificationService: EmailVerificationService,
     notificationService: NotificationService,
     approvalDao: ApprovalSql, approvalService: ApprovalService,
-    aiService: AIService
+    aiService: AIService, otpService: OtpService
 ) {
     routing {
-        usersRoutes(usersDao,eventDispatchService, moderatorRegistrationService,userManagementService,emailVerificationService, userRolesDao)
+        usersRoutes(usersDao,eventDispatchService, moderatorRegistrationService,userManagementService,emailVerificationService, userRolesDao, otpService)
         groupsRoutes(groupsDao,eventDispatchService,usersDao,notificationService,approvalDao)
         rolesRoutes(roleDao)
         userRolesRoutes(userRolesDao, roleDao, typeDao)
@@ -69,7 +70,7 @@ fun Application.registerRoutes(
         typesRoutes(typeDao)
         notificationsRoutes(notificationsDao)
         feedbackRoutes(feedbackDao)
-        adminRoutes(adminDao,eventDispatchService)
+        adminRoutes(adminDao,eventDispatchService, usersDao)
         pinHistoryRoutes(pinHistoryDao)
         passwordHistoryRoutes(passwordHistoryDao)
         rolePrivilegeRoutes(roleDao)

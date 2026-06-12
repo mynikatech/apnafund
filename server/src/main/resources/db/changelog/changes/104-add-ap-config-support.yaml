@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 104-adding-config-support
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/104-adding-config-support.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

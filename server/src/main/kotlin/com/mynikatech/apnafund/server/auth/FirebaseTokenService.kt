@@ -6,16 +6,18 @@ object FirebaseTokenService {
 
     fun generateFirebaseCustomToken(
         userId: Int,
-        email: String,
+        email: String?,
         groupId: Int?
     ): String {
 
         val uid = "user_$userId" // 🔑 STABLE Firebase UID
 
         val claims = mutableMapOf<String, Any>(
-            "userId" to userId,
-            "email" to email
+            "userId" to userId
         )
+        email?.takeIf { it.isNotBlank() }?.let {
+            claims["email"] = it
+        }
 
         groupId?.let {
             claims["groupId"] = it

@@ -29,9 +29,19 @@ else
     echo "[WARN] disk setup script missing"
 fi
 
+########################################
+# 3. Install Cron Infrastructure
+########################################
+if [ -x /opt/apnafund/bin/cron-install.sh ]; then
+    echo "[SSM] Running cron-install.sh..."
+    sudo bash /opt/apnafund/bin/cron-install.sh || echo "[WARN] cron install failed"
+else
+    echo "[WARN] cron-install.sh missing"
+fi
+
 
 ########################################
-# 3. Install PostgreSQL (SAFE + IDEMPOTENT)
+# 4. Install PostgreSQL (SAFE + IDEMPOTENT)
 ########################################
 if [ -x /opt/apnafund/bin/postgres-install.sh ]; then
     echo "[SSM] Checking PostgreSQL installation..."
@@ -49,7 +59,7 @@ fi
 
 
 ########################################
-# 4. Install / Update Nginx Config
+# 5. Install / Update Nginx Config
 ########################################
 if [ -x /opt/apnafund/bin/nginx-install.sh ]; then
     echo "[SSM] Running nginx-install.sh..."
@@ -60,7 +70,7 @@ fi
 
 
 ########################################
-# 5. Install / Update SSL Config
+# 6. Install / Update SSL Config
 ########################################
 if [ -x /opt/apnafund/bin/nginx-ssl-setup.sh ]; then
     echo "[SSM] Running nginx-ssl-setup.sh..."
@@ -71,7 +81,7 @@ fi
 
 
 ########################################
-# 6. Reload systemd (needed if any services updated)
+# . Reload systemd (needed if any services updated)
 ########################################
 echo "[SSM] Reloading systemd..."
 sudo systemctl daemon-reload || true
