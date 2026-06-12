@@ -25,6 +25,20 @@ class FundSharedViewModel : ViewModel() {
     private var isLoaded = false
     private var lastIsAdmin: Boolean? = null
     private var lastGroupId: Int? = null
+    var shouldForceRefreshFundDetails = false
+
+    private val _selectedFundDetailsRefresh =
+        MutableSharedFlow<Int>(
+            replay = 0,
+            extraBufferCapacity = 1
+        )
+
+    val selectedFundDetailsRefresh =
+        _selectedFundDetailsRefresh.asSharedFlow()
+
+    fun triggerSelectedFundDetailsRefresh( fundId: Int) {
+        _selectedFundDetailsRefresh.tryEmit(fundId)
+    }
 
 
     // Add refresh trigger
@@ -54,8 +68,9 @@ class FundSharedViewModel : ViewModel() {
         _selectedFundId.value = fundId
     }
 
-    fun loadFunds(isAdmin: Boolean, groupId: Int) {
-        if (isLoaded && lastIsAdmin == isAdmin && lastGroupId == groupId) return
+    fun loadFunds(isAdmin: Boolean, groupId: Int, forceRefresh: Boolean = false) {
+        if (!forceRefresh &&
+            isLoaded && lastIsAdmin == isAdmin && lastGroupId == groupId) return
 
         viewModelScope.launch {
             lastIsAdmin = isAdmin
@@ -66,12 +81,31 @@ class FundSharedViewModel : ViewModel() {
         }
     }
 
-    fun refreshFunds() {
+    fun refreshFunds(fundId: Int? = null) {
         viewModelScope.launch {
+
             val isAdmin = lastIsAdmin ?: return@launch
             val groupId = lastGroupId ?: return@launch
 
-            _funds.value = fetchFunds(isAdmin, groupId)
+            if (fundId == null) {
+
+                _funds.value = fetchFunds(isAdmin, groupId)
+
+            } else {
+
+                val updatedFund =
+                    fundRepository.getFundWithDetails(fundId)
+
+                _funds.value =
+                    _funds.value.map { existing ->
+
+                        if (existing.fundId == fundId)
+                            updatedFund
+                        else
+                            existing
+                    }
+            }
+
             isLoaded = true
         }
     }

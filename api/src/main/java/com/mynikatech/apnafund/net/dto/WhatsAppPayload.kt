@@ -5,5 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class WhatsAppPayload(
     val phone: String,
-    val template: String? = null
+    val template: String? = null,
+    val templateParams: List<String> = emptyList()
 )

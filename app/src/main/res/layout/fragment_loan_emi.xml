@@ -10,9 +10,9 @@
         android:id="@+id/user_loan_emi_toolbar"
         style="@style/ApnaFund.Toolbar"
         android:layout_width="match_parent"
+        android:elevation="4dp"
         android:layout_height="?attr/actionBarSize"
-        android:title="@string/text_loan_emi"
-        app:navigationIconTint="@color/black" />
+        android:title="@string/text_loan_emi"/>
 
     <TextView
         android:id="@+id/text_view_Loan_number"
@@ -22,12 +22,13 @@
         android:padding="12dp"
         android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
         android:textStyle="italic|bold"
+        android:textColor="?attr/colorOnSurface"
         tools:text="Loan Number" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/light_gray"
+        android:background="?attr/colorSurfaceContainer"
         android:orientation="horizontal"
         android:padding="12dp">
 
@@ -36,7 +37,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/text_deposited_date"
-            android:textColor="@android:color/black"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -46,7 +47,7 @@
             android:layout_weight="1"
             android:gravity="end"
             android:text="@string/text_amount"
-            android:textColor="@android:color/black"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -57,7 +58,7 @@
             android:gravity="end"
             android:text="@string/text_late_fee"
             android:textAlignment="textEnd"
-            android:textColor="@android:color/black"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="14sp"
             android:textStyle="bold" />
     </LinearLayout>

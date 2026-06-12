@@ -110,12 +110,14 @@ class UserSummaryViewModel : ViewModel() {
     }
 
     fun loadFundDetails(userId: Int, fundId: Int, force: Boolean = false) {
-        if (!force && lastFundId == fundId) return
-        if (isLoading) return
+        Log.d("UserSummaryFragment- LoadFundDetails"," User Id is $userId, fund Id is $fundId and force is $force and is Loading is $isLoading and last fund Id is $lastFundId")
+        //if (!force && lastFundId == fundId) return
+        if (isLoading && !force) return
         lastFundId = fundId
         val cachedDetails = fundDetailsCache[fundId]
         val cachedLoans = loanCache[fundId]
         if (!force && cachedDetails != null) {
+            Log.d("UserSummaryFragment- LoadFundDetails"," cache is still active")
 
             fundDepositSummary.postValue(cachedDetails.totalDeposit)
             fundMaturity.postValue(cachedDetails.userExpMatAmount)
@@ -306,6 +308,16 @@ class UserSummaryViewModel : ViewModel() {
                 // optionally log / handle error
             }
         }
+    }
+
+    fun invalidateFundDetailsCache(
+        fundId: Int
+    ) {
+        Log.d("UserSummarViewNModel","The fund Id to be invaldated from Cache $fundId")
+        Log.d("UserSummarViewNModel"," the fundDetails Cache before removal $fundDetailsCache")
+        fundDetailsCache.remove(fundId)
+        loanCache.remove(fundId)
+        Log.d("UserSummarViewNModel"," the fundDetails Cache after removal $fundDetailsCache")
     }
 
 

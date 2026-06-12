@@ -5,6 +5,7 @@ import com.mynikatech.apnafund.net.dto.GroupsDto
 import com.mynikatech.apnafund.net.dto.GroupMemberWithNameDto
 import com.mynikatech.apnafund.net.dto.GroupMembersDto
 import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
+import io.ktor.client.statement.HttpResponse
 
 interface GroupsApi {
     suspend fun getAllGroups(): List<GroupsDto>
@@ -18,7 +19,7 @@ interface GroupsApi {
     // members
     suspend fun getAllMembersofGroup(groupId: Int): List<GroupMembersDto>
     suspend fun addGroupMember(groupMembers: GroupMembers): Int
-    suspend fun updateGroupMember(groupMembers: GroupMembers)
+    suspend fun updateGroupMember(groupMembers: GroupMembers):HttpResponse
     suspend fun hasModerator(groupId: Int): Boolean
     suspend fun deleteGroupMember(groupMembers: GroupMembers): Boolean
     suspend fun getAllMembersofGroupWithNames( groupId: Int,  onlyActive: Boolean): List<GroupMemberWithNameDto>

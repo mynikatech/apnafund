@@ -9,146 +9,294 @@
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/fund_details_toolbar"
+        style="@style/ApnaFund.Toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        style="@style/ApnaFund.Toolbar"
         android:title="@string/text_fund_deposits"
         app:layout_constraintTop_toTopOf="parent"
-        app:navigationIconTint="@color/black"/>
+        app:navigationIcon="@drawable/ic_back_arrow"/>
 
-    <TextView
-        android:id="@+id/text_view_fund_name"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-black"
-        android:padding="12dp"
-        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-        android:textStyle="italic|bold"
-        app:layout_constraintTop_toBottomOf="@id/fund_details_toolbar"
-        tools:text="My Fund" />
-
-    <HorizontalScrollView
-        android:id="@+id/scrollview_header"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/text_view_fund_name">
+    <LinearLayout
+        android:id="@+id/layoutFundSummaryContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="?attr/colorSurface"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/fund_details_toolbar">
 
         <LinearLayout
+            android:id="@+id/layoutFundHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp"
+            android:paddingTop="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/fund_details_toolbar">
 
-            <TableLayout
-                android:id="@+id/table_fund_details"
+            <TextView
+                android:id="@+id/text_view_fund_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif-black"
+                android:padding="12dp"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                android:textStyle="italic|bold"
+                android:textColor="?attr/colorOnSurface"
+                tools:text="My Fund" />
+
+            <TextView
+                android:id="@+id/buttonShareSummary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:drawablePadding="4dp"
+                android:focusable="true"
+                android:includeFontPadding="false"
+                android:padding="8dp"
+                android:text="@string/link_export_summary"
+                android:textColor="?attr/colorPrimary"
+                android:textSize="13sp"
+                android:textStyle="italic"
+                app:drawableStartCompat="@drawable/ic_ios_share"
+                app:drawableTint="?attr/colorPrimary"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layoutFundQuickSummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="12dp"
+            android:paddingBottom="2dp">
+
+            <LinearLayout
+                android:id="@+id/layoutFundSummaryLine1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingTop="2dp">
 
-                android:padding="10dp"
-                android:stretchColumns="*">
+                <TextView
+                    android:id="@+id/textSummaryStart"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="11sp"
+                    tools:text="Start 01/10/2024" />
 
-                <TableRow
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/textSummaryEnd"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:gravity="start"
+                    android:maxLines="1"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="11sp"
+                    tools:text="End 30/09/2026" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/table_cell_shape"
-                        android:gravity="center_vertical"
-                        android:padding="3dp"
-                        android:text="@string/text_serial_number"
-                        android:textColor="#ffffff"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/textSummaryMembers"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:gravity="start"
+                    android:maxLines="1"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="11sp"
+                    tools:text="Members 52" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/table_cell_shape"
-                        android:gravity="center_vertical|center_horizontal"
-                        android:padding="3dp"
-                        android:text="@string/text_member"
-                        android:textColor="#ffffff"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+            </LinearLayout>
 
-                    <TextView
-                        android:layout_width="120dp"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/table_cell_shape"
-                        android:ellipsize="none"
-                        android:gravity="center_vertical|center_horizontal"
-                        android:maxLines="2"
-                        android:padding="3dp"
-                        android:text="@string/text_total_deposited_amount"
-                        android:textColor="#ffffff"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+            <LinearLayout
+                android:id="@+id/layoutFundSummaryLine2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingBottom="4dp">
 
-                    <TextView
-                        android:layout_width="100dp"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/table_cell_shape"
-                        android:ellipsize="none"
-                        android:gravity="center_vertical|center_horizontal"
-                        android:maxLines="2"
-                        android:padding="3dp"
-                        android:text="@string/text_total_loan_amount"
-                        android:textColor="#ffffff"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/textSummaryDeposit"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="11sp"
+                    tools:text="Deposit ₹10.4L" />
 
-                    <TextView
-                        android:layout_width="110dp"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/table_cell_shape"
-                        android:ellipsize="none"
-                        android:gravity="center_vertical|center_horizontal"
-                        android:maxLines="2"
-                        android:padding="3dp"
-                        android:text="@string/text_total_pending_amount"
-                        android:textColor="#ffffff"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/textSummaryCurrent"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:gravity="start"
+                    android:maxLines="1"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="11sp"
+                    tools:text="Curr ₹10.4L" />
 
-                    <TextView
-                        android:layout_width="110dp"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/table_cell_shape"
-                        android:ellipsize="none"
-                        android:gravity="center_vertical|center_horizontal"
-                        android:maxLines="2"
-                        android:padding="3dp"
-                        android:text="@string/text_total_interest_paid"
-                        android:textColor="#ffffff"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/textSummaryMaturity"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:gravity="start"
+                    android:maxLines="1"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="11sp"
+                    tools:text="Maturity ₹13.5L" />
 
-                    <TextView
-                        android:layout_width="120dp"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/table_cell_shape"
-                        android:ellipsize="none"
-                        android:gravity="center_vertical|center_horizontal"
-                        android:maxLines="2"
-                        android:padding="3dp"
-                        android:text="@string/text_expected_maturity_amount"
-                        android:textColor="#ffffff"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+            </LinearLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/table_cell_shape"
-                        android:gravity="center_vertical"
-                        android:padding="3dp"
-                        android:text="@string/text_apply_loan"
-                        android:textColor="#ffffff"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-                </TableRow>
-            </TableLayout>
         </LinearLayout>
-    </HorizontalScrollView>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
+
+            <HorizontalScrollView
+                android:id="@+id/scrollview_header"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/layoutFundHeader">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TableLayout
+                        android:id="@+id/table_fund_details"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+
+                        android:padding="10dp"
+                        android:stretchColumns="*">
+
+                        <TableRow
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/table_cell_shape"
+                                android:gravity="center_vertical"
+                                android:padding="3dp"
+                                android:text="@string/text_serial_number"
+                                android:textColor="#ffffff"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/table_cell_shape"
+                                android:gravity="center_vertical|center_horizontal"
+                                android:padding="3dp"
+                                android:text="@string/text_member"
+                                android:textColor="#ffffff"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/table_cell_shape"
+                                android:ellipsize="none"
+                                android:gravity="center_vertical|center_horizontal"
+                                android:maxLines="2"
+                                android:padding="3dp"
+                                android:text="@string/text_total_deposited_amount"
+                                android:textColor="#ffffff"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="100dp"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/table_cell_shape"
+                                android:ellipsize="none"
+                                android:gravity="center_vertical|center_horizontal"
+                                android:maxLines="2"
+                                android:padding="3dp"
+                                android:text="@string/text_total_loan_amount"
+                                android:textColor="#ffffff"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="110dp"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/table_cell_shape"
+                                android:ellipsize="none"
+                                android:gravity="center_vertical|center_horizontal"
+                                android:maxLines="2"
+                                android:padding="3dp"
+                                android:text="@string/text_total_pending_amount"
+                                android:textColor="#ffffff"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="110dp"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/table_cell_shape"
+                                android:ellipsize="none"
+                                android:gravity="center_vertical|center_horizontal"
+                                android:maxLines="2"
+                                android:padding="3dp"
+                                android:text="@string/text_total_interest_paid"
+                                android:textColor="#ffffff"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/table_cell_shape"
+                                android:ellipsize="none"
+                                android:gravity="center_vertical|center_horizontal"
+                                android:maxLines="2"
+                                android:padding="3dp"
+                                android:text="@string/text_expected_maturity_amount"
+                                android:textColor="#ffffff"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/table_cell_shape"
+                                android:gravity="center_vertical"
+                                android:padding="3dp"
+                                android:text="@string/text_apply_loan"
+                                android:textColor="#ffffff"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </TableRow>
+                    </TableLayout>
+                </LinearLayout>
+            </HorizontalScrollView>
+        </ScrollView>
+    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

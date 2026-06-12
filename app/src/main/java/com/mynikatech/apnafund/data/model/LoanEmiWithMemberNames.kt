@@ -4,14 +4,14 @@ import androidx.room.Ignore
 
 data class LoanEmiWithMemberNames(
 
-    val loanEmiId: Int?,
-    val loanId: Int?,
-    val emiMonth: String?,
-    val emiYear: String?,
-    val emiDepositedDate: String?,
-    val emiDepositedAmount: Double?,
-    val prepaymentAmount: Double,
-    val lateFee: Double,
+    val loanEmiId: Int? = null,
+    val loanId: Int? = null,
+    val emiMonth: String? = null,
+    val emiYear: String? = null,
+    val emiDepositedDate: String? = null,
+    val emiDepositedAmount: Double? = null,
+    val prepaymentAmount: Double? = null,
+    val lateFee: Double? = null,
     val fundId: Int,
     val loanNumber: String,
     val borrowerId: Int,

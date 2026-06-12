@@ -76,7 +76,9 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
                             if (shouldSetPin) {
                                 val action =
                                     VerifyEmailFragmentDirections
-                                        .actionVerifyEmailFragmentToSetPinFragment(userId)
+                                        .actionVerifyEmailFragmentToSetPinFragment(
+                                            userId = userId,
+                                            isRegistrationFlow = purpose == "EMAIL_VERIFY")
                                 findNavController().navigate(action)
                             } else {
                                 val action =

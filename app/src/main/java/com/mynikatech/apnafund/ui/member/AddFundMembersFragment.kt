@@ -112,7 +112,9 @@ class AddFundMembersFragment : Fragment() {
                         }
 
                         fundViewModel.addFundMembersBatch(fundId, payload)
-                        fundSharedViewModel.refreshFunds()
+                        fundSharedViewModel.shouldForceRefreshFundDetails = true
+                        fundSharedViewModel.refreshFunds(fundId)
+
                         Toast.makeText(
                             context,
                             getString(R.string.message_member_added),

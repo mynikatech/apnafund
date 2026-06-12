@@ -7,7 +7,8 @@ data class UserBasicDto(
     val userId: Int,
     val firstName: String,
     val lastName: String,
-    val emailId: String
+    val emailId: String?,
+    val phoneNumber: String?
 ) {
     val fullName: String get() = "$firstName $lastName"
 }

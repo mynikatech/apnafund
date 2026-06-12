@@ -9,6 +9,7 @@ fun PendingModeratorRequestDto.toEntity(): PendingModeratorRequest = PendingMode
     moderatorName = moderatorName,
     groupName = groupName,
     emailId = emailId,
+    phoneNumber = phoneNumber,
     groupDescription     = groupDescription
 
 )
@@ -19,6 +20,7 @@ fun PendingModeratorRequest.toDto(): PendingModeratorRequestDto = PendingModerat
     moderatorName = moderatorName,
     groupName = groupName,
     emailId = emailId,
+    phoneNumber = phoneNumber,
     groupDescription  = groupDescription
 )
 fun List<PendingModeratorRequestDto>.toEntity(): List<PendingModeratorRequest> = map { it.toEntity() }

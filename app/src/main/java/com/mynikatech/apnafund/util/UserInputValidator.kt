@@ -7,7 +7,7 @@ object UserInputValidator {
     }
 
     fun isEmailValid(email: String?): Boolean {
-        return !email.isNullOrBlank() && email.matches(Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"))
+        return email.isNullOrBlank() || email.matches(Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"))
     }
 
     fun isPhoneValid(phone: String?): Boolean {

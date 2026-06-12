@@ -1,12 +1,14 @@
 package com.mynikatech.apnafund.util
 
 import android.content.Context
+import android.graphics.Typeface
 import android.view.Gravity
 import android.widget.ImageView
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.core.view.ViewCompat
 import com.mynikatech.apnafund.R
+import com.google.android.material.color.MaterialColors
 
 class FundDetailsTableRowViewHolder(context: Context, applyLoan: Boolean = false) {
     val tvNo = createTextView(context, Gravity.CENTER)
@@ -31,10 +33,28 @@ class FundDetailsTableRowViewHolder(context: Context, applyLoan: Boolean = false
     }
 
     companion object {
-        fun createTextView(context: Context, gravity: Int): TextView {
+        fun createTextView(
+            context: Context,
+            gravity: Int
+        ): TextView {
+
             return TextView(context).apply {
+
                 setPadding(8, 8, 8, 8)
-                this.gravity = gravity
+
+                this.gravity = gravity or Gravity.CENTER_VERTICAL
+
+                textSize = 11f
+
+                setTextColor(
+                    MaterialColors.getColor(
+                        this,
+                        com.google.android.material.R.attr.colorOnSurface
+                    )
+                )
+
+                setTypeface(typeface, Typeface.NORMAL)
+
             }
         }
         fun createImageView(context:Context, tooltip: String, drawableRes: Int): ImageView {

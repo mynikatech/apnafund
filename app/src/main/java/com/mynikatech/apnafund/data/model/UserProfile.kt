@@ -13,7 +13,7 @@ data class UserProfile(
     var isPinSet: Boolean? = false,
     var firstName: String,
     var lastName: String?,
-    var emailId: String,
+    var emailId: String?,
     var phoneNumber: String,
 ){
     var roles: List<RolesDto> = emptyList()

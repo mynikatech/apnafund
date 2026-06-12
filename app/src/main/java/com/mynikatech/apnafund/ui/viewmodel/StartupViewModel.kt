@@ -10,21 +10,35 @@ class StartupViewModel(
 
     private val userRolesRepository = ApnaFundApplication.userRolesRepository
 
-    suspend fun restoreFirebaseSession(email: String) {
+    suspend fun restoreFirebaseSession(
+        email: String?,
+        phoneNumber: String?
+    ) {
 
         Log.d("Firebase", "Calling restoreFirebaseSession")
 
-        val response = userRolesRepository.getUserByEmail(email)
+        val user = when {
+            !email.isNullOrBlank() ->
+                userRolesRepository.getUserByEmail(email)
 
-        if (null == response){
-            Log.w("Firebase", "Firebase UID not available — skipping restore")
+            !phoneNumber.isNullOrBlank() ->
+                userRolesRepository.getUserByPhone(phoneNumber)
+
+            else -> {
+                Log.w("Firebase", "Neither email nor phone available")
+                return
+            }
+        }
+
+        if (user == null) {
+            Log.w("Firebase", "User not found")
             return
         }
 
-        val token = response.firebaseToken
+        val token = user.firebaseToken
 
         if (token.isNullOrBlank()) {
-            Log.w("Firebase", "Firebase token not available — skipping restore")
+            Log.w("Firebase", "Firebase token not available")
             return
         }
 
@@ -36,7 +50,5 @@ class StartupViewModel(
             .addOnFailureListener {
                 Log.e("Firebase", "Firebase login failed", it)
             }
-
-
     }
 }

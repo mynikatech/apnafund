@@ -10,9 +10,10 @@ import com.mynikatech.apnafund.data.model.FundMemberWithName
 import com.mynikatech.apnafund.data.model.FundMembers
 import com.mynikatech.apnafund.data.model.FundWithDetails
 import com.mynikatech.apnafund.data.model.Funds
-import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.net.dto.AvailableFundMemberDto
+import com.mynikatech.apnafund.net.dto.FundMemberFinancialSummaryDto
 import com.mynikatech.apnafund.net.dto.FundMembersDto
+import com.mynikatech.apnafund.net.dto.MonthlyFinancialSummaryResponseDto
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.util.ApnaBankDate
 import kotlinx.coroutines.launch
@@ -22,7 +23,11 @@ class FundViewModel : ViewModel() {
 
     private val fundRepository = ApnaFundApplication.fundRepository
 
-    suspend fun fetchAllActiveFunds(isAdmin: Boolean, moderatorGroupId: Int, moderatorFundId: Int): List<Funds> {
+    suspend fun fetchAllActiveFunds(
+        isAdmin: Boolean,
+        moderatorGroupId: Int,
+        moderatorFundId: Int
+    ): List<Funds> {
         return if (isAdmin)
             fundRepository.fetchAllActiveFunds()
         else
@@ -71,8 +76,10 @@ class FundViewModel : ViewModel() {
             )
             fundRepository.updateFundAndDetails(fundToSave, updatedFundDetails)
         } else {
-            newFundId = fundRepository.saveFundAndDetails(fundToSave, fundDetailstoSave,
-                SessionManager.userId, excludeCreator )
+            newFundId = fundRepository.saveFundAndDetails(
+                fundToSave, fundDetailstoSave,
+                SessionManager.userId, excludeCreator
+            )
         }
         return newFundId
     }
@@ -82,12 +89,24 @@ class FundViewModel : ViewModel() {
         return fundMembers
     }
 
-    suspend fun getFundMembersWithNamesForFund(fundId: Int): List<FundMemberWithName> {
-        return fundRepository.getFundMembersWithNamesForFund(fundId)
+    suspend fun getFundMembersWithNamesForFund(
+        fundId: Int,
+        status: String = "ACTIVE"
+    ): List<FundMemberWithName> {
+        return fundRepository.getFundMembersWithNamesForFund(fundId, status)
+    }
+
+    suspend fun getFundMembersFinancialSummForFund(fundId: Int): List<FundMemberFinancialSummaryDto> {
+        return fundRepository.getFundMembersFinancialSummForFund(fundId)
+    }
+
+    suspend fun getFundMembersMonthlyFinancialSummForFund(fundId: Int, month: Int, year: Int): MonthlyFinancialSummaryResponseDto {
+        return fundRepository.getFundMembersMonthlyFinancialSummForFund(fundId, month, year)
     }
 
     suspend fun getAvailableFundMembers(groupId: Int, fundId: Int): List<AvailableFundMemberDto> {
-        val memberList: List<AvailableFundMemberDto> = fundRepository.getAvailableFundMembers(groupId, fundId)
+        val memberList: List<AvailableFundMemberDto> =
+            fundRepository.getAvailableFundMembers(groupId, fundId)
         return memberList
     }
 
@@ -200,7 +219,7 @@ class FundViewModel : ViewModel() {
 
     suspend fun getMemberByNameForFund(name: String, fundId: Int): FundMemberWithName? {
         val members: List<FundMemberWithName> =
-            fundRepository.getFundMembersWithNamesForFund(fundId)
+            fundRepository.getFundMembersWithNamesForFund(fundId, "ACTIVE")
         return members.firstOrNull {
             "${it.firstName} ${it.lastName}".trim()
                 .equals(name.trim(), ignoreCase = true)

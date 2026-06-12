@@ -11,8 +11,11 @@ fun GroupMemberWithNameDto.toEntity(): GroupMemberWithName = GroupMemberWithName
     firstName = firstName,
     lastName = lastName,
     emailId = emailId,
+    phoneNumber = phoneNumber,
     role = role,
-    status = status
+    status = status,
+    updatedAt = updatedAt,
+    updatedBy = updatedBy
 
 )
 
@@ -24,8 +27,11 @@ fun GroupMemberWithName.toDto(): GroupMemberWithNameDto = GroupMemberWithNameDto
     firstName = firstName,
     lastName = lastName,
     emailId = emailId,
+    phoneNumber = phoneNumber,
     role = role,
-    status = status
+    status = status,
+    updatedAt = updatedAt,
+    updatedBy = updatedBy
 )
 
 fun List<GroupMemberWithNameDto>.toEntity(): List<GroupMemberWithName> = map { it.toEntity() }

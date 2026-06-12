@@ -104,7 +104,6 @@ class UserFragment : Fragment() {
     private fun observeUsers() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // Now collect Room and render
                 userViewModel.usersFlow(isAdmin, moderatorGroupId)
                     .collectLatest { usersWithGroup -> adapter.updateList(usersWithGroup) }
             }
@@ -142,7 +141,6 @@ class UserFragment : Fragment() {
         // Required fields
         listOf(
             inputLayoutFirstName,
-            inputLayoutEmail,
             inputLayoutPhone,
             textInputGroup
 
@@ -191,37 +189,124 @@ class UserFragment : Fragment() {
     }
 
     private fun toggleUserStatus(user: UserWithGroup) {
-        lifecycleScope.launch {
-            // Fetch original user by ID to retain all sensitive fields
-            val existingUser = userViewModel.fetchUser(user.userId)
 
-            if (existingUser != null) {
-                val updatedStatus = if (user.status == ApnaBankConstants.STATUS_ACTIVE) {
-                    ApnaBankConstants.INACTIVE_STATUS
+        lifecycleScope.launch {
+
+            try {
+
+                // Fetch original user by ID to retain all fields
+                val existingUser =
+                    userViewModel.fetchUser(user.userId)
+
+                if (existingUser != null) {
+
+                    val updatedStatus =
+                        if (
+                            user.status ==
+                            ApnaBankConstants.STATUS_ACTIVE
+                        ) {
+                            ApnaBankConstants.INACTIVE_STATUS
+                        } else {
+                            ApnaBankConstants.STATUS_ACTIVE
+                        }
+
+                    val updatedUser =
+                        existingUser.copy(
+                            status = updatedStatus
+                        )
+                    val saveSource =
+                        if (SessionManager.isAdmin()) {
+                            UserSaveSource.ADMIN_UPDATE
+                        } else {
+                            UserSaveSource.MODERATOR_UPDATE
+                        }
+
+                    val result =
+                        userViewModel.saveOrUpdateUser(
+                            updatedUser,
+                            userSaveSource =
+                                saveSource
+                        )
+
+                    if (result.isSuccess) {
+
+                        val response =
+                            result.getOrNull()
+
+                        // BUSINESS VALIDATION FAILURE
+                        if (response?.success == false) {
+
+                            Toast.makeText(
+                                requireContext(),
+                                response.validationMessage
+                                    ?: getString(
+                                        R.string.error_saving_user
+                                    ),
+                                Toast.LENGTH_LONG
+                            ).show()
+
+                            return@launch
+                        }
+
+                        Toast.makeText(
+                            requireContext(),
+                            "${ApnaBankConstants.USER_TEXT} ${
+                                updatedUser.firstName
+                            } ${
+                                updatedUser.lastName ?: ""
+                            } ${
+                                if (
+                                    updatedUser.status ==
+                                    ApnaBankConstants.STATUS_ACTIVE
+                                )
+                                    ApnaBankConstants.ACTIVATED_TEXT
+                                else
+                                    ApnaBankConstants.DEACTIVATED_TEXT
+                            }",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        userViewModel.refreshTrigger
+                            .tryEmit(Unit)
+
+                    } else {
+
+                        Toast.makeText(
+                            requireContext(),
+                            result.exceptionOrNull()?.message
+                                ?: getString(
+                                    R.string.error_saving_user
+                                ),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
                 } else {
-                    ApnaBankConstants.STATUS_ACTIVE
+
+                    Toast.makeText(
+                        requireContext(),
+                        getString(
+                            R.string.error_user_not_found
+                        ),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
 
-                val updatedUser = existingUser.copy(status = updatedStatus)
+            } catch (e: Exception) {
 
-                userViewModel.saveOrUpdateUser(
-                    updatedUser,
-                    userSaveSource = UserSaveSource.ADMIN_UPDATE
+                Log.e(
+                    "UserToggle",
+                    "Error toggling user status",
+                    e
                 )
 
                 Toast.makeText(
                     requireContext(),
-                    "${ApnaBankConstants.USER_TEXT} ${updatedUser.firstName} ${updatedUser.lastName ?: ""} ${
-                        if (updatedUser.status == ApnaBankConstants.STATUS_ACTIVE)
-                            ApnaBankConstants.ACTIVATED_TEXT else ApnaBankConstants.DEACTIVATED_TEXT
-                    }",
-                    Toast.LENGTH_SHORT
-                ).show()
-            } else {
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.error_user_not_found),
-                    Toast.LENGTH_SHORT
+                    e.message
+                        ?: getString(
+                            R.string.error_saving_user
+                        ),
+                    Toast.LENGTH_LONG
                 ).show()
             }
         }
@@ -401,7 +486,8 @@ class UserFragment : Fragment() {
 
 
             val isFirstNameValid = UserInputValidator.isFirstNameValid(firstName)
-            val isEmailValid = UserInputValidator.isEmailValid(email)
+            val isEmailValid =
+                email.isEmpty() || UserInputValidator.isEmailValid(email)
             val isPhoneValid = UserInputValidator.isPhoneValid(phone)
 
             dialogBinding.buttonSaveUser.isEnabled =
@@ -433,7 +519,7 @@ class UserFragment : Fragment() {
         dialogBinding.buttonSaveUser.setOnClickListener {
             dialogBinding.buttonSaveUser.isEnabled = false
             dialogBinding.buttonSaveUser.text = getString(R.string.button_saving_progress)
-            val email = dialogBinding.editTextEmail.text.toString().trim()
+            val email = dialogBinding.editTextEmail.text.toString().trim().lowercase()
             val phone = dialogBinding.editTextPhone.text.toString().trim()
             val userId = existingUser?.userId ?: 0
             val group = dialogBinding.editTextGroup.text.toString()
@@ -452,15 +538,17 @@ class UserFragment : Fragment() {
                     }
                     val existingResponse = when {
 
+                        phone.length == 10 ->
+                            userViewModel.findExistingUserByPhone(
+                                phone
+                            )
+
                         email.isNotEmpty() ->
                             userViewModel.findExistingUserByEmail(
                                 email
                             )
 
-                        phone.length == 10 ->
-                            userViewModel.findExistingUserByPhone(
-                                phone
-                            )
+
 
                         else -> null
                     }
@@ -506,6 +594,8 @@ class UserFragment : Fragment() {
                                 groupRole = groupRole
                             )
 
+
+
                             dialogBinding.buttonSaveUser.isEnabled = true
 
                             dialogBinding.buttonSaveUser.text =
@@ -543,7 +633,7 @@ class UserFragment : Fragment() {
                         userId = userId,
                         firstName = firstName,
                         lastName = lastName,
-                        emailId = email,
+                        emailId = email.ifBlank { "" },
                         phoneNumber = phone,
                         status = existingUserFull?.status ?: ApnaBankConstants.STATUS_ACTIVE,
                         isPinSet = existingUserFull?.isPinSet == true,
@@ -581,7 +671,7 @@ class UserFragment : Fragment() {
                         ).show()
 
                         dialog.dismiss()
-                        userViewModel.refreshTrigger.value = Unit
+                        userViewModel.refreshTrigger.tryEmit(Unit)
 
                     } else {
 
@@ -596,7 +686,7 @@ class UserFragment : Fragment() {
                         dialogBinding.buttonSaveUser.text = getString(R.string.text_save_button)
                     }
                     dialog.dismiss()
-                    userViewModel.refreshTrigger.value = Unit
+                    userViewModel.refreshTrigger.tryEmit(Unit)
                 } catch (e: Exception) {
                     Log.e("UserDialog", "Error saving user", e)
 
@@ -662,10 +752,8 @@ class UserFragment : Fragment() {
                             ),
                             Toast.LENGTH_LONG
                         ).show()
-
                         dialog.dismiss()
-
-                        userViewModel.refreshTrigger.value = Unit
+                        userViewModel.refreshTrigger.tryEmit(Unit)
 
                     } catch (e: Exception) {
 

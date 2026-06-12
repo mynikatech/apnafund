@@ -12,7 +12,7 @@ data class UserProfileDto(
     var isPinSet: Boolean? = false,
     var firstName: String,
     var lastName: String? = null,
-    var emailId: String,
+    var emailId: String?,
     var phoneNumber: String
 
 ){

@@ -21,6 +21,7 @@ class SetPinFragment : Fragment() {
     private lateinit var binding: FragmentSetPinBinding
     private var userId: Int = -1
     private val userViewModel: UserViewModel by viewModels()
+    private var isRegistrationFlow: Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -28,6 +29,7 @@ class SetPinFragment : Fragment() {
         binding = FragmentSetPinBinding.inflate(inflater, container, false)
         arguments?.let {
             userId = it.getInt("userId")
+            isRegistrationFlow = it.getBoolean("isRegistrationFlow", false)
         }
         return binding.root
     }
@@ -64,11 +66,28 @@ class SetPinFragment : Fragment() {
                 }
                 userViewModel.changeUserPIN(userId, pin)
                 showToast(getString(R.string.message_pin_set_success))
-                findNavController().navigateUp() // Or navigate to home
+                if (isRegistrationFlow) {
+                    val action =
+                        SetPinFragmentDirections
+                            .actionSetPinFragmentToLoginPinFragment(
+                                userId
+                            )
+                    findNavController().navigate(action)
+                } else {
+
+                    findNavController().navigateUp()
+                }
             }
         }
         binding.buttonCancel.setOnClickListener {
-            findNavController().navigateUp()
+
+            if (isRegistrationFlow) {
+                findNavController().navigate(
+                    R.id.action_setPinFragment_to_loginFragment
+                )
+            } else {
+                findNavController().navigateUp()
+            }
         }
     }
 

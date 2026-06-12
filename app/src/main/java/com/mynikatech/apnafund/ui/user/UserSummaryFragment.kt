@@ -1,6 +1,8 @@
 package com.mynikatech.apnafund.ui.user
 
 import android.app.AlertDialog
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Color
 import android.os.Build
@@ -28,6 +30,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.mynikatech.apnafund.Exception.InvalidSessionException
@@ -54,6 +57,7 @@ import com.mynikatech.apnafund.util.ApnaBankDate
 import com.mynikatech.apnafund.util.Converters
 import com.mynikatech.apnafund.util.Converters.toTitleCase
 import com.mynikatech.apnafund.util.GroupInputValidator
+import com.mynikatech.apnafund.util.showSuccessSnackbar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -182,7 +186,30 @@ class UserSummaryFragment : Fragment() {
             findNavController().navigate(R.id.aiChatFragment)
         }
         setupObservers()
+        observeSelectedFundRefresh()
 
+        binding.textViewShowInviteCode.setOnClickListener {
+
+            lifecycleScope.launch {
+
+                try {
+
+                    val groupId =
+                        SessionManager.groupId ?: return@launch
+
+                    val group =
+                        groupViewModel.fetchGroup(groupId)
+
+                    showInviteCodeDialog(group)
+
+                } catch (e: Exception) {
+
+                    showToast(
+                        getString(R.string.error_server)
+                    )
+                }
+            }
+        }
         userSummaryViewModel.userName.observe(viewLifecycleOwner) { nameFromVm ->
 
             val preferred = SessionManager.getFormattedUserName()
@@ -304,13 +331,62 @@ class UserSummaryFragment : Fragment() {
             binding.layoutAddGroup.setOnClickListener {
                 handleAddGroupClick()
             }
-            binding.buttonAddGroupNone.setOnClickListener {
+            binding.layoutAddGroupNone.setOnClickListener {
                 handleAddGroupClick()
             }
         }
 
     }
 
+    private fun showInviteCodeDialog(
+        group: Groups
+    ) {
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(
+                getString(R.string.title_invite_code)
+            )
+            .setMessage(
+                getString(
+                    R.string.message_invite_code_dialog,
+                    group.groupName,
+                    group.groupCode
+                )
+            )
+            .setPositiveButton(
+                R.string.button_copy_code
+            ) { _, _ ->
+
+                val clipboard =
+                    requireContext().getSystemService(
+                        Context.CLIPBOARD_SERVICE
+                    ) as ClipboardManager
+
+                clipboard.setPrimaryClip(
+                    ClipData.newPlainText(
+                        getString(
+                            R.string.title_invite_code
+                        ),
+                        group.groupCode
+                    )
+                )
+
+                showToast(
+                    getString(
+                        R.string.message_invite_code_copied
+                    )
+                )
+            }
+            .setNegativeButton(
+                R.string.button_close,
+                null
+            )
+            .show()
+    }
+
+    private fun showToast(msg: String) {
+        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+    }
     fun showPendingWarningDialog(onContinue: () -> Unit) {
         if (!isAdded) return
 
@@ -332,7 +408,11 @@ class UserSummaryFragment : Fragment() {
     private fun lazyLoadContent() {
         val groupId = SessionManager.groupId ?: return
         val isAdmin = SessionManager.roleNames.contains("ADMIN")
-
+        binding.textViewShowInviteCode.visibility =
+            if (SessionManager.canManageGroups())
+                View.VISIBLE
+            else
+                View.GONE
         fundSharedViewModel.loadFunds(isAdmin, groupId)
         if (adapter == null) {
             adapter = LoanAdapter(
@@ -434,7 +514,7 @@ class UserSummaryFragment : Fragment() {
                         getString(R.string.group_label, selected.groupName)
                     )
 
-                    reloadForSelectedGroup()
+                    reloadForSelectedGroup(true)
                 }
                 .show()
         }
@@ -493,6 +573,15 @@ class UserSummaryFragment : Fragment() {
                             fundId = fund.fundId
                         )
                     findNavController().navigate(action)
+                }
+                binding.buttonMonthlySummary.setOnClickListener {
+
+                    val action = UserSummaryFragmentDirections
+                        .actionUserSummaryFragmentToMonthlySummaryFragment(
+                            fundId = fund.fundId
+                        )
+                    findNavController().navigate(action)
+
                 }
 
             }
@@ -650,7 +739,8 @@ class UserSummaryFragment : Fragment() {
             }
             //Get current available amount in the Fund display to the user and also add a validation
             val totalAmounts = userSummaryViewModel.getAllAmountAvailableforFund(fundId)
-
+            val isModerator = SessionManager.canManageFund(fundId)
+            val autoapprove = isModerator
             val dialog = AddLoanDialog(
                 borrowerName = borrowerName,
                 rateOfInterest = fundRateOfInterest,
@@ -681,11 +771,20 @@ class UserSummaryFragment : Fragment() {
                         period = period.toDouble(),
                         rateOfInt = fundRateOfInterest,
                         maturityDate = loanMaturityDate,
-                        autoapprove = false,
+                        autoapprove = autoapprove,
                         requestorId = SessionManager.userId
-
                     )
                 }
+                val message =
+                    if (isModerator)
+                        getString(R.string.message_loan_created_approved)
+                    else
+                        getString(R.string.message_loan_sent_approval)
+
+                showSuccessSnackbar(message)
+                fundSharedViewModel.shouldForceRefreshFundDetails = true
+                fundSharedViewModel
+                    .refreshFunds()
             }
             dialog.show(parentFragmentManager, "AddLoanDialog")
         }
@@ -772,20 +871,29 @@ class UserSummaryFragment : Fragment() {
         binding.loanAddText.visibility = if (canAddLoan) View.VISIBLE else View.GONE
     }
 
-    private fun reloadForSelectedGroup() {
+    private fun reloadForSelectedGroup(
+        resetSelection: Boolean = false
+    ) {
 
         val groupId = SessionManager.groupId ?: return
-        val isAdmin = SessionManager.roleNames.contains("ADMIN")
+        val isAdmin =
+            SessionManager.roleNames.contains("ADMIN")
 
-        fundSharedViewModel.clearSelectedFund()
-        fundSharedViewModel.clearSelectedFundId()
-        fundSharedViewModel.loadFunds(isAdmin, groupId)
+        if (resetSelection) {
+
+            fundSharedViewModel.clearSelectedFund()
+            fundSharedViewModel.clearSelectedFundId()
+        }
+
+        fundSharedViewModel.loadFunds(
+            isAdmin,
+            groupId
+        )
 
         userSummaryViewModel.loadUserSummary(
             userId = SessionManager.userId,
             selectedGroupId = groupId
         )
-
     }
 
     private fun refreshGroupChip() {
@@ -820,16 +928,17 @@ class UserSummaryFragment : Fragment() {
         }
         Log.d("Firebase", "Session Email Id ${SessionManager.emailId}")
         val email = SessionManager.emailId
+        val phoneNumber = SessionManager.phoneNumber
 
-        if (email.isBlank()) {
-            Log.w("Firebase", "Email missing in session — cannot restore Firebase session")
+        if (email.isNullOrBlank() && phoneNumber.isNullOrBlank()) {
+            Log.w("Firebase", "Email and Phone Number missing in session — cannot restore Firebase session")
             return
         }
 
         lifecycleScope.launch {
             Log.d("Firebase", "Restoring Firebase session for $email")
             try {
-                startUpViewModel.restoreFirebaseSession(email)
+                startUpViewModel.restoreFirebaseSession(email, phoneNumber)
             } catch (e: Exception) {
 
                 Log.e("Firebase", "Failed to restore Firebase session", e)
@@ -1078,7 +1187,15 @@ class UserSummaryFragment : Fragment() {
             val selectedFundId = fundSharedViewModel.selectedFundId.value
             val fundToUse = funds.firstOrNull { it.fundId == selectedFundId } ?: funds.first()
 
-            fundSharedViewModel.setSelectedFundId(fundToUse.fundId)
+            if (
+                fundSharedViewModel.selectedFundId.value
+                != fundToUse.fundId
+            ) {
+
+                fundSharedViewModel.setSelectedFundId(
+                    fundToUse.fundId
+                )
+            }
 
             binding.textViewSelectedFund.text = fundToUse.fundName
 
@@ -1095,7 +1212,16 @@ class UserSummaryFragment : Fragment() {
 
             updateLoanAddVisibility(fundStatus)
 
-            userSummaryViewModel.loadFundDetails(userId, fundToUse.fundId)
+            val force =
+                fundSharedViewModel.shouldForceRefreshFundDetails
+
+            userSummaryViewModel.loadFundDetails(
+                userId,
+                fundToUse.fundId,
+                force = force
+            )
+
+            fundSharedViewModel.shouldForceRefreshFundDetails = false
 
         } else {
             binding.FundMessageContainer.visibility = View.GONE
@@ -1194,5 +1320,35 @@ class UserSummaryFragment : Fragment() {
                 ).show()
             }
         }
+    }
+
+    private fun observeSelectedFundRefresh() {
+        Log.d("UserSummaryFragment", "FundrefreshObserver is called")
+        viewLifecycleOwner.lifecycleScope.launch {
+
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+
+                fundSharedViewModel
+                    .selectedFundDetailsRefresh
+                    .collect { fundId ->
+
+                        refreshSelectedFundDetails(fundId)
+                    }
+            }
+        }
+    }
+
+    private fun refreshSelectedFundDetails(fundId: Int) {
+        Log.d("UserSummaryFragment", "refreshSelectedFundDetails called for Fund Id $fundId")
+        userSummaryViewModel
+            .invalidateFundDetailsCache(fundId)
+
+        userSummaryViewModel.loadFundDetails(
+            userId,
+            fundId,
+            force = true
+        )
     }
 }

@@ -192,7 +192,7 @@
                     android:layout_height="wrap_content"
                     android:layout_columnWeight="1"
                     android:layout_gravity="fill"
-                    android:text="@string/text_period"
+                    android:text="@string/text_fund_period"
                     android:textSize="11sp" />
 
                 <TextView

@@ -6,4 +6,5 @@
     android:paddingVertical="4dp"
     android:paddingHorizontal="8dp"
     android:textSize="14sp"
-    android:textColor="@color/black" />
+    android:textColor="?attr/colorOnSurface"
+    android:background="?attr/colorSurface"/>

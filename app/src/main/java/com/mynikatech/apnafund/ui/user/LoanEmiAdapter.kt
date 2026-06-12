@@ -31,10 +31,11 @@ class LoanEmiAdapter(private val loanEmis: List<LoanEmiWithMemberNames>) :
             binding.apply {
                 textDate.text = loanEmi.emiDepositedDate
                 textAmount.text = Converters.formatCurrency(loanEmi.emiDepositedAmount!!)
-                if (loanEmi.lateFee >= 0)
-                    textLateFee.text = Converters.formatCurrency(loanEmi.lateFee)
+                if ((loanEmi.lateFee ?: 0.0) >= 0)
+                    textLateFee.text = Converters.formatCurrency(loanEmi.lateFee ?: 0.0)
                 else
                     textLateFee.text = ""
+
             }
 
         }

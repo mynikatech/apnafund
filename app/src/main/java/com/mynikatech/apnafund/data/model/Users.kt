@@ -22,6 +22,8 @@ data class Users(
     val firebaseUserId: String? = null,
     val emailVerified: Boolean = false,
     val emailVerifiedAt: String? = null,
+    val phoneVerified: Boolean = false,
+    val phoneVerifiedAt: String? = null,
     val isInvited: Boolean = false,
     val userCode: String, // Construct as first 2 letters of FirstName+ 2 letters of lastname+ random 5 digit number with trailing zeroes
     val createdByUserId: Int?,
@@ -30,4 +32,9 @@ data class Users(
     val updatedByUserId: Int?,
     val updatedAt: Long?,
     val createdByName: String?
-)
+){
+
+    val fullName: String
+        get() = listOfNotNull(lastName, firstName)
+            .joinToString(", ")
+}

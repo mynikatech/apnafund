@@ -15,30 +15,36 @@ import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TableRow
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.snackbar.Snackbar
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.data.model.LoanEmiWithMemberNames
 import com.mynikatech.apnafund.data.model.LoanEmis
+import com.mynikatech.apnafund.databinding.BottomSheetLoanDetailsBinding
 import com.mynikatech.apnafund.databinding.FragmentLoanEmiEntryBinding
 import com.mynikatech.apnafund.ui.admin.BaseEntryFragment
 import com.mynikatech.apnafund.ui.viewmodel.FundSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.FundViewModel
 import com.mynikatech.apnafund.ui.viewmodel.LoansViewModel
 import com.mynikatech.apnafund.util.ApnaBankDate
+import com.mynikatech.apnafund.util.Converters
 import com.mynikatech.apnafund.util.LoanEmiInputValidator
 import com.mynikatech.apnafund.util.ViewTags
 import com.mynikatech.apnafund.util.showLoanDetailsDialog
@@ -220,6 +226,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun refreshLoanEmiTable(fundId: Int, month: Int, year: Int) {
         lifecycleScope.launch {
+
             binding.tableLoanEmiEntries.removeAllViews()
             val header = createHeaderRow(TABLE_TYPE_LOAN)
             binding.tableLoanEmiEntries.addView(header)
@@ -227,6 +234,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
             val loanEmiWithMemberNames =
                 loanViewModel.getAllLoanEmisForFundForMonthYear(fundId, month, year)
             if (loanEmiWithMemberNames.isNotEmpty()) {
+                Log.d("InitialLoad", "rows=${loanEmiWithMemberNames.size}")
                 val sortedLoanEmiWithMemberNames = loanEmiWithMemberNames.sortedWith(
                     compareBy<LoanEmiWithMemberNames> { it.emiDepositedAmount ?: 0.0 }
                         .thenBy { "${it.firstName} ${it.lastName}" }
@@ -272,7 +280,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
 
     private fun cleanTable() {
         binding.tableLoanEmiEntries.removeAllViews()
-        val header = createHeaderRow(TABLE_TYPE_DEPOSIT)
+        val header = createHeaderRow(TABLE_TYPE_LOAN)
         binding.tableLoanEmiEntries.addView(header)
     }
 
@@ -333,6 +341,13 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
             resources.getDimensionPixelSize(R.dimen.loan_number_col_width),
             TableRow.LayoutParams.WRAP_CONTENT
         )
+        tvBorrowerName.setOnClickListener {
+
+            lifecycleScope.launch {
+                showLoanDetailsBottomSheet(loanEmis)
+
+            }
+        }
         val etEmiAmount = EditText(requireContext()).apply {
 
             inputType = InputType.TYPE_CLASS_NUMBER
@@ -385,17 +400,29 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                 setText(loanEmis.emiInterest.toString())
             }
         }
+        val lateFeeContainer = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        val textSuggestedLateFee = TextView(requireContext()).apply {
+
+            textSize = 10f
+
+            setTextColor(Color.GRAY)
+
+            visibility = View.GONE
+        }
         val lateFeeLoanEmi = EditText(requireContext()).apply {
-            inputType = InputType.TYPE_CLASS_TEXT
+            inputType = InputType.TYPE_CLASS_NUMBER or
+                    InputType.TYPE_NUMBER_FLAG_DECIMAL
             isEnabled = false
         }
+        lateFeeContainer.addView(lateFeeLoanEmi)
+
+        lateFeeContainer.addView(textSuggestedLateFee)
         val etPrepayAmount = EditText(requireContext()).apply {
 
-            inputType = InputType.TYPE_CLASS_NUMBER
-            // Basic character-level filtering (optional, to block non-digit input)
-            filters = arrayOf(InputFilter { source, _, _, _, _, _ ->
-                if (source.matches(Regex("[0-9]*"))) null else ""
-            })
+            inputType = InputType.TYPE_CLASS_NUMBER or
+                    InputType.TYPE_NUMBER_FLAG_DECIMAL
             addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(
                     s: CharSequence?,
@@ -420,9 +447,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                     binding.buttonSaveLoanEmi.isEnabled = true
                 }
             })
-            if (loanEmis.prepaymentAmount > 0.0) {
-                setText(loanEmis.prepaymentAmount.toString())
-            }
+
         }
 
         val etLoanEmiDepositDate = EditText(requireContext()).apply {
@@ -446,8 +471,17 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                     val lateFine =
                         calculateLateFee(text.toString(), formatedLastDepDate, lateFeeRate)
                     if (lateFine > 0) {
-                        lateFeeLoanEmi.setText(lateFine.toString())
 
+                        textSuggestedLateFee.text =
+                            "Sug. ${lateFine.toInt()}"
+
+                        textSuggestedLateFee.visibility =
+                            View.VISIBLE
+
+                    } else {
+
+                        textSuggestedLateFee.visibility =
+                            View.GONE
                     }
 
                 }
@@ -465,26 +499,131 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
             etEmiAmount.setText(loanEmis.emiDepositedAmount.toString())
             etLoanEmiDepositDate.setText(loanEmis.emiDepositedDate.toString())
             lateFeeLoanEmi.setText(loanEmis.lateFee.toString())
-            etPrepayAmount.setText(loanEmis.prepaymentAmount.toString())
+
+            if ((loanEmis.lateFee ?: 0.0) > 0) {
+
+                lateFeeLoanEmi.setText(
+                    loanEmis.lateFee.toString()
+                )
+
+            } else {
+
+                lateFeeLoanEmi.setText("")
+            }
+            val formatedLastDepDate =
+                ApnaBankDate.createDateString(
+                    lastDepDate,
+                    month,
+                    year
+                )
+
+            val suggestedLateFee =
+                calculateLateFee(
+                    loanEmis.emiDepositedDate!!,
+                    formatedLastDepDate,
+                    lateFeeRate
+                )
+
+            if (suggestedLateFee > 0) {
+
+                textSuggestedLateFee.text =
+                    "Sug. ${suggestedLateFee.toInt()}"
+
+                textSuggestedLateFee.visibility =
+                    View.VISIBLE
+            }
+            if ((loanEmis.prepaymentAmount ?: 0.0) > 0) {
+                etPrepayAmount.setText(
+                    loanEmis.prepaymentAmount.toString()
+                )
+
+            } else {
+                etPrepayAmount.setText("")
+            }
             etEmiAmount.isEnabled = false
             etLoanEmiDepositDate.isEnabled = false
             lateFeeLoanEmi.isEnabled = false
             etPrepayAmount.isEnabled = false
             loanEmis.isEdited = false
             setButtonState(btnLoanEmiEdit, enabled = true)
-            row.setBackgroundColor(Color.LTGRAY)
+            row.setBackgroundColor(
+                MaterialColors.getColor(
+                    row,
+                    com.google.android.material.R.attr.colorSurfaceContainerHighest
+                )
+            )
+            var isEditing = false
+            val originalEMIAmount =
+                etEmiAmount.text.toString()
 
+            val originalDate =
+                etLoanEmiDepositDate.text.toString()
+
+            val originalLateFee =
+                lateFeeLoanEmi.text.toString()
+            val originalPrepayAmount = etPrepayAmount.text.toString()
             btnLoanEmiEdit.setOnClickListener {
-                etEmiAmount.isEnabled = true
-                etLoanEmiDepositDate.isEnabled = true
-                lateFeeLoanEmi.isEnabled = true
-                etPrepayAmount.isEnabled = true
-                hasAnyLoanEmiEdits = true
-                loanEmis.isEdited = true
-                binding.buttonSaveLoanEmi.isEnabled = true
-                setButtonState(btnLoanEmiEdit, enabled = false)
-                row.setBackgroundColor(Color.TRANSPARENT)
+
+                if (!isEditing) {
+
+                    // ENTER EDIT MODE
+
+                    etEmiAmount.isEnabled = true
+                    etLoanEmiDepositDate.isEnabled = true
+                    lateFeeLoanEmi.isEnabled = true
+                    etPrepayAmount.isEnabled = true
+
+                    hasAnyLoanEmiEdits = true
+
+                    loanEmis.isEdited = true
+
+                    binding.buttonSaveLoanEmi.isEnabled = true
+
+                    btnLoanEmiEdit.setImageResource(
+                        R.drawable.ic_cancel
+                    )
+
+                    row.setBackgroundColor(
+                        MaterialColors.getColor(
+                            row,
+                            com.google.android.material.R.attr.colorSurface
+                        )
+                    )
+                    isEditing = true
+
+                } else {
+
+                    // CANCEL EDIT
+
+                    etEmiAmount.setText(originalEMIAmount)
+
+                    etLoanEmiDepositDate.setText(originalDate)
+
+                    lateFeeLoanEmi.setText(originalLateFee)
+                    etPrepayAmount.setText(originalPrepayAmount)
+
+                    etEmiAmount.isEnabled = false
+                    etLoanEmiDepositDate.isEnabled = false
+                    lateFeeLoanEmi.isEnabled = false
+                    etPrepayAmount.isEnabled = false
+
+                    btnLoanEmiEdit.setImageResource(
+                        R.drawable.ic_edit
+                    )
+
+                    row.setBackgroundColor(
+                        MaterialColors.getColor(
+                            row,
+                            com.google.android.material.R.attr.colorSurfaceContainerHighest
+                        )
+                    )
+
+                    loanEmis.isEdited = false
+
+                    isEditing = false
+                }
             }
+
         } else {
             etEmiAmount.isEnabled = true
             etLoanEmiDepositDate.isEnabled = true
@@ -493,11 +632,16 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
             loanEmis.isEdited = true
             setButtonState(btnLoanEmiEdit, enabled = false)
             etLoanEmiDepositDate.setText(ApnaBankDate.getCurrentDate())
-            row.setBackgroundColor(Color.TRANSPARENT)
+            row.setBackgroundColor(
+                MaterialColors.getColor(
+                    row,
+                    com.google.android.material.R.attr.colorSurface
+                )
+            )
         }
         row.addView(tvBorrowerName)
         row.addView(etEmiAmount)
-        row.addView(lateFeeLoanEmi)
+        row.addView(lateFeeContainer)
         row.addView(etPrepayAmount)
         row.addView(etLoanEmiDepositDate)
         row.addView(btnLoanEmiEdit)
@@ -567,6 +711,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                             selectedYear.toString()
                         )
                         originalLoanEmis = updatedLoanEmiList
+                        Log.d("AfterSave", "rows=${updatedLoanEmiList.size}")
                         refreshLoanEmiTableWithData(updatedLoanEmiList)
                         Snackbar.make(
                             requireView(),
@@ -578,7 +723,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                         )
                             .show()
 
-                        fundSharedViewModel.refreshFunds()
+                        fundSharedViewModel.refreshFunds(fundId)
 
                         hasAnyLoanEmiEdits = false
 
@@ -604,6 +749,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                             selectedYear.toString()
                         )
                         originalLoanEmis = updatedLoanEmisList
+                        Log.d("AfterSave", "rows=${updatedLoanEmisList.size}")
                         refreshLoanEmiTableWithData(updatedLoanEmisList)
                         Snackbar.make(
                             requireView(),
@@ -611,7 +757,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                             Snackbar.LENGTH_SHORT
                         )
                             .show()
-                        fundSharedViewModel.refreshFunds()
+                        fundSharedViewModel.refreshFunds(fundId)
                     }
 
                 } else {
@@ -639,11 +785,16 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
             val etLoanEmiAmount = row.getChildAt(1) as EditText
             val etLoanEmiDepositedDate = row.getChildAt(4) as EditText
             val etLoanPrepayAmount = row.getChildAt(3) as EditText
-            val lateFee = row.getChildAt(2) as EditText
+            val lateFeeContainer =
+                row.getChildAt(2) as LinearLayout
+
+            val lateFee =
+                lateFeeContainer.getChildAt(0) as EditText
             val loanId = row.getTag(ViewTags.LOAN_ID) as? Int
             val amountText = etLoanEmiAmount.text.toString()
             val prepayAmount = etLoanPrepayAmount.text.toString()
             val dateText = etLoanEmiDepositedDate.text.toString()
+
             val lateFeeAmount = lateFee.text.toString()
             if (amountText.isBlank()) continue
             loanEmis.add(
@@ -669,6 +820,45 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                 original.emiDepositedDate.toString() != current.emiDepositedDate ||
                 original.lateFee.toString() != current.lateFee.toString() ||
                 original.prepaymentAmount != current.prepaymentAmount
+    }
+
+    private fun showLoanDetailsBottomSheet(
+        loan: LoanEmiWithMemberNames
+    ) {
+
+        val dialog =
+            BottomSheetDialog(requireContext())
+
+        val binding =
+            BottomSheetLoanDetailsBinding.inflate(
+                layoutInflater
+            )
+
+        binding.textLoanNumberValue.text = loan.loanNumber
+        binding.textIssuedDateValue.text = loan.issuedDate
+        binding.textMaturityDateValue.text = loan.maturityDate
+        binding.textEmiInterestValue.text =
+            Converters.formatCurrency(
+                loan.emiInterest)
+
+        binding.textLoanAmountValue.text =
+                Converters.formatCurrency(
+                    loan.loanAmount)
+
+        binding.textOutstandingValue.text =
+                Converters.formatCurrency(
+                    loan.currPrincipal
+                )
+        binding.textInterestPendingValue.text =
+
+                Converters.formatCurrency(
+                    loan.emiInterest
+                )
+
+
+        dialog.setContentView(binding.root)
+
+        dialog.show()
     }
 
 

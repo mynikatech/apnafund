@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund.net
 
 import com.mynikatech.apnafund.net.api.ApiResponse
+import com.mynikatech.apnafund.net.dto.AppUsageLogDto
 import com.mynikatech.apnafund.net.dto.ChangePasswordRequest
 import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
 import com.mynikatech.apnafund.net.dto.FundWithDetailsDto
@@ -39,6 +40,9 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import com.mynikatech.apnafund.net.dto.SendOtpReq
+import com.mynikatech.apnafund.net.dto.SendOtpResp
+import com.mynikatech.apnafund.net.dto.VerifyOtpReq
 
 
 class UsersApiKtor(
@@ -124,6 +128,25 @@ class UsersApiKtor(
         safeApiCall {
             client.get("/users/get/by-phone") {
                 parameter("phone", phone)
+            }
+        }.unwrap()
+
+    override suspend fun getUserByPhoneAndEmail(email: String, phone: String): LoginUserResponse =
+        safeApiCall {
+            client.get("/users/get/by-phone-email") {
+                parameter("email", email)
+                parameter("phone", phone)
+            }
+        }.unwrap()
+
+    override suspend fun getUserByPhoneAndGroupCode(
+        phone: String,
+        groupCode: String
+    ): LoginUserResponse =
+        safeApiCall {
+            client.get("/users/get/by-phone-group-code") {
+                parameter("phone", phone)
+                parameter("groupCode", groupCode)
             }
         }.unwrap()
 
@@ -332,6 +355,20 @@ class UsersApiKtor(
         }.unwrap<SendEmailVerificationResp>()
     }
 
+    override suspend fun sendOtp(req: SendOtpReq): SendOtpResp {
+        return client.post("/users/otp/send") {
+            contentType(ContentType.Application.Json)
+            setBody(req)
+        }.unwrap<SendOtpResp>()
+    }
+
+    override suspend fun verifyOtp(req: VerifyOtpReq ): Boolean {
+
+        return client.post("/users/otp/verify") {
+            contentType(ContentType.Application.Json)
+            setBody(req)
+        }.unwrap<Boolean>()
+    }
     override suspend fun isEmailVerified(userId: Int): Boolean {
         return client.get("/users/is-email-verified/$userId")
             .unwrap<Boolean>()
@@ -380,4 +417,28 @@ class UsersApiKtor(
             false
         }
     }
+
+    override suspend fun addUsageLog(
+        usage: AppUsageLogDto
+    ): Boolean =
+
+        try {
+
+            val response =
+                client.post("/users/add/usage/logs") {
+
+                    contentType(
+                        ContentType.Application.Json
+                    )
+
+                    setBody(usage)
+                }
+
+            response.status == HttpStatusCode.Created ||
+                    response.status == HttpStatusCode.OK
+
+        } catch (_: Exception) {
+
+            false
+        }
 }

@@ -10,7 +10,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
-import androidx.core.view.isVisible
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -21,7 +22,6 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
-import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.net.dto.UserSaveSource
 import com.mynikatech.apnafund.session.PreferencesHelper
 import com.mynikatech.apnafund.session.SessionManager
@@ -31,7 +31,6 @@ import com.mynikatech.apnafund.ui.viewmodel.AdminViewModel
 import com.mynikatech.apnafund.ui.viewmodel.ProfileSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.UserSummaryViewModel
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
-import com.mynikatech.apnafund.util.Converters
 import com.mynikatech.apnafund.util.ThemeManager
 import com.mynikatech.apnafund.util.UserInputValidator
 import kotlinx.coroutines.launch
@@ -80,8 +79,14 @@ class SideMenuDialogFragment : DialogFragment() {
                 R.id.menu_theme -> {
                     // to toggle theme from day to night and vice versa
                     ThemeManager.toggleTheme(requireContext())
-                    Snackbar.make(view,
-                        getString(R.string.message_theme_updated), Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(
+                        view,
+                        getString(R.string.message_theme_updated), Snackbar.LENGTH_SHORT
+                    ).show()
+                }
+
+                R.id.menu_language -> {
+                    showLanguageDialog()
                 }
 
                 R.id.menu_profile -> {
@@ -109,7 +114,10 @@ class SideMenuDialogFragment : DialogFragment() {
                         val dialog = AlertDialog.Builder(requireContext())
                             .setTitle(getString(R.string.title_edit_profile))
                             .setView(dialogView)
-                            .setPositiveButton(getString(R.string.text_save), null) // we override click
+                            .setPositiveButton(
+                                getString(R.string.text_save),
+                                null
+                            ) // we override click
                             .setNegativeButton(getString(R.string.text_cancel_button), null)
                             .create()
 
@@ -257,9 +265,12 @@ class SideMenuDialogFragment : DialogFragment() {
                 }
 
                 R.id.menu_share -> {
-                    Toast.makeText(requireContext(),
-                        getString(R.string.message_share_app), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.message_share_app), Toast.LENGTH_SHORT
+                    ).show()
                 }
+
 
                 R.id.menu_logout -> {
                     AlertDialog.Builder(requireContext())
@@ -271,7 +282,10 @@ class SideMenuDialogFragment : DialogFragment() {
                             } catch (e: Exception) {
                                 Log.w("LOGOUT", "Firestore terminate failed", e)
                             }
-
+                            userViewModel.addUsageLog(
+                                userId = SessionManager.userId,
+                                eventType = "LOGOUT"
+                            )
                             FirebaseAuthHelper.signOut()
                             val prefsHelper = PreferencesHelper(requireContext())
                             prefsHelper.clearSession()
@@ -286,6 +300,8 @@ class SideMenuDialogFragment : DialogFragment() {
                             intent.flags =
                                 Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                             startActivity(intent)
+                            // capture usage logs
+
                             val action = SideMenuDialogFragmentDirections
                                 .actionSideMenuDialogFragmentToLogInFragment()
                             findNavController().navigate(action)
@@ -316,12 +332,16 @@ class SideMenuDialogFragment : DialogFragment() {
                 lifecycleScope.launch {
                     adminViewModel.submitFeedback(SessionManager.userId, message)
                 }
-                Toast.makeText(requireContext(),
-                    getString(R.string.message_thank_feedback), Toast.LENGTH_SHORT)
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.message_thank_feedback), Toast.LENGTH_SHORT
+                )
                     .show()
             } else {
-                Toast.makeText(requireContext(),
-                    getString(R.string.message_enter_feedback), Toast.LENGTH_SHORT)
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.message_enter_feedback), Toast.LENGTH_SHORT
+                )
                     .show()
             }
             dialog.dismiss()
@@ -337,4 +357,60 @@ class SideMenuDialogFragment : DialogFragment() {
     ) {
         Toast.makeText(requireContext(), message, duration).show()
     }
+
+
+    private fun showLanguageDialog() {
+
+        val languages = arrayOf(
+            "English",
+            "हिन्दी"
+        )
+
+        val languageCodes = arrayOf(
+            "en",
+            "hi"
+        )
+
+        val prefsHelper =
+            PreferencesHelper(requireContext())
+
+        val currentLanguage =
+            prefsHelper.getLanguage()
+
+        var selectedPosition =
+            languageCodes.indexOf(currentLanguage)
+                .takeIf { it >= 0 } ?: 0
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.title_select_language))
+            .setSingleChoiceItems(
+                languages,
+                selectedPosition
+            ) { _, which ->
+
+                selectedPosition = which
+            }
+            .setPositiveButton(
+                getString(R.string.label_continue)
+            ) { _, _ ->
+
+                val selectedLanguage =
+                    languageCodes[selectedPosition]
+
+                prefsHelper.saveLanguage(selectedLanguage)
+
+                val appLocale =
+                    LocaleListCompat.forLanguageTags(selectedLanguage)
+
+                AppCompatDelegate.setApplicationLocales(appLocale)
+
+                requireActivity().recreate()
+            }
+            .setNegativeButton(
+                getString(R.string.text_cancel_button),
+                null
+            )
+            .show()
+    }
+
 }

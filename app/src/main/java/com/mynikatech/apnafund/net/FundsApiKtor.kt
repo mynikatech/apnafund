@@ -1,20 +1,25 @@
 package com.mynikatech.apnafund.net
 
 import android.util.Log
-import com.mynikatech.apnafund.data.model.FundMembers
 import com.mynikatech.apnafund.net.dto.AddFundWithDetailsRequest
 import com.mynikatech.apnafund.net.dto.AvailableFundMemberDto
 import com.mynikatech.apnafund.net.dto.CloseFundRequest
 import com.mynikatech.apnafund.net.dto.FundAvailabilityDto
 import com.mynikatech.apnafund.net.dto.FundDetailsDto
+import com.mynikatech.apnafund.net.dto.FundMemberFinancialSummaryDto
 import com.mynikatech.apnafund.net.dto.FundMemberWithNameDto
-import com.mynikatech.apnafund.net.dto.FundsDto
 import com.mynikatech.apnafund.net.dto.FundMembersDto
 import com.mynikatech.apnafund.net.dto.FundUpdateRequestDto
 import com.mynikatech.apnafund.net.dto.FundWithDetailsDto
-import com.mynikatech.apnafund.net.dto.UsersDto
+import com.mynikatech.apnafund.net.dto.FundsDto
+import com.mynikatech.apnafund.net.dto.MonthlyFinancialSummaryResponseDto
 import io.ktor.client.call.body
-import io.ktor.client.request.*
+import io.ktor.client.request.delete
+import io.ktor.client.request.get
+import io.ktor.client.request.parameter
+import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.coroutines.flow.Flow
@@ -63,7 +68,10 @@ class FundsApiKtor(
     override suspend fun getAllActiveFundsForGroup(groupId: Int): List<FundsDto> =
         client.get("/funds/get/active/group/$groupId").unwrap<List<FundsDto>>()
 
-    override suspend fun getAllActiveFundsForGroupAndModerator(groupId: Int, userId: Int): List<FundsDto> =
+    override suspend fun getAllActiveFundsForGroupAndModerator(
+        groupId: Int,
+        userId: Int
+    ): List<FundsDto> =
         client.get("/funds/get/active/group/$groupId/$userId").unwrap<List<FundsDto>>()
 
     override suspend fun getAllFundsWithDetails(): List<FundWithDetailsDto> =
@@ -100,6 +108,7 @@ class FundsApiKtor(
             emptyList()
         }
     }
+
     override suspend fun getFundWithDetails(fundId: Int): FundWithDetailsDto =
         client.get("/funds/get/with-details/$fundId").unwrap<FundWithDetailsDto>()
 
@@ -158,14 +167,14 @@ class FundsApiKtor(
         }.unwrap<Int>()
 
     override suspend fun getAvailableFundAmount(fundId: Int): Double? {
-            return try {
-                client.get("/funds/available-amount/get/$fundId")
-                    .unwrap<Double>()
-            } catch (e: Exception) {
-                Log.e("FundsApi", "Error fetching fund availability", e)
-                null
-            }
+        return try {
+            client.get("/funds/available-amount/get/$fundId")
+                .unwrap<Double>()
+        } catch (e: Exception) {
+            Log.e("FundsApi", "Error fetching fund availability", e)
+            null
         }
+    }
 
     override suspend fun getTotalAvailableFundAmount(fundId: Int): FundAvailabilityDto? {
         return try {
@@ -183,7 +192,10 @@ class FundsApiKtor(
 //            parameter("fundId", fundId)
 //        }.unwrap<List<UsersDto>>()
 
-    override suspend fun getAvailableFundMembers(groupId: Int, fundId: Int): List<AvailableFundMemberDto> =
+    override suspend fun getAvailableFundMembers(
+        groupId: Int,
+        fundId: Int
+    ): List<AvailableFundMemberDto> =
         client.get("/funds/available-members/get") {
             parameter("groupId", groupId)
             parameter("fundId", fundId)
@@ -196,8 +208,32 @@ class FundsApiKtor(
         }
     }
 
-    override suspend fun getFundMembersWithNamesForFund(fundId: Int): List<FundMemberWithNameDto> =
-        client.get("/funds/members/get/with-names/$fundId").unwrap<List<FundMemberWithNameDto>>()
+    override suspend fun getFundMembersWithNamesForFund(
+        fundId: Int,
+        status: String
+    ): List<FundMemberWithNameDto> =
+        client.get(
+            "/funds/members/get/with-names/$fundId"
+        ) {
+            parameter("status", status)
+        }.unwrap()
+
+    override suspend fun getFundMembersFinancialSummForFund(
+        fundId: Int
+    ): List<FundMemberFinancialSummaryDto> =
+        client.get(
+            "/funds/members/get/with-names/financial-summary/$fundId"
+        ).unwrap()
+
+    override suspend fun getFundMembersMonthlyFinancialSummForFund(
+        fundId: Int, month: Int, year: Int
+    ): MonthlyFinancialSummaryResponseDto =
+        client.get(
+            "/funds/members/get/with-names/monthly-financial-summary/$fundId"
+        ) {
+            parameter("month", month)
+            parameter("year", year)
+        }.unwrap()
 
     override suspend fun checkIfFundMemberAlreadyAdded(userId: Int, fundId: Int): Boolean =
         client.get("/funds/members/check/$fundId") {
@@ -212,7 +248,14 @@ class FundsApiKtor(
     ): Int =
         client.post("/funds/add/with-details") {
             contentType(ContentType.Application.Json)
-            setBody(AddFundWithDetailsRequest(fund = fund, details = details, requestorId = requestorId, excludeCreator = excludeCreator ))
+            setBody(
+                AddFundWithDetailsRequest(
+                    fund = fund,
+                    details = details,
+                    requestorId = requestorId,
+                    excludeCreator = excludeCreator
+                )
+            )
         }.unwrap<Int>()
 
     override suspend fun closeFund(

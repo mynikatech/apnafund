@@ -9,13 +9,14 @@ import com.mynikatech.apnafund.data.model.FundMemberWithName
 import com.mynikatech.apnafund.data.model.FundMembers
 import com.mynikatech.apnafund.data.model.FundWithDetails
 import com.mynikatech.apnafund.data.model.Funds
-import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.net.FundsApi
 import com.mynikatech.apnafund.net.dto.AvailableFundMemberDto
 import com.mynikatech.apnafund.net.dto.CloseFundRequest
 import com.mynikatech.apnafund.net.dto.FundAvailabilityDto
+import com.mynikatech.apnafund.net.dto.FundMemberFinancialSummaryDto
 import com.mynikatech.apnafund.net.dto.FundMembersDto
 import com.mynikatech.apnafund.net.dto.FundUpdateRequestDto
+import com.mynikatech.apnafund.net.dto.MonthlyFinancialSummaryResponseDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -50,7 +51,7 @@ class FundRepository(
     }
 
     suspend fun fetchFundsByGroupAndModerator(groupId: Int, moderatorId: Int): List<Funds> {
-        return api.getAllActiveFundsForGroupAndModerator(groupId,moderatorId).toEntity()
+        return api.getAllActiveFundsForGroupAndModerator(groupId, moderatorId).toEntity()
 
     }
 
@@ -58,8 +59,18 @@ class FundRepository(
         return api.getFund(fundId)?.toEntity()
     }
 
-    suspend fun saveFundAndDetails(fund: Funds, fundDetails: FundDetails, requestorId: Int, excludeCreator: Boolean): Int {
-        return api.addFundWithDetails(fund.toDto(), fundDetails.toDto(), requestorId, excludeCreator)
+    suspend fun saveFundAndDetails(
+        fund: Funds,
+        fundDetails: FundDetails,
+        requestorId: Int,
+        excludeCreator: Boolean
+    ): Int {
+        return api.addFundWithDetails(
+            fund.toDto(),
+            fundDetails.toDto(),
+            requestorId,
+            excludeCreator
+        )
     }
 
     suspend fun updateFundDetails(details: FundDetails) {
@@ -115,8 +126,19 @@ class FundRepository(
         api.addFundMembers(fundMembers.toDto())
     }
 
-    suspend fun getFundMembersWithNamesForFund(fundId: Int): List<FundMemberWithName> {
-        return api.getFundMembersWithNamesForFund(fundId).toEntity()
+    suspend fun getFundMembersWithNamesForFund(
+        fundId: Int,
+        status: String
+    ): List<FundMemberWithName> {
+        return api.getFundMembersWithNamesForFund(fundId, status).toEntity()
+    }
+
+    suspend fun getFundMembersFinancialSummForFund(fundId: Int): List<FundMemberFinancialSummaryDto> {
+        return api.getFundMembersFinancialSummForFund(fundId)
+    }
+
+    suspend fun getFundMembersMonthlyFinancialSummForFund(fundId: Int, month: Int, year: Int): MonthlyFinancialSummaryResponseDto {
+        return api.getFundMembersMonthlyFinancialSummForFund(fundId, month, year)
     }
 
     suspend fun insertFundDetails(details: FundDetails) {

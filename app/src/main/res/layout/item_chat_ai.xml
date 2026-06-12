@@ -20,7 +20,7 @@
             android:id="@+id/text_message"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/black"
+            android:textColor="?attr/colorPrimary"
             android:textSize="14sp"
             android:lineSpacingExtra="2dp"
             android:maxWidth="260dp"

@@ -81,7 +81,11 @@ class LoginPinFragment : Fragment() {
                             firebaseToken = firebaseRespToken.firebaseToken,
                             onSuccess = {
                                 SessionManager.isFirebaseSynced = true
-
+                                // capture usage logs
+                                userViewModel.addUsageLog(
+                                    userId = userId,
+                                    eventType = "LOGIN_PIN"
+                                )
                                 // STEP 3: Navigate only AFTER Firebase is ready
                                 findNavController().navigate(
                                     LoginPinFragmentDirections

@@ -1,14 +1,17 @@
 // LoginFragment.kt
 package com.mynikatech.apnafund.ui.auth
 
-import android.graphics.Color
 import android.os.Bundle
 import android.text.InputFilter
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.RadioButton
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -24,6 +27,8 @@ import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.mappers.toEntity
 import com.mynikatech.apnafund.databinding.FragmentLoginBinding
 import com.mynikatech.apnafund.net.ApiException
+import com.mynikatech.apnafund.net.dto.Channel
+import com.mynikatech.apnafund.session.PreferencesHelper
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
 import com.mynikatech.apnafund.util.Converters
 import kotlinx.coroutines.launch
@@ -73,8 +78,10 @@ class LoginFragment : Fragment() {
             if (isPhoneLogin) {
                 val phone = binding.phoneEditText.text.toString()
                 if (phone.isEmpty()) {
-                    Toast.makeText(requireContext(),
-                        getString(R.string.error_phone_number_required), Toast.LENGTH_SHORT)
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.error_phone_number_required), Toast.LENGTH_SHORT
+                    )
                         .show()
                     binding.loginButton.isEnabled = true
                     return@setOnClickListener
@@ -125,20 +132,24 @@ class LoginFragment : Fragment() {
                 }
 
             } else {
-                val email = binding.emailEditText.text.toString()
+                val phone = binding.phonePasswordEditText.text.toString()
                 val password = binding.passwordEditText.text.toString()
-                if (email.isEmpty() || password.isEmpty()) {
+                if (phone.isEmpty() || password.isEmpty()) {
                     Toast.makeText(
                         requireContext(),
-                        getString(R.string.error_email_and_pwd_required),
+                        getString(R.string.error_phone_and_pwd_required),
                         Toast.LENGTH_SHORT
                     ).show()
                     binding.loginButton.isEnabled = true
                 } else {
-                    loginWithEmail(email, password)
+                    loginWithPhone(phone, password)
                 }
             }
 
+        }
+
+        binding.textChangeLanguage.setOnClickListener {
+            showLanguageDialog()
         }
 
         binding.verifyOtpButton.setOnClickListener {
@@ -181,41 +192,15 @@ class LoginFragment : Fragment() {
             findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
         }
         binding.textForgotPassword.setOnClickListener {
-            val email = binding.emailEditText.text.toString().trim()
-            if (email.isEmpty()) {
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.error_enter_email_reset_password),
-                    Toast.LENGTH_SHORT
-                ).show()
-                return@setOnClickListener
-            }
-
-            // Option 1: Firebase password reset
-            /*FirebaseAuth.getInstance().sendPasswordResetEmail(email)
-                .addOnSuccessListener {
-                    /*Toast.makeText(
-                        requireContext(),
-                        "Password reset email sent. Check your inbox.",
-                        Toast.LENGTH_SHORT
-                    ).show()*/
-                }
-                .addOnFailureListener {
-                    Toast.makeText(
-                        requireContext(),
-                        "Failed to send reset email: ${it.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }*/
-            // doing both at this point of time
-            val action = LoginFragmentDirections
-                .actionLoginFragmentToForgotPasswordFragment(email)
-            findNavController().navigate(action)
+            findNavController().navigate(
+                LoginFragmentDirections
+                    .actionLoginFragmentToForgotPasswordPhoneFragment()
+            )
         }
     }
 
     private fun updateLoginMode() {
-        binding.emailLayout.visibility = if (isPhoneLogin) View.GONE else View.VISIBLE
+        binding.phonePasswordLayout.visibility = if (isPhoneLogin) View.GONE else View.VISIBLE
         binding.passwordLayout.visibility = if (isPhoneLogin) View.GONE else View.VISIBLE
         binding.phoneLayout.visibility = if (isPhoneLogin) View.VISIBLE else View.GONE
         // OTP MUST ALWAYS START HIDDEN
@@ -266,9 +251,33 @@ class LoginFragment : Fragment() {
                 binding.loginButton.isEnabled = true
                 return@launch
             }
+            // disabled the process to allow using the mail user id and password process to verfiy invited users.
 
             val userPassword = localUser.passwordHash
-            if (userPassword.isNullOrEmpty()) {
+            val isInvited = localUser.isInvited
+            val isVerified = localUser.emailVerified
+
+            if (userPassword.isNullOrEmpty() || (!isVerified && isInvited)) {
+
+                AlertDialog.Builder(requireContext())
+                    .setTitle(getString(R.string.title_account_setup_pending))
+                    .setMessage(
+                        getString(R.string.message_use_invite_flow)
+                    )
+                    .setCancelable(false)
+                    .setPositiveButton(
+                        getString(R.string.text_button_ok)
+                    ) { _, _ ->
+
+                        binding.loginButton.isEnabled = true
+                    }
+                    .show()
+
+                return@launch
+
+            }
+
+            /*if (userPassword.isNullOrEmpty()) {
                 val isVerified = userViewModel.isEmailVerified(localUser.userId)
 
                 if (!isVerified) {
@@ -309,12 +318,14 @@ class LoginFragment : Fragment() {
 
                 binding.loginButton.isEnabled = true
                 return@launch
-            }
+            } */
             val isPasswordMatch = Converters.verifyPassword(password, localUser.passwordHash)
 
             if (!isPasswordMatch) {
-                Toast.makeText(requireContext(),
-                    getString(R.string.error_incorrect_password), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.error_incorrect_password), Toast.LENGTH_SHORT
+                ).show()
                 binding.loginButton.isEnabled = true
                 return@launch
             }
@@ -361,6 +372,11 @@ class LoginFragment : Fragment() {
                                     ?.addOnSuccessListener {
                                         Log.d("FirebaseAuth", "Token claims = ${it.claims}")
                                     }
+                                // Add login logs
+                                userViewModel.addUsageLog(
+                                    userId = localUser.userId,
+                                    eventType = "LOGIN_PASSWORD"
+                                )
                                 findNavController().navigate(
                                     LoginFragmentDirections
                                         .actionLoginFragmentToUserSummaryFragment(localUser.userId)
@@ -440,6 +456,182 @@ class LoginFragment : Fragment() {
         }
     }
 
+
+    private fun loginWithPhone(phone: String, password: String) {
+        lifecycleScope.launch {
+            val loginResponse = try {
+                userViewModel.getUserByPhone(phone)
+            } catch (e: ApiException) {
+                when (e.code) {
+                    404 -> showToast(getString(R.string.error_user_not_found_register_first))
+                    400 -> showToast(e.message)
+                    else -> showToast(getString(R.string.error_server))
+                }
+                binding.loginButton.isEnabled = true
+                return@launch
+            }
+            if (null == loginResponse) {
+                binding.loginButton.isEnabled = true
+                return@launch
+            }
+
+
+            val userDto = loginResponse.user
+
+            if (userDto == null) {
+                showToast(getString(R.string.error_user_not_found_register_first))
+                binding.loginButton.isEnabled = true
+                return@launch
+            }
+
+            val localUser = userDto.toEntity()
+            val firebaseToken = loginResponse.firebaseToken
+
+
+
+            if (localUser == null) {
+                showToast(getString(R.string.user_not_found_register_norml_user))
+                binding.loginButton.isEnabled = true
+                return@launch
+            }
+            // disabled the process to allow using the mail user id and password process to verfiy invited users.
+
+            val userPassword = localUser.passwordHash
+            val isInvited = localUser.isInvited
+            val isVerified = localUser.emailVerified
+            val isPhoneVerified = localUser.phoneVerified
+
+            if (userPassword.isNullOrEmpty() || (!isPhoneVerified && isInvited)) {
+
+                AlertDialog.Builder(requireContext())
+                    .setTitle(getString(R.string.title_account_setup_pending))
+                    .setMessage(
+                        getString(R.string.message_use_invite_flow)
+                    )
+                    .setCancelable(false)
+                    .setPositiveButton(
+                        getString(R.string.text_button_ok)
+                    ) { _, _ ->
+
+                        binding.loginButton.isEnabled = true
+                    }
+                    .show()
+
+                return@launch
+
+            }
+
+            val isPasswordMatch = Converters.verifyPassword(password, localUser.passwordHash)
+
+            if (!isPasswordMatch) {
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.error_incorrect_password), Toast.LENGTH_SHORT
+                ).show()
+                binding.loginButton.isEnabled = true
+                return@launch
+            }
+            FirebaseAuthHelper.ensureFirebaseSignedIn(
+                firebaseToken = firebaseToken,
+                onSuccess = {
+                    lifecycleScope.launch {
+                        val isDue = userViewModel.isPasswordRotationDue(localUser.userId)
+                        if (isDue) {
+                            findNavController().navigate(
+                                LoginFragmentDirections
+                                    .actionLoginFragmentToChangePasswordFragment(localUser.userId)
+                            )
+                        } else {
+
+                            if (!localUser.phoneVerified) {
+
+                                val phone =
+                                    localUser.phoneNumber
+
+                                if (phone.isNullOrBlank()) {
+
+                                    showToast(
+                                        getString(
+                                            R.string.error_phone_number_not_available
+                                        )
+                                    )
+
+                                    binding.loginButton.isEnabled = true
+
+                                    return@launch
+                                }
+
+                                val resp = try {
+
+                                    userViewModel.sendOtp(
+                                        userId = localUser.userId,
+                                        phone = phone,
+                                        purpose = ApnaBankConstants.LOGIN
+                                    )
+
+                                } catch (e: ApiException) {
+
+                                    Log.e(
+                                        "LoginFragment",
+                                        e.message.toString()
+                                    )
+
+                                    showToast(
+                                        getString(
+                                            R.string.error_server
+                                        )
+                                    )
+
+                                    binding.loginButton.isEnabled = true
+
+                                    return@launch
+                                }
+
+                                findNavController().navigate(
+                                    LoginFragmentDirections
+                                        .actionLoginFragmentToVerifyOtpFragment(
+                                            userId = localUser.userId,
+                                            userName = localUser.fullName,
+                                            phoneNumber = phone,
+                                            email = localUser.emailId,
+                                            purpose = ApnaBankConstants.LOGIN,
+                                            channel = Channel.WHATSAPP.name,
+                                            otpExpiresAtMillis =
+                                                resp.otpExpiresAtMillis,
+                                            shouldSetPin = false
+                                        )
+                                )
+
+                                return@launch
+                            } else {
+                                FirebaseAuth.getInstance().currentUser
+                                    ?.getIdToken(true)
+                                    ?.addOnSuccessListener {
+                                        Log.d("FirebaseAuth", "Token claims = ${it.claims}")
+                                    }
+                                // Add login logs
+                                userViewModel.addUsageLog(
+                                    userId = localUser.userId,
+                                    eventType = "LOGIN_PASSWORD"
+                                )
+                                findNavController().navigate(
+                                    LoginFragmentDirections
+                                        .actionLoginFragmentToUserSummaryFragment(localUser.userId)
+                                )
+                           }
+
+                        }
+                    }
+                },
+                onFailure = {
+                    binding.loginButton.isEnabled = true
+                    showToast(getString(R.string.error_authentication_failed))
+                }
+            )
+
+        }
+    }
+
     private fun sendOtp(phone: String) {
         val options = PhoneAuthOptions.newBuilder(auth)
             .setPhoneNumber("+91$phone")
@@ -473,8 +665,10 @@ class LoginFragment : Fragment() {
                             binding.loginButton.isEnabled = true
                         }
                     }, 60_000)
-                    Toast.makeText(requireContext(),
-                        getString(R.string.message_otp_sent), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.message_otp_sent), Toast.LENGTH_SHORT
+                    ).show()
                     Log.d("OTP_DEBUG", "currentUser=${FirebaseAuth.getInstance().currentUser}")
                 }
             }).build()
@@ -542,7 +736,11 @@ class LoginFragment : Fragment() {
                     }
                     val localUser = userDto.toEntity()
                     if (localUser == null) {
-                        Toast.makeText(requireContext(), getString(R.string.error_user_not_found), Toast.LENGTH_SHORT)
+                        Toast.makeText(
+                            requireContext(),
+                            getString(R.string.error_user_not_found),
+                            Toast.LENGTH_SHORT
+                        )
                             .show()
                         FirebaseAuth.getInstance().signOut()
                         binding.loginButton.isEnabled = true
@@ -608,5 +806,56 @@ class LoginFragment : Fragment() {
 
     private fun showToast(message: String) {
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showLanguageDialog() {
+
+        val dialogView = layoutInflater.inflate(
+            R.layout.dialog_language_selection,
+            null
+        )
+
+        val radioEnglish =
+            dialogView.findViewById<RadioButton>(R.id.radioEnglish)
+
+        val radioHindi =
+            dialogView.findViewById<RadioButton>(R.id.radioHindi)
+
+        // Preselect current language
+        val currentLang =
+            AppCompatDelegate.getApplicationLocales()[0]?.language
+
+        when (currentLang) {
+            "hi" -> radioHindi.isChecked = true
+            else -> radioEnglish.isChecked = true
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.title_select_language))
+            .setView(dialogView)
+            .setPositiveButton(getString(R.string.label_continue)) { _, _ ->
+
+                val languageCode =
+                    if (radioHindi.isChecked)
+                        "hi"
+                    else
+                        "en"
+
+                val appLocale =
+                    LocaleListCompat.forLanguageTags(languageCode)
+
+                AppCompatDelegate.setApplicationLocales(appLocale)
+
+                // Optional save in preferences
+                PreferencesHelper(requireContext())
+                    .saveLanguage(languageCode)
+
+                requireActivity().recreate()
+            }
+            .setNegativeButton(
+                getString(R.string.text_cancel_button),
+                null
+            )
+            .show()
     }
 }

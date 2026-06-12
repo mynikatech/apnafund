@@ -1,5 +1,6 @@
 package com.mynikatech.apnafund.net
 
+import com.mynikatech.apnafund.net.dto.AppUsageLogDto
 import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
 import com.mynikatech.apnafund.net.dto.FundWithDetailsDto
 import com.mynikatech.apnafund.net.dto.FundsDto
@@ -13,6 +14,8 @@ import com.mynikatech.apnafund.net.dto.RegisterOrUpdateUserRequest
 import com.mynikatech.apnafund.net.dto.SaveOrUpdateUserResponse
 import com.mynikatech.apnafund.net.dto.SendEmailVerificationReq
 import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
+import com.mynikatech.apnafund.net.dto.SendOtpReq
+import com.mynikatech.apnafund.net.dto.SendOtpResp
 import com.mynikatech.apnafund.net.dto.UpdateFirebaseUidReq
 import com.mynikatech.apnafund.net.dto.UserDetailsDto
 import com.mynikatech.apnafund.net.dto.UserFundDetailsDto
@@ -21,6 +24,7 @@ import com.mynikatech.apnafund.net.dto.UsersDto
 import com.mynikatech.apnafund.net.dto.UserProfileDto
 import com.mynikatech.apnafund.net.dto.UserWithGroupDto
 import com.mynikatech.apnafund.net.dto.VerifyEmailReq
+import com.mynikatech.apnafund.net.dto.VerifyOtpReq
 
 interface UsersApi {
     // CRUD
@@ -37,6 +41,8 @@ interface UsersApi {
     suspend fun countMatchingUsers(email: String, phone: String, excludeUserId: Int): Int
     suspend fun getUserByEmail(email: String): LoginUserResponse?
     suspend fun getUserByPhone(phone: String): LoginUserResponse?
+    suspend fun getUserByPhoneAndEmail(email: String, phone: String): LoginUserResponse?
+    suspend fun getUserByPhoneAndGroupCode(phone: String, groupCode: String): LoginUserResponse
     suspend fun validateUser(email: String, password: String): UsersDto?
     suspend fun checkUserPIN(userId: Int, pin: String): Boolean
     suspend fun doesGroupHasModerator(groupId: Int): Boolean
@@ -65,11 +71,14 @@ interface UsersApi {
     suspend fun registerOrUpdateUser(registerOrUpdateUserRequest: RegisterOrUpdateUserRequest): SaveOrUpdateUserResponse
     suspend fun verifyEmailOtp(req: VerifyEmailReq): Boolean
     suspend fun sendEmailVerification(req: SendEmailVerificationReq): SendEmailVerificationResp
+    suspend fun sendOtp(req: SendOtpReq ): SendOtpResp
+    suspend fun verifyOtp(req: VerifyOtpReq ): Boolean
     suspend fun isEmailVerified(userId: Int): Boolean
     suspend fun updateFirebaseUserId( req: UpdateFirebaseUidReq): Boolean
     suspend fun getFirebaseTokenForUser(userId: Int): FirebaseTokenResp
     suspend fun getUnreadNotificationCount(userId: Int): Int
     suspend fun markNotificationRead(notificationId: Int): Boolean
+    suspend fun addUsageLog(usage: AppUsageLogDto): Boolean
 }
 
 

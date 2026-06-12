@@ -3,7 +3,9 @@ package com.mynikatech.apnafund.util
 import android.util.Base64
 import androidx.room.TypeConverter
 import com.mynikatech.apnafund.ApnaFundApplication
+import com.mynikatech.apnafund.data.model.FundMemberWithName
 import com.mynikatech.apnafund.data.model.FundMembers
+import com.mynikatech.apnafund.data.model.GroupMemberWithName
 import com.mynikatech.apnafund.data.model.GroupMembers
 import com.mynikatech.apnafund.net.dto.UserFundMembership
 import com.mynikatech.apnafund.net.dto.UserGroupMembership
@@ -187,6 +189,60 @@ object Converters {
         else return false
 
 
+    }
+
+    fun FundMemberWithName.toFundMember(): FundMembers {
+
+        return FundMembers(
+            fundMemberId = fundMemberId,
+            userId = userId,
+            fundId = fundId,
+            joiningDate = joiningDate,
+            role = role,
+            status = status,
+            updatedAt = updatedAt,
+            updatedBy = updatedBy
+        )
+    }
+
+    fun GroupMemberWithName.toGroupMember(): GroupMembers {
+
+        return GroupMembers(
+            groupMemberId = groupMemberId,
+            userId = userId,
+            groupId = groupId,
+            joiningDate = joiningDate,
+            role = role,
+            status = status,
+            updatedAt = updatedAt,
+            updatedBy = updatedBy
+        )
+    }
+
+    fun formatMonthYear(
+        month: String?,
+        year: String?
+    ): String {
+
+        val monthName = when (month?.toIntOrNull()) {
+
+            1 -> "Jan"
+            2 -> "Feb"
+            3 -> "Mar"
+            4 -> "Apr"
+            5 -> "May"
+            6 -> "Jun"
+            7 -> "Jul"
+            8 -> "Aug"
+            9 -> "Sep"
+            10 -> "Oct"
+            11 -> "Nov"
+            12 -> "Dec"
+
+            else -> month ?: ""
+        }
+
+        return "$monthName $year"
     }
 
 }

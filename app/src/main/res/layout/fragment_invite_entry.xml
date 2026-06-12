@@ -48,16 +48,46 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
-                android:text="@string/msg_enter_email_to_continue"
+                android:text="@string/msg_enter_phone_code_to_continue"
                 android:textSize="14sp" />
 
             <!-- Email Input -->
+
+
+            <EditText
+                android:id="@+id/etPhone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:autofillHints=""
+                app:endIconDrawable="@drawable/ic_info"
+                app:endIconMode="custom"
+                android:background="@android:drawable/edit_text"
+                android:hint="@string/hint_enter_phone_number"
+                android:inputType="phone"
+                android:maxLength="10"
+                android:padding="12dp" />
+            <EditText
+                android:id="@+id/etInviteCode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:autofillHints=""
+                android:background="@android:drawable/edit_text"
+                android:hint="@string/hint_enter_invite_code"
+                android:inputType="textCapCharacters"
+                android:maxLength="20"
+                android:padding="12dp"
+                app:endIconDrawable="@drawable/ic_info"
+                app:endIconMode="custom" />
             <EditText
                 android:id="@+id/etEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:autofillHints=""
+                app:endIconDrawable="@drawable/ic_info"
+                app:endIconMode="custom"
                 android:background="@android:drawable/edit_text"
                 android:hint="@string/message_enter_email_id"
                 android:inputType="textEmailAddress"

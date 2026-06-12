@@ -28,5 +28,29 @@
         <item name="android:layout_width">24dp</item>
         <item name="android:layout_height">24dp</item>
     </style>
+    <style name="ApnaFundDropdown">
+
+        <item name="android:textColor">
+            ?attr/colorOnSurface
+        </item>
+
+        <item name="android:textSize">
+            14sp
+        </item>
+
+        <item name="android:minHeight">
+            28dp
+        </item>
+
+        <item name="android:paddingStart">
+            12dp
+        </item>
+
+        <item name="android:paddingEnd">
+            12dp
+        </item>
+    </style>
+
+
 
 </resources>

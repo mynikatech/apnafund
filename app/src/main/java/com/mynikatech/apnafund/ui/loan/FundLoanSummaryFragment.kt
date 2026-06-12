@@ -207,7 +207,8 @@ class FundLoanSummaryFragment : Fragment() {
                 tv.gravity = Gravity.END
 
             if (i == 1) {
-                tv.applyStatusStyle(value)
+                tv.setTextColor(getStatusColor(value))
+                tv.setTypeface(null, Typeface.BOLD)
             }
 
             if (i == 7) {
@@ -260,6 +261,39 @@ class FundLoanSummaryFragment : Fragment() {
         row.addView(actionLayout)
 
         binding.tableLoans.addView(row)
+    }
+
+    private fun getStatusColor(status: String): Int {
+
+        val context = requireContext()
+
+        return when (status.uppercase()) {
+
+            ApnaBankConstants.STATUS_ACTIVE ->
+                ContextCompat.getColor(
+                    context,
+                    R.color.status_approved_text
+                )
+
+            ApnaBankConstants.STATUS_CLOSED ->
+                ContextCompat.getColor(
+                    context,
+                    R.color.status_closed_text
+                )
+
+            ApnaBankConstants.STATUS_REJECTED ->
+                ContextCompat.getColor(
+                    context,
+                    R.color.status_rejected_text
+                )
+
+            else ->
+                MaterialColors.getColor(
+                    context,
+                    com.google.android.material.R.attr.colorOnSurface,
+                    Color.DKGRAY
+                )
+        }
     }
 
     private fun showDirectClosureConfirmation(loan: LoanDetailsWithMemberNames) {
@@ -367,9 +401,11 @@ class FundLoanSummaryFragment : Fragment() {
 
         val interest = approvedLoans.sumOf { it.currTotalIntPaid }
 
-        val pending = loans.count {
-            it.workflowStatus.equals(ApnaBankConstants.STATUS_PENDING, true)
-        }
+        val expectedInterest = approvedLoans.sumOf { it.totalInterest }
+
+//        val pending = loans.count {
+//            it.workflowStatus.equals(ApnaBankConstants.STATUS_PENDING, true)
+//        }
 
         binding.textTotalLoans.text = totalLoans.toString()
 
@@ -377,7 +413,7 @@ class FundLoanSummaryFragment : Fragment() {
 
         binding.textTotalInterest.text = Converters.formatCurrency(interest)
 
-        binding.textPendingLoans.text = pending.toString()
+        binding.textTotalExpInterest.text = Converters.formatCurrency(expectedInterest)
     }
 
     private fun getWorkflowColor(status: String): Int {

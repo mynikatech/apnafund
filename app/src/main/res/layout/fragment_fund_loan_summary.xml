@@ -13,7 +13,6 @@
         android:layout_height="?attr/actionBarSize"
         style="@style/ApnaFund.Toolbar"
         android:title="@string/text_fund_loan_summary"
-        app:navigationIconTint="@color/black"
         app:navigationIcon="@drawable/ic_back_arrow"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -54,7 +53,7 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight=".7"
             android:gravity="start"
             android:orientation="vertical">
 
@@ -62,7 +61,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/text_loans_header"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textColor="?attr/colorPrimary"/>
 
             <TextView
@@ -89,7 +88,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/text_outstanding"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textColor="?attr/colorPrimary"/>
 
             <TextView
@@ -115,8 +114,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/text_interest"
-                android:textSize="13sp"
+                android:text="@string/text_interest_earned"
+                android:textSize="12sp"
                 android:textColor="?attr/colorPrimary"/>
 
             <TextView
@@ -135,22 +134,22 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="1.3"
             android:gravity="start"
             android:orientation="vertical">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/heading_pending"
-                android:textSize="13sp"
+                android:text="Interest Expected"
+                android:textSize="12sp"
                 android:textColor="?attr/colorPrimary"/>
 
             <TextView
-                android:id="@+id/text_pending_loans"
+                android:id="@+id/text_total_exp_interest"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/text_zero"
+                android:text="@string/text_zero_amount"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="?attr/colorOnSurface"/>
@@ -162,18 +161,23 @@
     <!-- Table Header -->
 
     <!-- Horizontal scroll container for table -->
-
-    <HorizontalScrollView
-        android:id="@+id/scroll_table"
+    <androidx.core.widget.NestedScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:scrollbars="horizontal"
-        android:fillViewport="false"
+        android:scrollbars="vertical"
         android:fadeScrollbars="false"
         app:layout_constraintTop_toBottomOf="@id/summary_panel"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
+
+    <HorizontalScrollView
+        android:id="@+id/scroll_table"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:scrollbars="horizontal"
+        android:fillViewport="true"
+        android:fadeScrollbars="false">
 
         <TableLayout
             android:id="@+id/table_loans"
@@ -295,5 +299,6 @@
         </TableLayout>
 
     </HorizontalScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

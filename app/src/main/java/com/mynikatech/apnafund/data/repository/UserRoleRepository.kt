@@ -23,6 +23,7 @@ import com.mynikatech.apnafund.net.PinHistoryApi
 import com.mynikatech.apnafund.net.RolesApi
 import com.mynikatech.apnafund.net.UserRolesApi
 import com.mynikatech.apnafund.net.UsersApi
+import com.mynikatech.apnafund.net.dto.AppUsageLogDto
 import com.mynikatech.apnafund.net.dto.BootstrapData
 import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
 import com.mynikatech.apnafund.net.dto.GroupsDto
@@ -35,10 +36,13 @@ import com.mynikatech.apnafund.net.dto.RolesDto
 import com.mynikatech.apnafund.net.dto.SaveOrUpdateUserResponse
 import com.mynikatech.apnafund.net.dto.SendEmailVerificationReq
 import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
+import com.mynikatech.apnafund.net.dto.SendOtpReq
+import com.mynikatech.apnafund.net.dto.SendOtpResp
 import com.mynikatech.apnafund.net.dto.UpdateFirebaseUidReq
 import com.mynikatech.apnafund.net.dto.UserStatusResponse
 import com.mynikatech.apnafund.net.dto.UsersDto
 import com.mynikatech.apnafund.net.dto.VerifyEmailReq
+import com.mynikatech.apnafund.net.dto.VerifyOtpReq
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -252,6 +256,16 @@ class UserRoleRepository(
         return usersApi.getUserByPhone(phone)
     }
 
+    suspend fun getUserByPhoneAndEmail(email: String, phone: String): LoginUserResponse? {
+        return usersApi.getUserByPhoneAndEmail(email, phone)
+    }
+
+    suspend fun getUserByPhoneAndGroupCode(phone: String, groupCode: String ): LoginUserResponse =
+        usersApi.getUserByPhoneAndGroupCode(
+            phone,
+            groupCode
+        )
+
     suspend fun checkUserPIN(userId: Int, pin: String): Boolean {
         return usersApi.checkUserPIN(userId, pin)
     }
@@ -379,6 +393,37 @@ class UserRoleRepository(
         )
     }
 
+    suspend fun sendOtp(
+        userId: Int,
+        phoneNumber: String,
+        purpose: String
+    ): SendOtpResp {
+        return usersApi.sendOtp(
+            SendOtpReq(
+                userId = userId,
+                phoneNumber = phoneNumber,
+                purpose = purpose
+            )
+        )
+    }
+
+    suspend fun verifyOtp(
+        otp: String,
+        userId: Int,
+        purpose: String,
+        channel: String
+    ): Boolean {
+
+        return usersApi.verifyOtp(
+            VerifyOtpReq(
+                otp = otp,
+                userId = userId,
+                purpose = purpose,
+                channel = channel
+            )
+        )
+    }
+
     suspend fun resendEmailVerification(
         userId: Int,
         email: String,
@@ -426,5 +471,12 @@ class UserRoleRepository(
 
     suspend fun checkUserStatus(email: String): UserStatusResponse {
         return userRolesApi.checkUserStatus(email)
+    }
+
+    suspend fun addUsageLog(
+        usage: AppUsageLogDto
+    ): Boolean {
+
+        return usersApi.addUsageLog(usage)
     }
 }

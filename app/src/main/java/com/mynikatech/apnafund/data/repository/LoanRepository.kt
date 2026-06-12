@@ -65,6 +65,7 @@ class LoanRepository(
         return loansApi.getAllLoanDetailsForFundForUser(fundId, userId).toEntity()
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun saveOrUpdateAllAndFetch(
         loanEmis: List<LoanEmis>,
         fundId: Int,
@@ -72,8 +73,25 @@ class LoanRepository(
         year: String
     ): List<LoanEmiWithMemberNames> {
 
-        return loansApi.saveOrUpdateAllLoanEmisAndFetch(loanEmis.toDto(), fundId, month, year)
-            .toEntity()
+        val allLoans =
+            loansApi.saveOrUpdateAllLoanEmisAndFetch(
+                loanEmis.toDto(),
+                fundId,
+                month,
+                year
+            )
+
+        val validLoans = allLoans.filter {
+            isLoanActiveInMonthYear(
+                it.issuedDate,
+                it.period,
+                it.maturityDate,
+                month.toInt(),
+                year.toInt()
+            )
+        }
+
+        return validLoans.toEntity()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

@@ -9,6 +9,7 @@ import com.mynikatech.apnafund.data.model.Groups
 import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.util.ApnaBankDate
+import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -42,8 +43,8 @@ class GroupViewModel : ViewModel() {
         }
     }
 
-    suspend fun updateGroupMember(updatedMember: GroupMembers) {
-        groupRepository.updateGroupMember(updatedMember)
+    suspend fun updateGroupMember(updatedMember: GroupMembers): HttpResponse {
+        return groupRepository.updateGroupMember(updatedMember)
     }
 
     fun fetchAllGroups(): Flow<List<Groups>> {

@@ -1,8 +1,6 @@
 package com.mynikatech.apnafund.data.repository
 
 import android.util.Log
-import com.mynikatech.apnafund.data.dao.GroupMembersDao
-import com.mynikatech.apnafund.data.dao.GroupsDao
 import com.mynikatech.apnafund.data.mappers.toDto
 import com.mynikatech.apnafund.data.mappers.toEntity
 import com.mynikatech.apnafund.data.model.GroupMemberWithName
@@ -10,12 +8,12 @@ import com.mynikatech.apnafund.data.model.GroupMembers
 import com.mynikatech.apnafund.data.model.Groups
 import com.mynikatech.apnafund.net.GroupsApi
 import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
+import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.withContext
 
 class GroupRepository(
     private val api: GroupsApi
@@ -41,7 +39,7 @@ class GroupRepository(
         }
     } */
 
-     suspend fun createGroup(group: Groups) {
+    suspend fun createGroup(group: Groups) {
         api.addGroup(group.toDto())
     }
 
@@ -79,8 +77,8 @@ class GroupRepository(
         api.addGroupMember(groupMembers)
     }
 
-    suspend fun updateGroupMember(groupMembers: GroupMembers) {
-        api.updateGroupMember(groupMembers)
+    suspend fun updateGroupMember(groupMembers: GroupMembers): HttpResponse {
+        return api.updateGroupMember(groupMembers)
     }
 
     suspend fun fetchAllMembersforGroup(groupId: Int): List<GroupMembers> {
@@ -93,6 +91,7 @@ class GroupRepository(
     ): List<GroupMemberWithName> {
         return api.getAllMembersofGroupWithNames(groupId, onlyActive).toEntity()
     }
+
     suspend fun checkIfGroupMemberAlreadyAdded(userId: Int, groupId: Int): Boolean {
         return api.checkIfGroupMemberAlreadyAdded(userId, groupId)
     }

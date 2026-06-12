@@ -41,6 +41,7 @@ import com.mynikatech.apnafund.net.dto.UserDisplay
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.loan.AddLoanDialog
 import com.mynikatech.apnafund.ui.viewmodel.FundSharedViewModel
+import com.mynikatech.apnafund.ui.viewmodel.AdminSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.FundViewModel
 import com.mynikatech.apnafund.ui.viewmodel.GroupSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.GroupViewModel
@@ -49,6 +50,7 @@ import com.mynikatech.apnafund.ui.viewmodel.UserSummaryViewModel
 import com.mynikatech.apnafund.util.ApnaBankDate
 import com.mynikatech.apnafund.util.Converters
 import com.mynikatech.apnafund.util.FundInputValidator
+import com.mynikatech.apnafund.util.showSuccessSnackbar
 import com.mynikatech.apnafund.util.toUserFundMembership
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -76,6 +78,8 @@ class FundFragment : Fragment() {
     private val fundSharedViewModel: FundSharedViewModel by activityViewModels()
 
     private val groupSharedViewModel: GroupSharedViewModel by activityViewModels()
+
+    private val sharedAdminViewModel: AdminSharedViewModel by activityViewModels()
 
     val isAdmin = SessionManager.isAdmin()
     private val moderatorGroupId = SessionManager.groupId ?: -1
@@ -253,6 +257,7 @@ class FundFragment : Fragment() {
         dialog.show()
         var groupId = -1
         var moderator = -1
+        val needsTabRefresh = !SessionManager.canManageDeposits()
         fun updateCreatorMembershipUiState(
             moderatorId: Int
         ) {
@@ -554,6 +559,9 @@ class FundFragment : Fragment() {
                         )
                     }
                     fundSharedViewModel.refreshFunds()
+                    if (needsTabRefresh && SessionManager.canManageDeposits()) {
+                        sharedAdminViewModel.refreshAdminTabs()
+                    }
                     binding.noFundMessageContainer.visibility = View.GONE
                     if (fundDetailsToSave.totalCurrentDeposit > 0) {
                         Toast.makeText(
@@ -694,6 +702,10 @@ class FundFragment : Fragment() {
         groupId: Int,
         moderator: Int
     ) {
+        Log.d(
+            "SAVE_DEBUG",
+            "groupId=$groupId moderator=$moderator"
+        )
         dialogBinding.buttonSaveFund.isEnabled =
             validateInputs(dialogBinding, groupId, moderator)
 
@@ -708,6 +720,10 @@ class FundFragment : Fragment() {
         groupId: Int,
         moderator: Int
     ): Boolean {
+        Log.d(
+            "SAVE_DEBUG",
+            "validate groupId=$groupId moderator=$moderator"
+        )
         return FundInputValidator.isAllInputValid(
             fundName = dialogBinding.editTextFundName.text?.toString(),
             startDate = dialogBinding.editTextFundStartDate.text?.toString(),
@@ -813,6 +829,9 @@ class FundFragment : Fragment() {
                         autoapprove = true,
                         requestorId = SessionManager.userId
                     )
+                    showSuccessSnackbar(
+                        getString(R.string.message_loan_created_approved)
+                    )
                 }
             }
             dialog.show(parentFragmentManager, ApnaBankConstants.TEXT_ADD_LOAN_DIALOG)
@@ -884,7 +903,14 @@ class FundFragment : Fragment() {
             dialogBinding.editTextModerator.setAdapter(adapter)
 
             // Pre-select if editing existing fund
-            val preselectUserId = existingFund?.moderator ?: defaultModerator
+            val preselectUserId = when {
+                existingFund != null -> existingFund.moderator
+
+                members.any { it.userId == SessionManager.userId } ->
+                    SessionManager.userId
+
+                else -> defaultModerator
+            }
             val preselectUser = members.find { it.userId == preselectUserId }
             if (preselectUser != null) {
                 val name = preselectUser.displayName
@@ -903,7 +929,10 @@ class FundFragment : Fragment() {
 
 
                 // still notify selection
-                onDataReady(members,preselectUser?.userId )
+                onDataReady(
+                    members,
+                    preselectUser?.userId ?: singleUser.userId
+                )
 
                 return@launch
             } else {

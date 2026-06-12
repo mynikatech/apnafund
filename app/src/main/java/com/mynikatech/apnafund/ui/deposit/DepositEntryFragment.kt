@@ -13,6 +13,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TableRow
 import android.widget.TextView
@@ -21,6 +22,7 @@ import androidx.annotation.RequiresApi
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.snackbar.Snackbar
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.data.model.Deposits
@@ -333,10 +335,27 @@ class DepositEntryFragment : BaseEntryFragment() {
                 override fun afterTextChanged(s: Editable?) {}
             })
         }
+        val lateFeeContainer = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        val textSuggestedLateFee = TextView(requireContext()).apply {
+
+            textSize = 10f
+
+            setTextColor(Color.GRAY)
+
+            visibility = View.GONE
+        }
         val lateFee = EditText(requireContext()).apply {
-            inputType = InputType.TYPE_CLASS_TEXT
+            inputType =
+                InputType.TYPE_CLASS_NUMBER or
+                        InputType.TYPE_NUMBER_FLAG_DECIMAL
+
             isEnabled = false
         }
+        lateFeeContainer.addView(lateFee)
+
+        lateFeeContainer.addView(textSuggestedLateFee)
 
         val etDate = EditText(requireContext()).apply {
             inputType = InputType.TYPE_CLASS_DATETIME
@@ -358,9 +377,22 @@ class DepositEntryFragment : BaseEntryFragment() {
                         ApnaBankDate.createDateString(lastDepDate, month, year)
                     val lateFine =
                         calculateLateFee(text.toString(), formatedLastDepDate, lateFeeRate)
-                    if (lateFine > 0) {
+                    /*if (lateFine > 0) {
                         lateFee.setText(lateFine.toString())
 
+                    }*/
+                    if (lateFine > 0) {
+
+                        textSuggestedLateFee.text =
+                            "Sug. ${lateFine.toInt()}"
+
+                        textSuggestedLateFee.visibility =
+                            View.VISIBLE
+
+                    } else {
+
+                        textSuggestedLateFee.visibility =
+                            View.GONE
                     }
                 }
 
@@ -376,7 +408,38 @@ class DepositEntryFragment : BaseEntryFragment() {
         if (deposit?.depositAmount != null) {
             etAmount.setText(deposit.depositAmount.toString())
             etDate.setText(deposit.depositedDate)
-            lateFee.setText(deposit.lateFee.toString())
+            if ((deposit.lateFee ?: 0.0) > 0) {
+
+                lateFee.setText(
+                    deposit.lateFee.toString()
+                )
+
+            } else {
+
+                lateFee.setText("")
+            }
+            val formatedLastDepDate =
+                ApnaBankDate.createDateString(
+                    lastDepDate,
+                    month,
+                    year
+                )
+
+            val suggestedLateFee =
+                calculateLateFee(
+                    deposit.depositedDate!!,
+                    formatedLastDepDate,
+                    lateFeeRate
+                )
+
+            if (suggestedLateFee > 0) {
+
+                textSuggestedLateFee.text =
+                    "Sug. ${suggestedLateFee.toInt()}"
+
+                textSuggestedLateFee.visibility =
+                    View.VISIBLE
+            }
             etAmount.isEnabled = false
             etDate.isEnabled = false
             lateFee.isEnabled = false
@@ -387,17 +450,79 @@ class DepositEntryFragment : BaseEntryFragment() {
             // will implement later
             setButtonState(btnEdit, enabled = true)
 
-            row.setBackgroundColor(Color.LTGRAY)
+            row.setBackgroundColor(
+                MaterialColors.getColor(
+                    row,
+                    com.google.android.material.R.attr.colorSurfaceContainerHighest
+                )
+            )
+            var isEditing = false
+            val originalAmount =
+                etAmount.text.toString()
 
+            val originalDate =
+                etDate.text.toString()
+
+            val originalLateFee =
+                lateFee.text.toString()
             btnEdit.setOnClickListener {
-                etAmount.isEnabled = true
-                etDate.isEnabled = true
-                lateFee.isEnabled = true
-                hasAnyDepositEdits = true
-                deposit.isEdited = true
-                binding.buttonSaveAll.isEnabled = true
-                setButtonState(btnEdit, enabled = false)
-                row.setBackgroundColor(Color.TRANSPARENT)
+
+                if (!isEditing) {
+
+                    // ENTER EDIT MODE
+
+                    etAmount.isEnabled = true
+                    etDate.isEnabled = true
+                    lateFee.isEnabled = true
+
+                    hasAnyDepositEdits = true
+
+                    deposit.isEdited = true
+
+                    binding.buttonSaveAll.isEnabled = true
+
+                    btnEdit.setImageResource(
+                        R.drawable.ic_cancel
+                    )
+
+                    row.setBackgroundColor(
+                        MaterialColors.getColor(
+                            row,
+                            com.google.android.material.R.attr.colorSurface
+                        )
+                    )
+
+                    isEditing = true
+
+                } else {
+
+                    // CANCEL EDIT
+
+                    etAmount.setText(originalAmount)
+
+                    etDate.setText(originalDate)
+
+                    lateFee.setText(originalLateFee)
+
+                    etAmount.isEnabled = false
+                    etDate.isEnabled = false
+                    lateFee.isEnabled = false
+
+                    btnEdit.setImageResource(
+                        R.drawable.ic_edit
+                    )
+
+                    row.setBackgroundColor(
+                        MaterialColors.getColor(
+                            row,
+                            com.google.android.material.R.attr.colorSurfaceContainerHighest
+                        )
+                    )
+
+                    deposit.isEdited = false
+
+                    isEditing = false
+                }
             }
         } else {
             etAmount.isEnabled = true
@@ -406,12 +531,20 @@ class DepositEntryFragment : BaseEntryFragment() {
             deposit?.isEdited = true
             setButtonState(btnEdit, enabled = false)
             etDate.setText(ApnaBankDate.getCurrentDate())
-            row.setBackgroundColor(Color.TRANSPARENT)
+            etAmount.setText(
+                recurringDepAmt.toString()
+            )
+            row.setBackgroundColor(
+                MaterialColors.getColor(
+                    row,
+                    com.google.android.material.R.attr.colorSurface
+                )
+            )
         }
 
         row.addView(tvName)
         row.addView(etAmount)
-        row.addView(lateFee)
+        row.addView(lateFeeContainer)
         row.addView(etDate)
         row.addView(btnEdit)
 
@@ -473,7 +606,8 @@ class DepositEntryFragment : BaseEntryFragment() {
                             Snackbar.LENGTH_SHORT
                         )
                             .show()
-                        fundSharedViewModel.refreshFunds()
+                        fundSharedViewModel.refreshFunds(fundId)
+                        fundSharedViewModel.shouldForceRefreshFundDetails = true
                         hasAnyDepositEdits = false
 
                     } else {
@@ -492,7 +626,9 @@ class DepositEntryFragment : BaseEntryFragment() {
                             Snackbar.LENGTH_SHORT
                         )
                             .show()
-                        fundSharedViewModel.refreshFunds()
+                        fundSharedViewModel.refreshFunds(fundId)
+                        fundSharedViewModel.shouldForceRefreshFundDetails = true
+
                     }
                 } else {
                     Snackbar.make(
@@ -515,12 +651,23 @@ class DepositEntryFragment : BaseEntryFragment() {
         selectedYear: Int
     ): List<Deposits> {
         val deposits = mutableListOf<Deposits>()
+        val fundMembers =
+            fundViewModel.getFundMembersWithNamesForFund(fundId)
+
+        val memberMap =
+            fundMembers.associateBy {
+                "${it.firstName} ${it.lastName}"
+            }
         for (i in 1 until binding.tableDepositEntries.childCount) {
             val row = binding.tableDepositEntries.getChildAt(i) as TableRow
             val tvName = row.getChildAt(0) as TextView
             val etAmount = row.getChildAt(1) as EditText
             val etDate = row.getChildAt(3) as EditText
-            val lateFee = row.getChildAt(2) as EditText
+            val lateFeeContainer =
+                row.getChildAt(2) as LinearLayout
+
+            val lateFee =
+                lateFeeContainer.getChildAt(0) as EditText
 
             val name = tvName.text.toString()
             val amountText = etAmount.text.toString()
@@ -529,7 +676,7 @@ class DepositEntryFragment : BaseEntryFragment() {
 
             if (amountText.isBlank()) continue
 
-            val member = fundViewModel.getMemberByNameForFund(name, fundId) ?: continue
+            val member = memberMap[name] ?: continue
 
             deposits.add(
                 Deposits(

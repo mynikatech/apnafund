@@ -293,7 +293,7 @@
     <string name="error_user_not_found_register_first">User not found. Please register first</string>
     <string name="error_login_failed">Login failed. Please try again.</string>
     <string name="error_email_and_pwd_required">Email and Password required</string>
-    <string name="user_not_found_register_norml_user">User not found. Please register as moderator first or request moderator to invite</string>
+    <string name="user_not_found_register_norml_user">User not found. Please register as moderator first or request moderator to invite. If Invited please use the invite link to verify account</string>
     <string name="error_password_not_set">Password is not set. Please set password.</string>
     <string name="error_incorrect_password">Incorrect Password</string>
     <string name="error_authentication_failed">Authentication failed. Please try again.</string>
@@ -536,7 +536,7 @@
     <string name="link_received_invite">Received an invite?</string>
     <string name="title_no_invite_found">No Invite Found</string>
     <string name="dialog_no_invite_found_message">
-    We couldn’t find an invite for this email.\n\n
+    We couldn’t find an invite for this code and phone.\n\n
     If you believe this is a mistake, please contact your group moderator.\n\n
     Would you like to register instead?
     </string>
@@ -574,6 +574,155 @@
     <string name="msg_user_added_group_success">User added to group successfully</string>
     <string name="label_primary_moderator_owner">Primary Moderator/Owner:</string>
     <string name="label_primary_moderator_tilda">Primary Moderator ~</string>
+    <string name="label_fund_moderator">Fund Moderator</string>
+    <string name="hint_enter_phone_number">Please Enter Phone Number</string>
+    <string name="error_enter_10_digit_phone_number">Please enter a 10 digit phone number</string>
+    <string name="title_account_setup_pending">Account Setup Pending</string>
+    <string name="message_use_invite_flow">Please complete your account setup using the Invite link below.</string>
+    <string name="label_user_name">User Name</string>
+    <string name="error_cannot_deaxtivate_member_fund">Member cannot be deactivated because deposit entries already exist.</string>
+    <string name="title_alert">Alert</string>
+    <string name="message_confirm_member_status_change">
+    Are you sure you want to %1$s %2$s %3$s from this fund?
+    </string>
+    <string name="message_confirm_group_member_status_change">
+    Are you sure you want to %1$s %2$s %3$s from this group?
+    </string>
+    <string name="title_confirm_action">Confirm Action</string>
+    <string name="error_group_member_active_funds">
+    User is active in one or more active funds. Deactivate from all funds first.
+    </string>
+    <string name="message_loan_created_approved">
+    Loan created and approved successfully
+    </string>
 
+    <string name="message_loan_sent_approval">
+    Loan request submitted for approval
+    </string>
+    <string name="menu_item_language">Change Language</string>
+    <string name="title_select_language">
+    Select Language
+    </string>
+    <string name="button_share_summary">
+    Share Summary
+    </string>
+    <string name="link_export_summary">
+    Export Summary
+    </string>
+    <string name="text_loan_maturity_date">Maturity Date</string>
+    <string name="msg_group_updated_success">Group Updated Successfully</string>
+    <string name="text_deposit_month">Deposit Month</string>
+    <string name="text_fund_summary_line_1">
+    Start: %1$s   End: %2$s   Members: %3$d
+    </string>
+
+    <string name="text_fund_summary_line_2">
+    Deposit: %1$s   Curr Amt: %2$s   Maturity: %3$s
+    </string>
+    <string name="label_start">Start</string>
+    <string name="label_end">End</string>
+    <string name="label_members">Members</string>
+    <string name="label_deposit">Deposit</string>
+    <string name="label_curramt">Curr Amt</string>
+    <string name="label_maturity">Maturity</string>
+    <string name="text_interest_earned">Interest Earned</string>
+    <string name="text_loan_issued">Loan Issued</string>
+    <string name="text_loan_prepayment">Loan Prepayment</string>
+    <string name="text_fees">Fees</string>
+    <string name="title_monthly_fund_summary">Monthly Fund Summary</string>
+    <string name="text_summary_deposit">
+    Total Deposit
+    </string>
+
+    <string name="text_summary_loans">
+    Total Loans
+    </string>
+
+    <string name="text_summary_interest">
+    Total Interest
+    </string>
+
+    <string name="text_summary_fees">
+    Total Fees
+    </string>
+
+    <string name="text_summary_prepayment">
+    Total Prepaid
+    </string>
+
+    <string name="text_summary_members">
+    Total Members
+    </string>
+    <string name="title_export_summary">
+    Share Summary\n(PDF recommended for large summaries)
+    </string>
+
+    <string name="text_share_as_image">
+    Share as Image (PNG)
+    </string>
+
+    <string name="text_share_as_pdf">
+    Share as PDF
+    </string>
+    <string name="link_monthly_summary">Monthly Summary</string>
+
+    <string name="msg_enter_phone_code_to_continue">Enter your Phone and Code to continue</string>
+    <string name="hint_enter_invite_code">Please Enter Invite Code</string>
+    <string name="title_invite_code_info">Invite Code</string>
+    <string name="info_invite_code">
+    Enter the invite code shared with you in your invitation message.
+    </string>
+    <string name="error_invite_code_required">Invite code is required</string>
+    <string name="error_invalid_invite_code">Invalid invite code</string>
+    <string name="error_phone_and_pwd_required">Phone Number and Password required</string>
+    <string name="msg_forgot_password_phone">
+    Enter your registered phone number. A verification code will be sent to you via WhatsApp.
+    </string>
+
+    <string name="error_no_user_found_phone">
+    No user found with this phone number.
+    </string>
+
+    <string name="error_enter_valid_phone">
+    Please enter a valid 10-digit phone number.
+    </string>
+    <string name="title_verify_code">Verify Code</string>
+
+    <string name="message_verification_code_sent">
+    We sent a 6-digit verification code to:
+    </string>
+
+    <string name="text_verify">Verify</string>
+
+    <string name="cancel_verification_message">
+    Cancel Verification?
+    </string>
+
+    <string name="message_cancel_verification">
+    If you leave this screen, the verification process will be cancelled.
+    </string>
+
+    <string name="message_cancel_verification_login">
+    If you leave this screen, you will be redirected to Login and must restart verification.
+    </string>
+
+    <string name="successful_verification_message">
+    Verification successful
+    </string>
+    <string name="link_show_invite_code">Show Invite Code</string>
+    <string name="title_invite_code">Invite Code</string>
+    <string name="message_invite_code_dialog">
+    Group: %1$s
+
+    Invite Code: %2$s
+
+    Share this code with members when inviting them.
+    </string>
+    <string name="button_copy_code">Copy Code</string>
+    <string name="message_invite_code_copied">Invite code copied</string>
+    <string name="button_close">Close</string>
+    <string name="error_phone_number_not_available">
+    No phone number is associated with this account. Please contact support.
+    </string>
 
 </resources>

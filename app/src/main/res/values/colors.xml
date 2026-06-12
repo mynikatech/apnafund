@@ -29,7 +29,6 @@
     <color name="table_header_bg">#C0C0C0</color>
 
     <color name="status_closed_bg">#F66A5A</color>   <!-- soft red -->
-    <color name="status_closed_text">#B3261E</color>
 
     <color name="text_primary">#0F1012</color>
     <color name="text_secondary">#475569</color>
@@ -49,5 +48,9 @@
     <color name="input_hint">#475569</color>         <!-- readable hint -->
     <color name="table_row_even">#FFFFFF</color>
     <color name="table_row_odd">#F5F5F5</color>
+
+    <color name="status_approved_text">#388E3C</color>
+    <color name="status_closed_text">#757575</color>
+    <color name="status_rejected_text">#D32F2F</color>
 
 </resources>

@@ -29,6 +29,11 @@ class FundDepositAdapter(private val deposits: List<Deposits>) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(deposit: Deposits) {
             binding.apply {
+                textMonthYear.text =
+                    Converters.formatMonthYear(
+                        deposit.depositMonth,
+                        deposit.depositYear
+                    )
                 textDate.text = deposit.depositedDate
                 textAmount.text = Converters.formatCurrency(deposit.depositAmount)
                 if (deposit.lateFee != null && deposit.lateFee >= 0)

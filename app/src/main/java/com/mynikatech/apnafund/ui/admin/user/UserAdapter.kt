@@ -11,7 +11,6 @@ import com.mynikatech.apnafund.constants.ApnaBankConstants
 import com.mynikatech.apnafund.data.model.UserWithGroup
 import com.mynikatech.apnafund.databinding.ItemUserRowBinding
 import com.mynikatech.apnafund.session.SessionManager
-import com.mynikatech.apnafund.util.Converters
 
 class UserAdapter(
     private val onEdit: (UserWithGroup) -> Unit,
@@ -29,8 +28,13 @@ class UserAdapter(
             binding.textSerial.text = "${position + 1}"
 
             // Text fields (same as your createTableCell)
-            binding.textFirstName.text = user.firstName
-            binding.textLastName.text = user.lastName
+            binding.textUserName.text =
+                listOfNotNull(
+                    user.firstName,
+                    user.lastName
+                )
+                    .filter { it.isNotBlank() }
+                    .joinToString(" ")
             binding.textEmail.text = user.emailId
             binding.textPhone.text = user.phoneNumber
             binding.textGroup.text = user.groupName
@@ -84,18 +88,55 @@ class UserAdapter(
     override fun getItemCount() = items.size
 
     fun updateList(newItems: List<UserWithGroup>) {
+
+        val oldItems = items
+
         val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
-            override fun getOldListSize() = items.size
+
+            override fun getOldListSize() = oldItems.size
+
             override fun getNewListSize() = newItems.size
 
-            override fun areItemsTheSame(oldPos: Int, newPos: Int) =
-                items[oldPos].userId == newItems[newPos].userId
+            override fun areItemsTheSame(oldPos: Int, newPos: Int): Boolean {
+                return oldItems[oldPos].userId == newItems[newPos].userId
+            }
 
-            override fun areContentsTheSame(oldPos: Int, newPos: Int) =
-                items[oldPos] == newItems[newPos]
+            override fun areContentsTheSame(oldPos: Int, newPos: Int): Boolean {
+                return oldItems[oldPos] == newItems[newPos]
+            }
         })
 
-        items = newItems
+        items = newItems.toList()
+
         diff.dispatchUpdatesTo(this)
+
+        // Rebind serial numbers
+        notifyItemRangeChanged(0, items.size, "serial_update")
+    }
+
+    fun addUser(user: UserWithGroup) {
+
+        val updatedList = items.toMutableList()
+
+        updatedList.add(0, user)
+
+        updateList(updatedList)
+
+
+    }
+
+    fun updateUser(user: UserWithGroup) {
+
+        val updatedList = items.toMutableList()
+
+        val index = updatedList.indexOfFirst {
+            it.userId == user.userId
+        }
+
+        if (index != -1) {
+            updatedList[index] = user
+        }
+
+        updateList(updatedList)
     }
 }

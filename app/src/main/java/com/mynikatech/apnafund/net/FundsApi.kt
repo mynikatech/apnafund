@@ -1,16 +1,16 @@
 package com.mynikatech.apnafund.net
 
-import com.mynikatech.apnafund.data.model.FundMembers
 import com.mynikatech.apnafund.net.dto.AvailableFundMemberDto
 import com.mynikatech.apnafund.net.dto.CloseFundRequest
 import com.mynikatech.apnafund.net.dto.FundAvailabilityDto
 import com.mynikatech.apnafund.net.dto.FundDetailsDto
+import com.mynikatech.apnafund.net.dto.FundMemberFinancialSummaryDto
 import com.mynikatech.apnafund.net.dto.FundMemberWithNameDto
-import com.mynikatech.apnafund.net.dto.FundsDto
 import com.mynikatech.apnafund.net.dto.FundMembersDto
 import com.mynikatech.apnafund.net.dto.FundUpdateRequestDto
 import com.mynikatech.apnafund.net.dto.FundWithDetailsDto
-import com.mynikatech.apnafund.net.dto.UsersDto
+import com.mynikatech.apnafund.net.dto.FundsDto
+import com.mynikatech.apnafund.net.dto.MonthlyFinancialSummaryResponseDto
 import kotlinx.coroutines.flow.Flow
 
 interface FundsApi {
@@ -29,11 +29,22 @@ interface FundsApi {
     suspend fun updateFund(id: Int, dto: FundsDto)
     suspend fun deleteFund(id: Int): Boolean
     suspend fun getRateOfInterestforFund(fundId: Int): Double
-    suspend fun addFundWithDetails(dto: FundsDto, details: FundDetailsDto, requestorId: Int, excludeCreator: Boolean): Int
+    suspend fun addFundWithDetails(
+        dto: FundsDto,
+        details: FundDetailsDto,
+        requestorId: Int,
+        excludeCreator: Boolean
+    ): Int
 
     // Members
     suspend fun getAllFundMembers(fundId: Int): List<FundMembersDto>
-    suspend fun getFundMembersWithNamesForFund(fundId: Int): List<FundMemberWithNameDto>
+    suspend fun getFundMembersWithNamesForFund(
+        fundId: Int,
+        status: String
+    ): List<FundMemberWithNameDto>
+
+    suspend fun getFundMembersFinancialSummForFund(fundId: Int): List<FundMemberFinancialSummaryDto>
+    suspend fun getFundMembersMonthlyFinancialSummForFund(fundId: Int, month: Int, year: Int): MonthlyFinancialSummaryResponseDto
     suspend fun addFundMember(dto: FundMembersDto): Int
     suspend fun addFundMembers(fundMembers: List<FundMembersDto>): List<Int>
     suspend fun removeFundMember(fundMemberId: Int): Boolean
@@ -48,5 +59,5 @@ interface FundsApi {
     suspend fun getTotalAvailableFundAmount(fundId: Int): FundAvailabilityDto?
     suspend fun getAvailableFundMembers(groupId: Int, fundId: Int): List<AvailableFundMemberDto>
     suspend fun updateFundWithDetails(fundUpdatereq: FundUpdateRequestDto)
-    suspend fun closeFund(fundId: Int, request: CloseFundRequest )
+    suspend fun closeFund(fundId: Int, request: CloseFundRequest)
 }

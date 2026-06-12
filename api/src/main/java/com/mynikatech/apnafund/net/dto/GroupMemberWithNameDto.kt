@@ -10,9 +10,12 @@ data class GroupMemberWithNameDto(
     val joiningDate: String,
     val firstName: String,
     val lastName: String,
-    val emailId: String,
+    val emailId: String?,
+    val phoneNumber: String?,
     val role: String,
-    val status: String
+    val status: String,
+    val updatedAt: Long? = null,
+    val updatedBy: Int? = null
 ) {
     val fullName: String get() = "$firstName $lastName"
 }

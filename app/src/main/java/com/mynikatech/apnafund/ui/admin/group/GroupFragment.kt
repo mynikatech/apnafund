@@ -397,11 +397,22 @@ class GroupFragment : Fragment() {
                     val description = dialogBinding.editTextGroupDesc.text
                         .toString()
                         .trim()
-                    val status = if (isAdmin) {
-                        ApnaBankConstants.STATUS_ACTIVE
-                    } else {
-                        ApnaBankConstants.STATUS_PENDING
-                    }
+                    val status =
+                        if (addOrEditFlag == 1) {
+
+                            // EDIT → keep existing status
+                            existingGroup?.status
+                                ?: ApnaBankConstants.STATUS_ACTIVE
+
+                        } else {
+
+                            // NEW CREATE
+                            if (isAdmin) {
+                                ApnaBankConstants.STATUS_ACTIVE
+                            } else {
+                                ApnaBankConstants.STATUS_PENDING
+                            }
+                        }
                     val existingGroupWithoutMod = existingGroup?.toEntity()
                     val groupToSave = existingGroupWithoutMod?.copy(
                         groupName = groupName,
@@ -418,11 +429,16 @@ class GroupFragment : Fragment() {
                     )
                     groupViewModel.saveOrUpdateGroup(groupToSave)
 
-                    val message = if (isAdmin) {
-                        getString(R.string.message_group_created_success)
-                    } else {
-                        getString(R.string.message_group_request_submitted_for_approval)
+                    val message = when {
 
+                        addOrEditFlag == 1 ->
+                            getString(R.string.msg_group_updated_success)
+
+                        isAdmin ->
+                            getString(R.string.message_group_created_success)
+
+                        else ->
+                            getString(R.string.message_group_request_submitted_for_approval)
                     }
 
                     Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()

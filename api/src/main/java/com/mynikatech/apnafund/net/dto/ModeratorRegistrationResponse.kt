@@ -10,6 +10,9 @@ data class ModeratorRegistrationResponse(
     // Email verification state
     val emailVerified: Boolean = false,
 
+    // Phone verification state
+    val phoneVerified: Boolean = false,
+
     // OTP expiry (ISO-8601 UTC), present only if verification required
     val emailOtpExpiresAtMillis : Long? = null
 )

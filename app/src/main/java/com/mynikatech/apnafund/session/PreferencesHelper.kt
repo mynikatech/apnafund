@@ -18,7 +18,7 @@ class PreferencesHelper(context: Context) {
         isPinSet: Boolean = false,
         firstName: String,
         lastName: String,
-        emailId: String,
+        emailId: String?,
         phoneNumber: String,
         firebaseUid: String,
         groupName: String
@@ -77,7 +77,21 @@ class PreferencesHelper(context: Context) {
     }
 
     fun clearSession() {
-        prefs.edit { clear() }
+        prefs.edit {
+            remove("user_id")
+            remove("user_name")
+            remove("role_ids")
+            remove("role_names")
+            remove("group_id")
+            remove("token")
+            remove("groupName")
+            remove("is_pin_set")
+            remove("first_name")
+            remove("last_name")
+            remove("email_id")
+            remove("phone_number")
+            remove("firebaseUid")
+        }
         SessionManager.clearSession()
     }
 
@@ -101,6 +115,26 @@ class PreferencesHelper(context: Context) {
     fun getUserId(): Int {
         val value = prefs.getInt("user_id", -1)
         return value
+    }
+    private companion object {
+        const val PREF_LANGUAGE = "pref_language"
+    }
+
+    fun saveLanguage(languageCode: String) {
+        prefs.edit {
+            putString(PREF_LANGUAGE, languageCode)
+        }
+    }
+
+    fun getLanguage(): String {
+        return prefs.getString(
+            PREF_LANGUAGE,
+            "en"
+        ) ?: "en"
+    }
+
+    fun isLanguageSelected(): Boolean {
+        return prefs.contains(PREF_LANGUAGE)
     }
 
 }

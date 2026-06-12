@@ -28,6 +28,10 @@ object ApnaBankConstants {
     const val STATUS_PENDING_APPROVAL = "PENDING_APPROVAL"
     const val STATUS_REJECTED = "REJECTED"
     const val RESET_PASSWORD = "RESET_PASSWORD"
+    const val LOGIN = "LOGIN"
+    const val USER_INVITE = "USER_INVITE"
+    const val CHANGE_PHONE = "CHANGE_PHONE"
+    const val INVITE_VERIFY = "INVITE_VERIFY"
     const val USER_EMAIL = "userEmail"
     const val STATUS_APPROVED = "APPROVED"
     const val STATUS_ACTIVE = "ACTIVE"
@@ -46,6 +50,7 @@ object ApnaBankConstants {
     const val MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
     const val ROLE_PRIMARY_MODERATOR = "PRIMARY_MODERATOR"
     const val ROLE_MODERATOR = "MODERATOR"
+    const val EXPORT_WIDTH = 1900
 
 
 }

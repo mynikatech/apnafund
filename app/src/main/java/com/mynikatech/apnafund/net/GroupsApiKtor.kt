@@ -1,25 +1,25 @@
 package com.mynikatech.apnafund.net
 
+import android.util.Log
+import com.mynikatech.apnafund.data.mappers.toDto
 import com.mynikatech.apnafund.data.model.GroupMembers
 import com.mynikatech.apnafund.net.dto.AddMemberRequest
+import com.mynikatech.apnafund.net.dto.FirebaseSyncRequest
+import com.mynikatech.apnafund.net.dto.GroupCreationRequest
 import com.mynikatech.apnafund.net.dto.GroupMemberWithNameDto
 import com.mynikatech.apnafund.net.dto.GroupMembersDto
 import com.mynikatech.apnafund.net.dto.GroupsDto
-import io.ktor.client.call.body
+import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
+import com.mynikatech.apnafund.session.SessionManager
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import android.util.Log
-import com.mynikatech.apnafund.data.mappers.toDto
-import com.mynikatech.apnafund.net.dto.FirebaseSyncRequest
-import com.mynikatech.apnafund.net.dto.GroupCreationRequest
-import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
-import com.mynikatech.apnafund.session.SessionManager
 
 class GroupsApiKtor(
     private val clientProvider: () -> io.ktor.client.HttpClient = { HttpClientProvider.client }
@@ -39,10 +39,12 @@ class GroupsApiKtor(
     override suspend fun addGroup(dto: GroupsDto): GroupsDto =
         client.post("/groups/add") {
             contentType(ContentType.Application.Json)
-            setBody(GroupCreationRequest(
-                group = dto,
-                requestorId = SessionManager.userId
-            ))
+            setBody(
+                GroupCreationRequest(
+                    group = dto,
+                    requestorId = SessionManager.userId
+                )
+            )
         }.unwrap<GroupsDto>()
 
     override suspend fun updateGroup(id: Int, dto: GroupsDto): Boolean {
@@ -70,7 +72,8 @@ class GroupsApiKtor(
                     userId = groupMembers.userId,
                     joiningDate = groupMembers.joiningDate.toString(),
                     role = groupMembers.role,
-                    requestorId = groupMembers.updatedBy ?: 1 // in case of any issue it will be updated by system
+                    requestorId = groupMembers.updatedBy
+                        ?: 1 // in case of any issue it will be updated by system
                 )
             )
         }.unwrap<Int>()
@@ -84,11 +87,11 @@ class GroupsApiKtor(
             setBody(groupMember)
         }.unwrap<Boolean>()
 
-    override suspend fun updateGroupMember(groupMembers: GroupMembers) {
-        client.put("/groups/update/member") {
+    override suspend fun updateGroupMember(groupMembers: GroupMembers): HttpResponse {
+        return client.put("/groups/update/member") {
             contentType(ContentType.Application.Json)
             setBody(groupMembers.toDto())
-        }.body<Unit>()
+        }
     }
 
     override suspend fun getAllMembersofGroupWithNames(
@@ -117,7 +120,7 @@ class GroupsApiKtor(
             .unwrap<Int>()
 
     override suspend fun syncFirebaseUid(userId: Int, groupId: Int, firebaseUid: String) {
-        Log.d("FireBase Chat","Calling syncFirebaseUid")
+        Log.d("FireBase Chat", "Calling syncFirebaseUid")
         val groupIds = SessionManager.userGroups
             ?.mapNotNull { it.groupId }
             ?: emptyList()

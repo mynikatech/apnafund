@@ -838,9 +838,9 @@
     <string name="title_no_invite_found">निमंत्रण नहीं मिला</string>
 
     <string name="dialog_no_invite_found_message">
-        इस ईमेल के लिए कोई निमंत्रण नहीं मिला।\n\n
+        दिए गए कोड और फ़ोन नंबर के लिए कोई निमंत्रण नहीं मिला।\n\n
         यदि आपको लगता है कि यह त्रुटि है, तो कृपया अपने समूह मॉडरेटर से संपर्क करें।\n\n
-        क्या आप इसके बजाय पंजीकरण करना चाहेंगे?
+        क्या आप इसके बजाय रजिस्ट्रेशन करना चाहेंगे?
     </string>
 
     <string name="title_account_inactive">खाता निष्क्रिय</string>
@@ -915,5 +915,192 @@
     <string name="msg_user_added_group_success">उपयोगकर्ता सफलतापूर्वक समूह में जोड़ दिया गया</string>
     <string name="label_primary_moderator_owner">मुख्य मॉडरेटर / मालिक:</string>
     <string name="label_primary_moderator_tilda">मुख्य मॉडरेटर ~</string>
+    <string name="label_fund_moderator">फंड मॉडरेटर</string>
+
+    <string name="hint_enter_phone_number">कृपया फ़ोन नंबर दर्ज करें</string>
+
+    <string name="error_enter_10_digit_phone_number">
+    कृपया 10 अंकों का फ़ोन नंबर दर्ज करें
+    </string>
+
+    <string name="title_account_setup_pending">
+    खाता सेटअप लंबित
+    </string>
+
+    <string name="message_use_invite_flow">
+    कृपया नीचे दिए गए आमंत्रण लिंक का उपयोग करके अपना खाता सेटअप पूरा करें।
+    </string>
+
+    <string name="label_user_name">उपयोगकर्ता नाम</string>
+
+    <string name="error_cannot_deaxtivate_member_fund">
+    सदस्य को निष्क्रिय नहीं किया जा सकता क्योंकि जमा प्रविष्टियाँ पहले से मौजूद हैं।
+    </string>
+
+    <string name="title_alert">चेतावनी</string>
+
+    <string name="message_confirm_member_status_change">
+    क्या आप वाकई %2$s %3$s को इस फंड से %1$s करना चाहते हैं?
+    </string>
+
+    <string name="title_confirm_action">कार्रवाई की पुष्टि करें</string>
+
+    <string name="message_confirm_group_member_status_change">
+    क्या आप वाकई %2$s %3$s को इस समूह से %1$s करना चाहते हैं?
+    </string>
+
+    <string name="error_group_member_active_funds">
+    उपयोगकर्ता एक या अधिक सक्रिय फंड में सक्रिय है। पहले सभी फंड से निष्क्रिय करें।
+    </string>
+
+    <string name="message_loan_created_approved">
+    ऋण सफलतापूर्वक बनाया और स्वीकृत किया गया
+    </string>
+
+    <string name="message_loan_sent_approval">
+    ऋण अनुरोध स्वीकृति के लिए भेज दिया गया है
+    </string>
+    <string name="menu_item_language">भाषा बदलें</string>
+
+    <string name="title_select_language">
+        भाषा चुनें
+    </string>
+    <string name="button_share_summary">
+    सारांश साझा करें
+    </string>
+
+    <string name="link_export_summary">
+    सारांश साझा करें
+    </string>
+    <string name="text_loan_maturity_date">
+    मैच्योरिटी तिथि
+    </string>
+    <string name="msg_group_updated_success">
+    समूह सफलतापूर्वक अपडेट किया गया
+    </string>
+
+    <string name="text_deposit_month">
+    जमा महीना
+    </string>
+
+    <string name="text_fund_summary_line_1">
+    प्रारंभ: %1$s   समाप्ति: %2$s   सदस्य: %3$d
+    </string>
+
+    <string name="text_fund_summary_line_2">
+    जमा: %1$s   वर्तमान राशि: %2$s   मैच्योरिटी: %3$s
+    </string>
+    <string name="label_start">प्रारंभ</string>
+
+    <string name="label_end">समाप्ति</string>
+
+    <string name="label_members">सदस्य</string>
+
+    <string name="label_deposit">जमा</string>
+
+    <string name="label_curramt">वर्तमान राशि</string>
+
+    <string name="label_maturity">मैच्योरिटी</string>
+    <string name="text_interest_earned">प्राप्त ब्याज</string>
+    <string name="text_loan_issued">ऋण जारी</string>
+    <string name="text_loan_prepayment">ऋण पूर्व भुगतान</string>
+    <string name="text_fees">शुल्क</string>
+    <string name="title_monthly_fund_summary">मासिक फंड सारांश</string>
+
+    <string name="text_summary_deposit">
+    कुल जमा
+    </string>
+
+    <string name="text_summary_loans">
+    कुल ऋण
+    </string>
+
+    <string name="text_summary_interest">
+    कुल ब्याज
+    </string>
+
+    <string name="text_summary_fees">
+    कुल शुल्क
+    </string>
+
+    <string name="text_summary_prepayment">
+    कुल पूर्व भुगतान
+    </string>
+
+    <string name="text_summary_members">
+    कुल सदस्य
+    </string>
+
+    <string name="title_export_summary">
+    सारांश साझा करें\n(बड़े सारांश के लिए PDF अनुशंसित)
+    </string>
+
+    <string name="text_share_as_image">
+    चित्र के रूप में साझा करें (PNG)
+    </string>
+
+    <string name="text_share_as_pdf">
+    PDF के रूप में साझा करें
+    </string>
+
+    <string name="link_monthly_summary">मासिक सारांश</string>
+    <string name="msg_enter_phone_code_to_continue">Enter your Phone and Code to continue</string>
+    <string name="hint_enter_invite_code">आमंत्रण कोड दर्ज करें</string>
+    <string name="title_invite_code_info">आमंत्रण कोड</string>
+    <string name="info_invite_code">
+    अपने आमंत्रण संदेश में साझा किया गया आमंत्रण कोड दर्ज करें।
+    </string>
+    <string name="error_invite_code_required">आमंत्रण कोड आवश्यक है</string>
+    <string name="error_invalid_invite_code">अमान्य आमंत्रण कोड</string>
+    <string name="error_phone_and_pwd_required">Phone Number and Password required</string>
+    <string name="msg_forgot_password_phone">
+    अपना पंजीकृत मोबाइल नंबर दर्ज करें। सत्यापन कोड आपको WhatsApp पर भेजा जाएगा।
+    </string>
+
+    <string name="error_no_user_found_phone">
+    इस मोबाइल नंबर से कोई उपयोगकर्ता नहीं मिला।
+    </string>
+
+    <string name="error_enter_valid_phone">
+    कृपया 10 अंकों का सही मोबाइल नंबर दर्ज करें।
+    </string>
+    <string name="title_verify_code">Verify Code</string>
+
+    <string name="message_verification_code_sent">
+    We sent a 6-digit verification code to:
+    </string>
+
+    <string name="text_verify">Verify</string>
+
+    <string name="cancel_verification_message">
+    Cancel Verification?
+    </string>
+
+    <string name="message_cancel_verification">
+    If you leave this screen, the verification process will be cancelled.
+    </string>
+
+    <string name="message_cancel_verification_login">
+    If you leave this screen, you will be redirected to Login and must restart verification.
+    </string>
+
+    <string name="successful_verification_message">
+    Verification successful
+    </string>
+    <string name="link_show_invite_code">Show Invite Code</string>
+    <string name="title_invite_code">Invite Code</string>
+    <string name="message_invite_code_dialog">
+    Group: %1$s
+
+    Invite Code: %2$s
+
+    Share this code with members when inviting them.
+    </string>
+    <string name="button_copy_code">Copy Code</string>
+    <string name="message_invite_code_copied">Invite code copied</string>
+    <string name="button_close">Close</string>
+    <string name="error_phone_number_not_available">
+    No phone number is associated with this account. Please contact support.
+    </string>
 
 </resources>

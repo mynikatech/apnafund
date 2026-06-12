@@ -475,7 +475,7 @@ class RegisterFragment : Fragment() {
         val action = RegisterFragmentDirections
             .actionRegisterFragmentToVerifyEmailFragment(
                 userId = user.userId!!,
-                email = user.emailId,
+                email = requireNotNull(user.emailId),
                 userName = "${user.firstName} ${user.lastName}",
                 shouldSetPin = binding.setPinFlag.isChecked,
                 emailOtpExpiresAtMillis = 0L,

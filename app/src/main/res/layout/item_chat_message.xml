@@ -57,7 +57,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:textColor="@color/black"
+                android:textColor="?attr/colorPrimary"
                 tools:text="Sunil"/>
 
             <TextView
@@ -65,7 +65,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="14sp"
-                android:textColor="@color/black"
+                android:textColor="?attr/colorOnSurface"
                 android:paddingTop="2dp"
                 tools:text="Hello everyone"/>
 
@@ -74,7 +74,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="11sp"
-                android:textColor="@color/gray"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 android:layout_gravity="end"
                 tools:text="10:45 AM"/>
 

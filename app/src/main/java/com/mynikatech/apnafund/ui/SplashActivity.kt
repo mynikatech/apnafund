@@ -4,6 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import com.mynikatech.apnafund.session.PreferencesHelper
 import com.mynikatech.apnafund.util.ThemeManager
 
@@ -14,6 +16,7 @@ class SplashActivity : AppCompatActivity() {
 
         val prefsHelper = PreferencesHelper(this)
 
+
         val userId = prefsHelper.getUserId()
         Log.d("Apnafund", "User Id is: $userId")
         Log.d("Apnafund", "Is PIN set : ${prefsHelper.isPinSet()}")
@@ -22,6 +25,11 @@ class SplashActivity : AppCompatActivity() {
             userId > 0 -> "home"
             else -> "login"
         }
+        val appLocale = LocaleListCompat.forLanguageTags(
+            prefsHelper.getLanguage()
+        )
+
+        AppCompatDelegate.setApplicationLocales(appLocale)
 
 
         //Amplify.configure(getApplicationContext())

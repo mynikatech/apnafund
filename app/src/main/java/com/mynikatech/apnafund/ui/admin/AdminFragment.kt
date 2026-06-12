@@ -22,12 +22,16 @@ import com.mynikatech.apnafund.ui.admin.loan.LoanEmiEntryFragment
 import com.mynikatech.apnafund.ui.admin.user.PendingApprovalFragment
 import com.mynikatech.apnafund.ui.admin.user.UserFragment
 import com.mynikatech.apnafund.ui.deposit.DepositEntryFragment
+import androidx.fragment.app.activityViewModels
+import com.mynikatech.apnafund.ui.viewmodel.AdminSharedViewModel
 
 class AdminFragment : Fragment() {
 
     private lateinit var binding: FragmentAdminBinding
 
     private lateinit var adminPagerAdapter: PagerAdapter
+
+    private val sharedAdminViewModel: AdminSharedViewModel by activityViewModels()
 
     private var tabToGo: String? = ""
 
@@ -62,6 +66,35 @@ class AdminFragment : Fragment() {
             getString(R.string.text_loan_emi)
         )
 
+        setupTabs()
+
+        sharedAdminViewModel.refreshTabs.observe(viewLifecycleOwner) {
+            val currentTab = binding.adminPager.currentItem
+
+            setupTabs()
+
+            if (currentTab < adminPagerAdapter.itemCount) {
+                binding.adminPager.setCurrentItem(currentTab, false)
+            }
+        }
+
+        binding.adminTabs.post {
+            for (i in 0 until binding.adminTabs.tabCount) {
+                val tab = binding.adminTabs.getTabAt(i)
+                val tv = tab?.customView as? TextView
+
+                tv?.setTextColor(
+                    MaterialColors.getColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorOnSurface,
+                        Color.BLACK
+                    )
+                )
+            }
+        }
+    }
+
+    private fun setupTabs() {
         val tabsToShow = mutableListOf<String>()
 
         if (SessionManager.canManageUsers()) {
@@ -87,13 +120,20 @@ class AdminFragment : Fragment() {
         if (SessionManager.canManageFeedback()) {
             tabsToShow.add(getString(R.string.tab_feedback))
         }
+
         adminPagerAdapter = PagerAdapter(this, tabsToShow)
         binding.adminPager.adapter = adminPagerAdapter
         binding.adminPager.offscreenPageLimit = 1
-        if (tabToGo.equals("Group"))
-            binding.adminPager.setCurrentItem(1, false)
-        else
+
+        if (tabToGo == "Group") {
+            val groupIndex = tabsToShow.indexOf(getString(R.string.text_group))
+            if (groupIndex >= 0) {
+                binding.adminPager.setCurrentItem(groupIndex, false)
+            }
+        } else {
             binding.adminPager.setCurrentItem(0, false)
+        }
+
         TabLayoutMediator(binding.adminTabs, binding.adminPager) { tab, position ->
             val tabText = tabsToShow[position]
 
@@ -106,21 +146,6 @@ class AdminFragment : Fragment() {
                 isAllCaps = true
             }
         }.attach()
-
-        binding.adminTabs.post {
-            for (i in 0 until binding.adminTabs.tabCount) {
-                val tab = binding.adminTabs.getTabAt(i)
-                val tv = tab?.customView as? TextView
-
-                tv?.setTextColor(
-                    MaterialColors.getColor(
-                        requireContext(),
-                        com.google.android.material.R.attr.colorOnSurface,
-                        Color.BLACK
-                    )
-                )
-            }
-        }
     }
 
     inner class PagerAdapter(
@@ -142,6 +167,8 @@ class AdminFragment : Fragment() {
             }
         }
     }
+
+
 
 }
 

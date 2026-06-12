@@ -11,6 +11,7 @@ import com.mynikatech.apnafund.net.LoansApi
 import com.mynikatech.apnafund.net.NotificationsApi
 import com.mynikatech.apnafund.net.UserRolesApi
 import com.mynikatech.apnafund.net.UsersApi
+import com.mynikatech.apnafund.net.dto.AppUsageLogDto
 
 class UserSummaryRepository(
     private val usersApi: UsersApi,
@@ -60,5 +61,12 @@ class UserSummaryRepository(
 
     suspend fun markNotificationRead(notificationId: Int): Boolean {
         return usersApi.markNotificationRead(notificationId)
+    }
+
+    suspend fun addUsageLog(
+        usage: AppUsageLogDto
+    ): Boolean {
+
+        return usersApi.addUsageLog(usage)
     }
 }

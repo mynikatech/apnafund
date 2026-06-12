@@ -183,7 +183,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="8dp"
-        android:background="#F9F9F9"
+        android:background="?attr/colorSurfaceContainer"
         android:elevation="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -198,7 +198,9 @@
             android:maxLines="4"
             android:imeOptions="actionSend"
             android:background="@drawable/bg_chat_input"
-            android:padding="12dp"/>
+            android:padding="12dp"
+            android:textColor="?attr/colorOnSurface"
+            android:textColorHint="?attr/colorOnSurfaceVariant"/>
         <ImageButton
             android:id="@+id/btnAttach"
             android:layout_width="40dp"

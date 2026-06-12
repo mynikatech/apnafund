@@ -15,28 +15,25 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.mynikatech.apnafund.R
-import com.mynikatech.apnafund.constants.ApnaBankConstants
+import com.mynikatech.apnafund.data.model.FundMemberWithName
 import com.mynikatech.apnafund.data.model.FundMembers
-import com.mynikatech.apnafund.data.model.GroupMembers
-import com.mynikatech.apnafund.data.model.Users
+import com.mynikatech.apnafund.data.model.FundWithDetails
 import com.mynikatech.apnafund.databinding.FragmentFundMembersBinding
 import com.mynikatech.apnafund.session.SessionManager
+import com.mynikatech.apnafund.ui.viewmodel.FundSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.FundViewModel
-import com.mynikatech.apnafund.ui.viewmodel.GroupViewModel
-import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
 import com.mynikatech.apnafund.util.Converters
+import com.mynikatech.apnafund.util.Converters.toFundMember
 import com.mynikatech.apnafund.util.toUserFundMembership
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -45,9 +42,8 @@ class FundMembersFragment : Fragment() {
 
     private lateinit var binding: FragmentFundMembersBinding
 
-    private val groupViewModel: GroupViewModel by viewModels()
     private val fundViewModel: FundViewModel by viewModels()
-    private val userViewModel: UserViewModel by viewModels()
+    private val fundSharedViewModel: FundSharedViewModel by activityViewModels()
     private var groupId: Int = -1
     private var dialog: BottomSheetDialog? = null
 
@@ -104,145 +100,214 @@ class FundMembersFragment : Fragment() {
         fetchMembersJob?.cancel()
         fetchMembersJob = lifecycleScope.launch {
             val fundMembers = withContext(Dispatchers.IO) {
-                fundViewModel.fetchFundMembersforFund(fundId)
+                fundViewModel.getFundMembersWithNamesForFund(fundId, "ALL")
             }
             val fundDetails = fundViewModel.getFundDetails(fundId)
-            val fund = fundViewModel.fetchFund(fundId)
-            if(null != fund)
-                groupId = fund.groupId
+            if (null != fundDetails)
+                groupId = fundDetails.groupId
             if (fundDetails.totalCurrentDeposit > 0)
                 binding.fundMembersFab.visibility = View.GONE
-            updateTable(fundId, fundMembers)
+            updateTable(fundDetails, fundMembers)
         }
     }
 
-    private suspend fun updateTable(
-        fundId: Int,
-        fundMembers: List<FundMembers>
-    ) = coroutineScope {
-        // 1) Fetch everything off the main thread, concurrently where it helps
-        val fundDeferred = async(Dispatchers.IO) { fundViewModel.fetchFund(fundId) }
+    private fun updateTable(
+        fundDetails: FundWithDetails,
+        fundMembers: List<FundMemberWithName>
+    ) {
 
-        val usersDeferred = fundMembers.map { member ->
-            async(Dispatchers.IO) { userViewModel.fetchUser(member.userId) } // returns Users?
-        }
+        cleanTable(binding.tableFundMembersDetails)
 
-        val fund = fundDeferred.await()
-        val groupDeferred = if (fund != null) {
-            async(Dispatchers.IO) { groupViewModel.fetchGroup(fund.groupId) } // Groups?
-        } else null
+        // Header info
+        binding.textViewFundNameValue.text =
+            fundDetails.fundName.orEmpty()
 
-        val moderatorDeferred = if (fund?.moderator != null) {
-            async(Dispatchers.IO) { userViewModel.fetchUser(fund.moderator) } // Users?
-        } else null
-
-        val group = groupDeferred?.await()
-        val moderatorUser: Users? = moderatorDeferred?.await()
-
-        val users = usersDeferred.awaitAll() // List<Users?>
-
-        // 2) Switch to main exactly once to update the UI
-        withContext(Dispatchers.Main) {
-            // clear table first
-            cleanTable(binding.tableFundMembersDetails)
-
-            // header info
-            binding.textViewFundNameValue.text = fund?.fundName.orEmpty()
-            binding.textViewGroupNameValue.text = Converters.formatWithBraces(group?.groupName.orEmpty())
-            binding.textViewModeratorValue.text = Converters.formatUserName(
-                moderatorUser?.firstName.orEmpty(),
-                moderatorUser?.lastName.orEmpty()
+        binding.textViewGroupNameValue.text =
+            Converters.formatWithBraces(
+                fundDetails.groupName.orEmpty()
             )
-            val canManageFund =
-                SessionManager.canManageFund(fundId)
-            val table = binding.tableFundMembersDetails
 
-            fundMembers.forEachIndexed { index, member ->
-                val user = users.getOrNull(index)
-                val tvNo = TextView(activity).apply {
-                    text = (index + 1).toString()
-                    gravity = Gravity.CENTER
-                }
-                val tvMemberName = TextView(activity).apply {
-                    text = Converters.formatUserName(user?.firstName.orEmpty(), user?.lastName.orEmpty())
-                    gravity = Gravity.START
-                }
-                val tvJoiningDate = TextView(activity).apply {
-                    text = member.joiningDate
-                    gravity = Gravity.START
-                }
-                val tvRole = TextView(activity).apply {
-                    text = Converters.toDisplayRole(member.role)
-                    gravity = Gravity.START
-                }
+        binding.textViewModeratorValue.text =
+            Converters.formatUserName(
+                fundDetails.moderatorFirstName.orEmpty(),
+                fundDetails.moderatorLastName.orEmpty()
+            )
 
-                val tvStatus = TextView(activity).apply {
-                    text = member.status
-                    gravity = Gravity.START
-                }
+        val canManageFund =
+            SessionManager.canManageFund(fundDetails.fundId)
 
-                val btnEdit = TextView(activity).apply {
-                    text = "Edit"
-                    setTextColor(resources.getColor(R.color.purple))
-                    setPadding(10, 5, 10, 5)
-                }
+        val table = binding.tableFundMembersDetails
 
-                val btnToggle = TextView(activity).apply {
-                    text = if (member.status == "ACTIVE") "Deactivate" else "Activate"
-                    setTextColor(resources.getColor(R.color.red))
-                    setPadding(10, 5, 10, 5)
-                }
+        fundMembers.forEachIndexed { index, member ->
 
-
-                btnToggle.setOnClickListener {
-                    handleStatusToggle(member, fundId)
-                }
-
-                btnEdit.setOnClickListener {
-                    showRoleChangeDialog(member, fundId)
-                }
-
-                btnEdit.visibility =
-                    if (canManageFund) View.VISIBLE else View.GONE
-
-                btnToggle.visibility =
-                    if (canManageFund) View.VISIBLE else View.GONE
-
-                val row = TableRow(activity).apply {
-                    addView(tvNo)
-                    addView(tvMemberName)
-                    addView(tvJoiningDate)
-                    addView(tvRole)
-                    addView(tvStatus)
-                    addView(btnToggle)
-                    addView(btnEdit)
-                }
-                table.addView(row)
+            val tvNo = TextView(activity).apply {
+                text = (index + 1).toString()
+                gravity = Gravity.CENTER
             }
+
+            val tvMemberName = TextView(activity).apply {
+                text = Converters.formatUserName(
+                    member.firstName.orEmpty(),
+                    member.lastName.orEmpty()
+                )
+                gravity = Gravity.START
+            }
+
+            val tvJoiningDate = TextView(activity).apply {
+                text = member.joiningDate
+                gravity = Gravity.START
+            }
+
+            val tvRole = TextView(activity).apply {
+                text = Converters.toDisplayRole(member.role)
+                gravity = Gravity.START
+            }
+
+            val tvStatus = TextView(activity).apply {
+                text = member.status
+                gravity = Gravity.START
+            }
+
+            val btnEdit = TextView(activity).apply {
+                text = "Edit"
+                setTextColor(
+                    resources.getColor(R.color.purple)
+                )
+                setPadding(10, 5, 10, 5)
+            }
+
+            val btnToggle = TextView(activity).apply {
+
+                text =
+                    if (member.status == "ACTIVE")
+                        "Deactivate"
+                    else
+                        "Activate"
+
+                setTextColor(
+                    resources.getColor(R.color.red)
+                )
+
+                setPadding(10, 5, 10, 5)
+            }
+
+            btnToggle.setOnClickListener {
+
+                val action =
+                    if (member.status == "ACTIVE")
+                        getString(R.string.action_deactivate)
+                    else
+                        getString(R.string.action_activate)
+
+                AlertDialog.Builder(requireContext())
+                    .setTitle(
+                        getString(R.string.title_confirm_action)
+                    )
+                    .setMessage(
+                        getString(
+                            R.string.message_confirm_member_status_change,
+                            action,
+                            member.firstName,
+                            member.lastName
+                        )
+                    )
+                    .setNegativeButton(
+                        getString(R.string.text_cancel_button),
+                        null
+                    )
+                    .setPositiveButton(action) { _, _ ->
+
+                        handleStatusToggle(
+                            member.toFundMember(),
+                            fundDetails.fundId
+                        )
+                    }
+                    .show()
+            }
+
+            btnEdit.setOnClickListener {
+                showRoleChangeDialog(
+                    member.toFundMember(),
+                    fundDetails.fundId
+                )
+            }
+
+            btnEdit.visibility =
+                if (canManageFund)
+                    View.VISIBLE
+                else
+                    View.GONE
+
+            btnToggle.visibility =
+                if (canManageFund)
+                    View.VISIBLE
+                else
+                    View.GONE
+
+            val row = TableRow(activity).apply {
+
+                addView(tvNo)
+                addView(tvMemberName)
+                addView(tvJoiningDate)
+                addView(tvRole)
+                addView(tvStatus)
+                addView(btnToggle)
+                addView(btnEdit)
+            }
+
+            table.addView(row)
         }
     }
 
-    private fun handleStatusToggle(member: FundMembers, fundId: Int) {
+    private fun handleStatusToggle(
+        member: FundMembers,
+        fundId: Int
+    ) {
 
         if (member.role == "PRIMARY_MODERATOR") {
             showToast("Cannot modify primary moderator")
             return
         }
 
-        val newStatus = if (member.status == "ACTIVE") "INACTIVE" else "ACTIVE"
-
-        val updatedMember = member.copy(
-            status = newStatus,
-            updatedBy = SessionManager.userId
-        )
         lifecycleScope.launch {
+
+            val fund = fundViewModel.getFundDetails(fundId)
+            val hasDeposits = fund.totalCurrentDeposit > 0
+            if (hasDeposits) {
+
+                showAlert(
+                    getString(R.string.error_cannot_deaxtivate_member_fund)
+                )
+
+                return@launch
+            }
+
+            val newStatus =
+                if (member.status == "ACTIVE")
+                    "INACTIVE"
+                else
+                    "ACTIVE"
+
+            val updatedMember = member.copy(
+                status = newStatus,
+                updatedBy = SessionManager.userId
+            )
+
             fundViewModel.updateFundMember(
                 updatedMember
             )
+
             if (member.userId == SessionManager.userId) {
-                SessionManager.updateFundMembership(updatedMember.toUserFundMembership())
+
+                SessionManager.updateFundMembership(
+                    updatedMember.toUserFundMembership()
+                )
             }
-            fetchAllMembers(groupId)
+            val isAdmin = SessionManager.roleNames.contains("ADMIN")
+            fetchAllMembers(fundId)
+            fundSharedViewModel.refreshFunds(fundId)
+            fundSharedViewModel.shouldForceRefreshFundDetails = true
+
         }
     }
 
@@ -273,7 +338,7 @@ class FundMembersFragment : Fragment() {
     private fun handleRoleUpdate(member: FundMembers, fundId: Int, newRole: String) {
 
         // permission check
-        if (newRole == "MODERATOR" &&  !SessionManager.isPrimaryFundModerator(fundId)) {
+        if (newRole == "MODERATOR" && !SessionManager.isPrimaryFundModerator(fundId)) {
             showToast("Only primary moderator can assign moderators")
             return
         }
@@ -335,5 +400,20 @@ class FundMembersFragment : Fragment() {
 
     private fun showToast(msg: String) {
         Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showAlert(
+        message: String,
+        title: String = getString(R.string.title_alert)
+    ) {
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(
+                getString(R.string.text_button_ok),
+                null
+            )
+            .show()
     }
 }

@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.core.view.MenuProvider
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.mynikatech.apnafund.BuildConfig
@@ -27,6 +28,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private val notificationViewModel by viewModels<NotificationSharedViewModel>()
+
+    private lateinit var appBarConfiguration: AppBarConfiguration
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -122,7 +125,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.verifyEmailFragment, R.id.resetPasswordFragment,
                 R.id.loginPinFragment, R.id.fundLoanSummaryFragment,
                 R.id.inviteEntryFragment, R.id.aiChatFragment,
-                R.id.helpFragment-> View.GONE
+                R.id.helpFragment, R.id.monthlySummaryFragment -> View.GONE
 
                 else -> View.VISIBLE
             }
@@ -155,17 +158,25 @@ class MainActivity : AppCompatActivity() {
             }
 
         }
-
+        appBarConfiguration = AppBarConfiguration(
+            setOf(
+                R.id.userSummaryFragment,
+                R.id.fundFragment,
+                R.id.adminFragment,
+                R.id.groupChatFragment
+            ),
+            binding.drawerLayout
+        )
         val sideNavigationView = binding.sideNavigationView
         val drawerLayout = binding.drawerLayout
         sideNavigationView.setNavigationItemSelectedListener { menuItem ->
             drawerLayout.closeDrawers()
             when (menuItem.itemId) {
-                R.id.nav_change_theme -> true
-                R.id.nav_user_info -> true
-                R.id.nav_feedback -> true
-                R.id.nav_share -> true
-                R.id.nav_logout -> true
+                R.id.menu_theme -> true
+                R.id.menu_profile -> true
+                R.id.menu_PIN -> true
+                R.id.menu_password -> true
+                R.id.menu_logout -> true
                 else -> false
             }
         }
@@ -216,6 +227,7 @@ class MainActivity : AppCompatActivity() {
                         navController.navigate(R.id.notificationFragment)
                         true
                     }
+
                     R.id.action_help -> {
                         navController.navigate(R.id.helpFragment)
                         true

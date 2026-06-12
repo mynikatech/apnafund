@@ -2,6 +2,7 @@ package com.mynikatech.apnafund.ui.member
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
@@ -27,18 +28,25 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
+import com.mynikatech.apnafund.data.model.GroupMemberWithName
 import com.mynikatech.apnafund.data.model.GroupMembers
 import com.mynikatech.apnafund.databinding.DialogAddGroupMemberBinding
 import com.mynikatech.apnafund.databinding.FragmentGroupDetailsBinding
+import com.mynikatech.apnafund.net.api.ApiResponse
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.GroupSharedViewModel
 import com.mynikatech.apnafund.ui.viewmodel.GroupViewModel
 import com.mynikatech.apnafund.ui.viewmodel.UserViewModel
 import com.mynikatech.apnafund.util.Converters
+import com.mynikatech.apnafund.util.Converters.toGroupMember
+import com.mynikatech.apnafund.util.showAlert
 import com.mynikatech.apnafund.util.toUserGroupMembership
+import io.ktor.client.call.body
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -102,24 +110,18 @@ class GroupDetailsFragment : Fragment() {
     }
 
     private fun fetchAllMembers(groupId: Int) {
-        // Cancel any ongoing job if you still have that logic (optional now)
-        fetchMembersJob?.cancel()
-        fetchMembersJob = lifecycleScope.launch {
+        lifecycleScope.launch {
             val groupMembers = withContext(Dispatchers.IO) {
-                groupViewModel.fetchGroupMembersforGrp(groupId)
+                groupViewModel.fetchGroupMembersforGrpWithNames(groupId, false)
             }
             updateTable(groupId, groupMembers)
         }
     }
 
-    private suspend fun updateTable(groupId: Int, groupMembers: List<GroupMembers>) {
+    private suspend fun updateTable(groupId: Int, groupMembers: List<GroupMemberWithName>) {
         if (groupId <= 0) return
         withContext(Dispatchers.Main) {
             cleanTable(binding.tableGroupDetails)
-
-            val userDeferredList = groupMembers.map { member ->
-                async { userViewModel.fetchUser(member.userId) }
-            }
 
             val groupName = withContext(Dispatchers.IO) {
 
@@ -138,7 +140,6 @@ class GroupDetailsFragment : Fragment() {
 
             for (i in groupMembers.indices) {
                 val member = groupMembers[i]
-                val user = userDeferredList[i].await()
 
                 val tvNo = TextView(activity).apply {
                     text = (i + 1).toString()
@@ -146,7 +147,7 @@ class GroupDetailsFragment : Fragment() {
                 }
 
                 val tvMemberName = TextView(activity).apply {
-                    text = "${user?.firstName} ${user?.lastName}"
+                    text = "${member?.firstName} ${member?.lastName}"
                     gravity = Gravity.START
                 }
 
@@ -173,7 +174,37 @@ class GroupDetailsFragment : Fragment() {
                     setPadding(8, 4, 8, 4)
                 }
                 btnAction.setOnClickListener {
-                    handleStatusToggle(member, groupId)
+
+                    val action =
+                        if (member.status == "ACTIVE")
+                            getString(R.string.action_deactivate)
+                        else
+                            getString(R.string.action_activate)
+
+                    AlertDialog.Builder(requireContext())
+                        .setTitle(
+                            getString(R.string.title_confirm_action)
+                        )
+                        .setMessage(
+                            getString(
+                                R.string.message_confirm_group_member_status_change,
+                                action,
+                                member.firstName,
+                                member.lastName
+                            )
+                        )
+                        .setNegativeButton(
+                            getString(R.string.text_cancel_button),
+                            null
+                        )
+                        .setPositiveButton(action) { _, _ ->
+
+                            handleStatusToggle(
+                                member.toGroupMember(),
+                                groupId
+                            )
+                        }
+                        .show()
                 }
                 val btnEdit = TextView(requireContext()).apply {
                     text = "Edit"
@@ -183,7 +214,7 @@ class GroupDetailsFragment : Fragment() {
 
 
                 btnEdit.setOnClickListener {
-                    showRoleChangeDialog(member, groupId)
+                    showRoleChangeDialog(member.toGroupMember(), groupId)
                 }
                 btnEdit.visibility =
                     if (canManageGroup) View.VISIBLE else View.GONE
@@ -221,13 +252,74 @@ class GroupDetailsFragment : Fragment() {
             updatedBy = SessionManager.userId
         )
         lifecycleScope.launch {
-            groupViewModel.updateGroupMember(
-                updatedMember
-            )
-            if (member.userId == SessionManager.userId) {
-                SessionManager.updateGroupMembership(updatedMember.toUserGroupMembership())
+            try {
+
+                val response = groupViewModel.updateGroupMember(
+                    updatedMember
+                )
+                if (
+                    response.status ==
+                    HttpStatusCode.Conflict
+                ) {
+
+                    val error =
+                        response.body<ApiResponse<Unit>>()
+
+                    showAlert(
+                        error.message
+                            ?: getString(
+                                R.string.error_group_member_active_funds
+                            )
+                    )
+
+                    return@launch
+                }
+
+                if (!response.status.isSuccess()) {
+
+                    showAlert(
+                        getString(R.string.error_server)
+                    )
+
+                    return@launch
+                }
+
+                if (member.userId == SessionManager.userId) {
+                    SessionManager.updateGroupMembership(updatedMember.toUserGroupMembership())
+                }
+                fetchAllMembers(groupId)
+
+            } catch (e: ClientRequestException) {
+                Log.d("GroupMemberShip", " ClientRequestException exception caught ${e.message}")
+                Log.d("GroupMemberShip", " Status Toggle eeor received ${e.response.status}")
+                if (
+                    e.response.status ==
+                    HttpStatusCode.Conflict
+                ) {
+
+                    val error =
+                        e.response.body<ApiResponse<Unit>>()
+                    Log.d("GroupMemberShip", " Status Toggle error is $error")
+                    showAlert(
+                        error.message
+                            ?: getString(
+                                R.string.error_group_member_active_funds
+                            )
+                    )
+
+                } else {
+
+                    showAlert(
+                        getString(R.string.error_server)
+                    )
+                }
+
+            } catch (e: Exception) {
+
+                showAlert(
+                    getString(R.string.error_server)
+                )
             }
-            fetchAllMembers(groupId)
         }
     }
 
@@ -341,7 +433,12 @@ class GroupDetailsFragment : Fragment() {
 
                         val role = if (isModerator) "MODERATOR" else "MEMBER"
                         runCatching {
-                            groupViewModel.createGroupMember(userId, groupId, role, SessionManager.userId)
+                            groupViewModel.createGroupMember(
+                                userId,
+                                groupId,
+                                role,
+                                SessionManager.userId
+                            )
                         }.onSuccess {
                             dialog?.dismiss()
                             fetchAllMembers(groupId)
@@ -353,13 +450,17 @@ class GroupDetailsFragment : Fragment() {
                             ).show()
                         }
                     } else {
-                        Toast.makeText(context,
-                            getString(R.string.error_member_already_added), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            getString(R.string.error_member_already_added), Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             } else {
-                Toast.makeText(context,
-                    getString(R.string.message_select_valid_member), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    getString(R.string.message_select_valid_member), Toast.LENGTH_SHORT
+                ).show()
             }
         }
         dialogBinding.buttonCancelGrpMember.setOnClickListener {

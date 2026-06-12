@@ -29,6 +29,12 @@
         <action
             android:id="@+id/action_loginFragment_to_inviteEntryFragment"
             app:destination="@id/inviteEntryFragment" />
+        <action
+            android:id="@+id/actionLoginFragmentToForgotPasswordPhoneFragment"
+            app:destination="@id/forgotPasswordPhoneFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_verifyOtpFragment"
+            app:destination="@id/verifyOtpFragment" />
     </fragment>
 
     <fragment
@@ -99,6 +105,22 @@
     </fragment>
 
     <fragment
+        android:id="@+id/forgotPasswordPhoneFragment"
+        android:name="com.mynikatech.apnafund.ui.auth.ForgotPasswordPhoneFragment"
+        android:label="Forgot Password">
+
+        <action
+            android:id="@+id/actionForgotPasswordPhoneFragmentToLoginFragment"
+            app:destination="@id/loginFragment" />
+
+        <!-- Phase 1: Reuse VerifyEmailFragment for OTP -->
+        <action
+            android:id="@+id/actionForgotPasswordPhoneFragmentToVerifyOtpFragment"
+            app:destination="@id/verifyOtpFragment" />
+
+    </fragment>
+
+    <fragment
         android:id="@+id/registerFragment"
         android:name="com.mynikatech.apnafund.ui.auth.RegisterFragment"
         android:label="Register">
@@ -139,6 +161,9 @@
         <action
             android:id="@+id/action_inviteEntryFragment_to_registerFragment"
             app:destination="@id/registerFragment" />
+        <action
+        android:id="@+id/action_inviteEntryFragment_to_verifyOtpFragment"
+        app:destination="@id/verifyOtpFragment" />
 
     </fragment>
     <fragment
@@ -148,10 +173,18 @@
         <action
             android:id="@+id/action_setPinFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_setPinFragment_to_loginPinFragment"
+            app:destination="@id/loginPinFragment" />
         <argument
             android:name="userId"
             android:defaultValue="0"
             app:argType="integer" />
+        <argument
+            android:name="isRegistrationFlow"
+            android:defaultValue="false"
+            app:argType="boolean" />
+
     </fragment>
 
     <fragment
@@ -195,6 +228,9 @@
         <action
             android:id="@+id/action_userSummaryFragment_to_loanEmiFragment"
             app:destination="@id/loanEmiFragment" />
+        <action
+            android:id="@+id/action_userSummaryFragment_to_monthlySummaryFragment"
+            app:destination="@id/monthlySummaryFragment" />
         <argument
             android:name="userId"
             android:defaultValue="0"
@@ -402,6 +438,64 @@
     </fragment>
 
     <fragment
+        android:id="@+id/verifyOtpFragment"
+        android:name="com.mynikatech.apnafund.ui.auth.VerifyOtpFragment"
+        android:label="VerifyOtpFragment">
+
+        <argument
+            android:name="userId"
+            app:argType="integer" />
+
+        <argument
+            android:name="email"
+            app:argType="string"
+            android:defaultValue="@null"
+            app:nullable="true" />
+
+        <argument
+            android:name="phoneNumber"
+            app:argType="string"
+            android:defaultValue="@null"
+            app:nullable="true" />
+
+        <argument
+            android:name="userName"
+            app:argType="string" />
+
+        <argument
+            android:name="purpose"
+            app:argType="string" />
+
+        <argument
+            android:name="channel"
+            app:argType="string" />
+
+        <argument
+            android:name="otpExpiresAtMillis"
+            app:argType="long" />
+
+        <argument
+            android:name="shouldSetPin"
+            app:argType="boolean"
+            android:defaultValue="false" />
+        <action
+            android:id="@+id/action_verifyOtpFragment_to_changePasswordFragment"
+            app:destination="@id/changePasswordFragment" />
+        <action
+            android:id="@+id/action_verifyOtpFragment_to_setPinFragment"
+            app:destination="@id/setPinFragment" />
+
+        <action
+            android:id="@+id/action_verifyOtpFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_verifyOtpFragment_to_setPasswordFragment"
+            app:destination="@id/setPasswordFragment"
+            app:popUpTo="@id/verifyOtpFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
         android:id="@+id/fundLoanSummaryFragment"
         android:name="com.mynikatech.apnafund.ui.loan.FundLoanSummaryFragment"
         android:label="Fund Loans Summary">
@@ -429,4 +523,14 @@
         android:id="@+id/helpFragment"
         android:name="com.mynikatech.apnafund.ui.help.HelpFragment"
         android:label="Help"/>
+
+    <fragment
+        android:id="@+id/monthlySummaryFragment"
+        android:name="com.mynikatech.apnafund.ui.fund.MonthlySummaryFragment"
+        android:label="@string/title_monthly_fund_summary">
+    <argument
+        android:name="fundId"
+        android:defaultValue="0"
+        app:argType="integer" />
+    </fragment>
 </navigation>

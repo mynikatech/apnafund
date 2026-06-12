@@ -29,5 +29,64 @@
         <item name="android:layout_width">24dp</item>
         <item name="android:layout_height">24dp</item>
     </style>
+    <style name="ApnaFundDropdown">
+
+        <item name="android:textColor">
+            ?attr/colorOnSurface
+        </item>
+
+        <item name="android:textSize">
+            14sp
+        </item>
+
+        <item name="android:minHeight">
+            0dp
+        </item>
+
+        <item name="android:paddingTop">
+            4dp
+        </item>
+
+        <item name="android:paddingBottom">
+            4dp
+        </item>
+
+        <item name="android:paddingStart">
+            12dp
+        </item>
+
+        <item name="android:paddingEnd">
+            12dp
+        </item>
+
+    </style>
+    <style name="ApnaFundDropdownLayout"
+        parent="Widget.Material3.TextInputLayout.FilledBox.Dense.ExposedDropdownMenu">
+
+        <item name="boxStrokeWidth">0dp</item>
+
+        <item name="boxStrokeWidthFocused">0dp</item>
+
+        <item name="boxBackgroundColor">
+            ?attr/colorSurfaceVariant
+        </item>
+
+        <item name="boxCollapsedPaddingTop">
+            0dp
+        </item>
+
+        <item name="hintTextAppearance">
+            @style/ApnaFundDropdownHint
+        </item>
+
+    </style>
+    <style name="ApnaFundDropdownHint"
+        parent="TextAppearance.Material3.BodySmall">
+
+        <item name="android:textSize">12sp</item>
+
+    </style>
+
+
 
 </resources>

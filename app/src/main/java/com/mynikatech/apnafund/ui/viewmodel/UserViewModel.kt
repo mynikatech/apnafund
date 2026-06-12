@@ -12,6 +12,7 @@ import com.mynikatech.apnafund.data.model.Groups
 import com.mynikatech.apnafund.data.model.UserWithGroup
 import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.net.ApiException
+import com.mynikatech.apnafund.net.dto.AppUsageLogDto
 import com.mynikatech.apnafund.net.dto.FirebaseTokenResp
 import com.mynikatech.apnafund.net.dto.GroupsWithModeratorDto
 import com.mynikatech.apnafund.net.dto.LoginUserResponse
@@ -20,13 +21,14 @@ import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
 import com.mynikatech.apnafund.net.dto.RegisterOrUpdateUserRequest
 import com.mynikatech.apnafund.net.dto.SaveOrUpdateUserResponse
 import com.mynikatech.apnafund.net.dto.SendEmailVerificationResp
+import com.mynikatech.apnafund.net.dto.SendOtpResp
 import com.mynikatech.apnafund.net.dto.UserSaveSource
 import com.mynikatech.apnafund.net.dto.UserStatusResponse
 import com.mynikatech.apnafund.net.dto.UsersDto
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.util.Converters
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -40,8 +42,15 @@ class UserViewModel : ViewModel() {
     val userStatus = MutableLiveData<UserStatusResponse>()
     val loading = MutableLiveData<Boolean>()
     val userLiveData = MutableLiveData<UsersDto?>()
-    val refreshTrigger = MutableStateFlow(Unit)
+    val refreshTrigger = MutableSharedFlow<Unit>(
+        replay = 1,
+        extraBufferCapacity = 1
+    )
     val errorLiveData = MutableLiveData<ApiException>()
+
+    init {
+        refreshTrigger.tryEmit(Unit)
+    }
 
     /** Flow source for the table (Room) */
     fun usersFlow(isAdmin: Boolean, moderatorGroupId: Int): Flow<List<UserWithGroup>> =
@@ -138,12 +147,38 @@ class UserViewModel : ViewModel() {
     }
 
     suspend fun getUserByEmail(email: String): LoginUserResponse? {
-
         return userRolesRepository.getUserByEmail(email)
     }
 
     suspend fun getUserByPhone(phone: String): LoginUserResponse? {
         return userRolesRepository.getUserByPhone(phone)
+    }
+
+    fun fetchUserByEmailandPhone(email: String, phone: String) {
+        viewModelScope.launch {
+            try {
+                val response = userRolesRepository.getUserByPhoneAndEmail(email, phone)
+                userLiveData.value = response?.user
+            } catch (e: ApiException) {
+                errorLiveData.value = e
+            }
+        }
+    }
+    fun fetchUserByPhoneAndGroupCode(phone: String, groupCode: String ) {
+        viewModelScope.launch {
+            try {
+                val response =
+                    userRolesRepository.getUserByPhoneAndGroupCode(
+                        phone,
+                        groupCode
+                    )
+
+                userLiveData.value = response?.user
+
+            } catch (e: ApiException) {
+                errorLiveData.value = e
+            }
+        }
     }
 
     fun getUserWithGroup(groupId: Int): Flow<List<UserWithGroup>> {
@@ -185,6 +220,33 @@ class UserViewModel : ViewModel() {
         return userRolesRepository.resendEmailVerification(userId, email, userName, purpose)
     }
 
+    suspend fun sendOtp(
+        userId: Int,
+        phone: String,
+        purpose: String
+    ): SendOtpResp {
+        return userRolesRepository.sendOtp(
+            userId = userId,
+            phoneNumber = phone,
+            purpose = purpose
+        )
+    }
+
+    suspend fun verifyOtp(
+        otp: String,
+        userId: Int,
+        purpose: String,
+        channel: String
+    ): Boolean {
+
+        return userRolesRepository.verifyOtp(
+            otp = otp,
+            userId = userId,
+            purpose = purpose,
+            channel = channel
+        )
+    }
+
     suspend fun isEmailVerified(userId: Int): Boolean {
         return userRolesRepository.isEmailVerified(userId)
     }
@@ -223,7 +285,7 @@ class UserViewModel : ViewModel() {
             try {
                 val response = userRolesRepository.getUserByEmail(email)
                 userLiveData.value = response?.user
-            } catch (e: ApiException){
+            } catch (e: ApiException) {
                 errorLiveData.value = e
             }
         }
@@ -279,4 +341,29 @@ class UserViewModel : ViewModel() {
                 Log.e("UserViewModel", "Error fetching moderator groups", e)
                 emit(emptyList())
             }
+
+    fun addUsageLog(
+        userId: Int,
+        eventType: String,
+        screenName: String? = null,
+        details: String? = null
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+
+                userRolesRepository.addUsageLog(
+                    AppUsageLogDto(
+                        userId = userId,
+                        eventType = eventType,
+                        screenName = screenName,
+                        details = details
+                    )
+                )
+
+            } catch (_: Exception) {
+            }
+        }
+    }
 }

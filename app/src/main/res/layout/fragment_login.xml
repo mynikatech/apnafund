@@ -20,6 +20,17 @@
             android:layout_marginBottom="24dp"
             android:contentDescription="@string/app_name"
             android:src="@drawable/ic_apnafund_logo" />
+        <TextView
+            android:id="@+id/textChangeLanguage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🌐 English | हिन्दी"
+            android:textSize="14sp"
+            android:textColor="@color/purple"
+            android:padding="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_gravity="center_horizontal"/>
 
         <!-- Toggle login mode -->
         <Button
@@ -34,20 +45,21 @@
 
         <!-- Email Login -->
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/emailLayout"
+            android:id="@+id/phonePasswordLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             app:boxStrokeColor="@color/primary_colour"
             app:hintTextColor="@color/input_hint"
             app:boxBackgroundMode="outline"
-            android:hint="@string/text_email">
+            android:hint="@string/text_phone_number">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/emailEditText"
+                android:id="@+id/phonePasswordEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textEmailAddress"
+                android:inputType="phone"
+                android:maxLength="10"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/input_hint"/>
         </com.google.android.material.textfield.TextInputLayout>

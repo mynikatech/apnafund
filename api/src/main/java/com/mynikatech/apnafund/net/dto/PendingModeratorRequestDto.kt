@@ -8,6 +8,7 @@ class PendingModeratorRequestDto (
         val groupId: Int,
         val moderatorName: String,
         val groupName: String,
-        val emailId: String,
+        val emailId: String?,
+        val phoneNumber: String?,
         val groupDescription: String?
 )

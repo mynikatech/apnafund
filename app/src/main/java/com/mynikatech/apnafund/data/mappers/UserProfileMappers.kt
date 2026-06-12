@@ -1,6 +1,5 @@
 package com.mynikatech.apnafund.data.mappers
 
-import com.mynikatech.apnafund.data.mappers.toDto
 import com.mynikatech.apnafund.data.model.UserProfile
 import com.mynikatech.apnafund.net.dto.UserProfileDto
 

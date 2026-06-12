@@ -30,74 +30,51 @@
                     android:background="@color/table_header_bg">
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="48dp"
                         android:layout_height="match_parent"
-                        android:minWidth="48dp"
-                        android:maxWidth="48dp"
                         android:gravity="center_vertical"
                         android:padding="3dp"
                         android:text="@string/text_serial_no"
                         android:textColor="@color/table_text"
-                        android:textSize="15sp"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="160dp"
                         android:layout_height="match_parent"
-                        android:minWidth="120dp"
-                        android:maxWidth="180dp"
                         android:gravity="center_vertical"
                         android:padding="3dp"
-                        android:text="@string/text_first_name"
+                        android:text="@string/label_user_name"
                         android:textColor="@color/table_text"
-                        android:textSize="15sp"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
-
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="160dp"
                         android:layout_height="match_parent"
-                        android:minWidth="120dp"
-                        android:maxWidth="180dp"
-                        android:gravity="center_vertical"
-                        android:padding="3dp"
-                        android:text="@string/text_last_name"
-                        android:textColor="@color/table_text"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:minWidth="200dp"
-                        android:maxWidth="260dp"
                         android:gravity="center_vertical"
                         android:padding="3dp"
                         android:text="@string/text_email"
                         android:textColor="@color/table_text"
-                        android:textSize="15sp"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="100dp"
                         android:layout_height="match_parent"
-                        android:minWidth="120dp"
-                        android:maxWidth="140dp"
                         android:gravity="center_vertical"
                         android:padding="3dp"
                         android:text="@string/text_phone_number"
                         android:textColor="@color/table_text"
-                        android:textSize="15sp"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="140dp"
                         android:layout_height="match_parent"
-                        android:minWidth="140dp"
-                        android:maxWidth="200dp"
                         android:gravity="center_vertical"
                         android:padding="3dp"
                         android:text="@string/header_single_group"
                         android:textColor="@color/table_text"
-                        android:textSize="15sp"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
                     <TextView
                         android:layout_width="wrap_content"
@@ -108,7 +85,7 @@
                         android:padding="3dp"
                         android:text="@string/text_edit"
                         android:textColor="@color/table_text"
-                        android:textSize="15sp"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
                     <TextView
                         android:layout_width="wrap_content"
@@ -119,7 +96,7 @@
                         android:padding="3dp"
                         android:text="@string/text_status"
                         android:textColor="@color/table_text"
-                        android:textSize="15sp"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
                 </TableRow>
             </TableLayout>

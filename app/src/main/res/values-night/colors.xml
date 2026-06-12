@@ -51,8 +51,11 @@
     <color name="status_active_text">#A5D6A7</color>
 
     <color name="status_closed_bg">#3B1F1F</color>
-    <color name="status_closed_text">#F2B8B5</color>
+    <color name="status_closed_text">#757575</color>
     <color name="status_bg_neutral">#E0E0E0</color>
     <color name="table_row_even">#121212</color>
     <color name="table_row_odd">#1E1E1E</color>
+
+    <color name="status_approved_text">#388E3C</color>
+    <color name="status_rejected_text">#D32F2F</color>
 </resources>

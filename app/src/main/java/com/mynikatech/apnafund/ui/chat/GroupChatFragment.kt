@@ -60,7 +60,7 @@ class GroupChatFragment : Fragment() {
     private var messageListener: ListenerRegistration? = null
     private var typingListener: ListenerRegistration? = null
     private var retryCount = 0
-    private val maxRetries = 2
+    private val maxRetries = 10
     private var chatStarted = false
     private var permissionErrorHandled = false
     private val imagePicker =
@@ -226,8 +226,19 @@ class GroupChatFragment : Fragment() {
     private fun startChat() {
         if (!isAdded || _binding == null) return
 
+        Log.d(
+            "GroupChat",
+            "isFirebaseSynced=${SessionManager.isFirebaseSynced}, firebaseUid=${SessionManager.firebaseUid}"
+        )
+
+        val firebaseUser = FirebaseAuth.getInstance().currentUser
+
         // HARD GATE: Firebase must be ready
-        if (!SessionManager.isFirebaseSynced || SessionManager.firebaseUid.isBlank()) {
+        if (firebaseUser == null) {
+            Log.d(
+                "GroupChat",
+                "Firebase user not ready. Retry=$retryCount"
+            )
 
             if (retryCount >= maxRetries) {
                 Log.w("GroupChat", "Chat failed after retries")
@@ -243,7 +254,7 @@ class GroupChatFragment : Fragment() {
 
             return
         }
-
+        SessionManager.firebaseUid = firebaseUser.uid
         retryCount = 0 // reset
 
         if (chatStarted) return
