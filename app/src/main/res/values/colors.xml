@@ -53,4 +53,7 @@
     <color name="status_closed_text">#757575</color>
     <color name="status_rejected_text">#D32F2F</color>
 
+    <color name="status_verified">#2E7D32</color>
+    <color name="status_not_verified">#ED6C02</color>
+
 </resources>

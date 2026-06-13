@@ -141,7 +141,6 @@ class UserFragment : Fragment() {
         // Required fields
         listOf(
             inputLayoutFirstName,
-            inputLayoutPhone,
             textInputGroup
 
         ).forEach { it.markRequired() }
@@ -536,78 +535,79 @@ class UserFragment : Fragment() {
                     } else {
                         "MEMBER"
                     }
-                    val existingResponse = when {
+                    if (userId == 0) {
+                        val existingResponse = when {
 
-                        phone.length == 10 ->
-                            userViewModel.findExistingUserByPhone(
-                                phone
-                            )
-
-                        email.isNotEmpty() ->
-                            userViewModel.findExistingUserByEmail(
-                                email
-                            )
-
-
-
-                        else -> null
-                    }
-
-                    val existingCheckResult =
-                        determineExistingUserState(
-                            response = existingResponse,
-                            selectedGroupId = selectedGroupId,
-                            currentUserId = userId
-                        )
-                    when (existingCheckResult.state) {
-
-                        ExistingUserState.ALREADY_IN_GROUP -> {
-
-                            Toast.makeText(
-                                context,
-                                getString(
-                                    R.string.error_user_already_in_group
-                                ),
-                                Toast.LENGTH_LONG
-                            ).show()
-
-                            dialogBinding.buttonSaveUser.isEnabled = true
-
-                            dialogBinding.buttonSaveUser.text =
-                                getString(
-                                    R.string.text_save_button
+                            !phone.isNullOrBlank() && phone.length == 10 ->
+                                userViewModel.findExistingUserByPhone(
+                                    phone
                                 )
 
-                            return@launch
+                            !email.isNullOrBlank() ->
+                                userViewModel.findExistingUserByEmail(
+                                    email
+                                )
+
+
+                            else -> null
                         }
 
-                        ExistingUserState.EXISTS_IN_OTHER_GROUP -> {
-
-                            val response =
-                                existingCheckResult.response
-                                    ?: return@launch
-
-                            showExistingUserGroupAdditionDialog(
-                                response = response,
-                                dialog = dialog,
+                        val existingCheckResult =
+                            determineExistingUserState(
+                                response = existingResponse,
                                 selectedGroupId = selectedGroupId,
-                                groupRole = groupRole
+                                currentUserId = userId
                             )
+                        when (existingCheckResult.state) {
 
+                            ExistingUserState.ALREADY_IN_GROUP -> {
 
+                                Toast.makeText(
+                                    context,
+                                    getString(
+                                        R.string.error_user_already_in_group
+                                    ),
+                                    Toast.LENGTH_LONG
+                                ).show()
 
-                            dialogBinding.buttonSaveUser.isEnabled = true
+                                dialogBinding.buttonSaveUser.isEnabled = true
 
-                            dialogBinding.buttonSaveUser.text =
-                                getString(
-                                    R.string.text_save_button
+                                dialogBinding.buttonSaveUser.text =
+                                    getString(
+                                        R.string.text_save_button
+                                    )
+
+                                return@launch
+                            }
+
+                            ExistingUserState.EXISTS_IN_OTHER_GROUP -> {
+
+                                val response =
+                                    existingCheckResult.response
+                                        ?: return@launch
+
+                                showExistingUserGroupAdditionDialog(
+                                    response = response,
+                                    dialog = dialog,
+                                    selectedGroupId = selectedGroupId,
+                                    groupRole = groupRole
                                 )
 
-                            return@launch
-                        }
 
-                        ExistingUserState.NEW_USER -> {
-                            // continue normal flow
+
+                                dialogBinding.buttonSaveUser.isEnabled = true
+
+                                dialogBinding.buttonSaveUser.text =
+                                    getString(
+                                        R.string.text_save_button
+                                    )
+
+                                return@launch
+                            }
+
+                            ExistingUserState.NEW_USER -> {
+                                // continue normal flow
+                            }
                         }
                     }
                     val existingUserFull =
@@ -623,11 +623,20 @@ class UserFragment : Fragment() {
                             getString(R.string.button_saving_progress)
                         return@launch
                     }
-                    val userSaveSource = if (!isAdmin) {
-                        UserSaveSource.MODERATOR_CREATE
-                    } else {
-                        UserSaveSource.ADMIN_CREATE
-                    }
+                    val userSaveSource =
+                        when {
+                            userId != 0 && isAdmin ->
+                                UserSaveSource.ADMIN_UPDATE
+
+                            userId != 0 && !isAdmin ->
+                                UserSaveSource.MODERATOR_UPDATE
+
+                            isAdmin ->
+                                UserSaveSource.ADMIN_CREATE
+
+                            else ->
+                                UserSaveSource.MODERATOR_CREATE
+                        }
                     val now = System.currentTimeMillis()
                     val userToSave = Users(
                         userId = userId,

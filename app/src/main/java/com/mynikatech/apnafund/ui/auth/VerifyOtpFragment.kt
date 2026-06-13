@@ -182,6 +182,27 @@ class VerifyOtpFragment : Fragment(R.layout.fragment_verify_otp) {
                         )
                 )
             }
+
+            ApnaBankConstants.MODERATOR_REGISTER_VERIFY -> {
+
+                if (shouldSetPin) {
+
+                    findNavController().navigate(
+                        VerifyOtpFragmentDirections
+                            .actionVerifyOtpFragmentToSetPinFragment(
+                                userId = userId,
+                                isRegistrationFlow = true
+                            )
+                    )
+
+                } else {
+
+                    findNavController().navigate(
+                        VerifyOtpFragmentDirections
+                            .actionVerifyOtpFragmentToLoginFragment()
+                    )
+                }
+            }
         }
     }
 

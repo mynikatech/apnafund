@@ -101,6 +101,17 @@ class VerifyEmailFragment : Fragment(R.layout.fragment_verify_email) {
                             findNavController().navigate(action)
                         }
 
+                        ApnaBankConstants.TEXT_PROFILE_EMAIL_VERIFY -> {
+
+                            Toast.makeText(
+                                requireContext(),
+                                getString(R.string.successful_email_verification_message),
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            findNavController().popBackStack()
+                        }
+
                     }
 
                 } catch (e: ApiException) {

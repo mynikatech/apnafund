@@ -1102,5 +1102,8 @@
     <string name="error_phone_number_not_available">
     No phone number is associated with this account. Please contact support.
     </string>
+    <string name="text_not_verified">⚠ Not Verified</string>
+    <string name="text_verified">✓ Verified</string>
+    <string name="text_close">Close</string>
 
 </resources>

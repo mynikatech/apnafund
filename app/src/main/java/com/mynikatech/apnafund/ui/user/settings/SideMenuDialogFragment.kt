@@ -9,8 +9,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
 import androidx.core.os.LocaleListCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
@@ -22,6 +24,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.constants.ApnaBankConstants
+import com.mynikatech.apnafund.databinding.DialogEditProfileBinding
 import com.mynikatech.apnafund.net.dto.UserSaveSource
 import com.mynikatech.apnafund.session.PreferencesHelper
 import com.mynikatech.apnafund.session.SessionManager
@@ -90,30 +93,66 @@ class SideMenuDialogFragment : DialogFragment() {
                 }
 
                 R.id.menu_profile -> {
-                    val dialogView = layoutInflater
-                        .inflate(R.layout.dialog_edit_profile, null)
+                    val dialogBinding =
+                        DialogEditProfileBinding.inflate(layoutInflater)
 
                     lifecycleScope.launch {
                         // Load the latest user (local cache). If you also want remote, call refresh first.
                         val user = userViewModel.fetchUser(SessionManager.userId)
+                        val originalFirstName =
+                            user?.firstName ?: SessionManager.firstName
 
-                        val firstNameEdit =
-                            dialogView.findViewById<EditText>(R.id.editTextFirstName)
-                        val lastNameEdit = dialogView.findViewById<EditText>(R.id.editTextLastName)
-                        val emailEdit = dialogView.findViewById<EditText>(R.id.editTextEmail)
-                        val phoneEdit = dialogView.findViewById<EditText>(R.id.editTextPhone)
+                        val originalLastName =
+                            user?.lastName ?: SessionManager.lastName
 
+                        val originalEmail =
+                            user?.emailId ?: SessionManager.emailId
+
+                        val originalPhone =
+                            user?.phoneNumber ?: SessionManager.phoneNumber
                         // Pre-fill from fetched user when available, else SessionManager
-                        firstNameEdit.setText(user?.firstName ?: SessionManager.firstName)
-                        lastNameEdit.setText(user?.lastName ?: SessionManager.lastName)
-                        emailEdit.setText(user?.emailId ?: SessionManager.emailId)
-                        phoneEdit.setText(user?.phoneNumber ?: SessionManager.phoneNumber)
-                        emailEdit.isEnabled = false
-                        phoneEdit.isEnabled = false
+                        var isEditMode = false
+                        val isEmailVerified = user?.emailVerified == true
+                        updateUiForMode(dialogBinding, isEditMode)
+
+                        dialogBinding.editTextFirstName.setText(
+                            user?.firstName ?: SessionManager.firstName
+                        )
+
+                        dialogBinding.editTextLastName.setText(
+                            user?.lastName ?: SessionManager.lastName
+                        )
+
+                        dialogBinding.editTextEmail.setText(
+                            user?.emailId ?: SessionManager.emailId
+                        )
+
+                        dialogBinding.editTextPhone.setText(
+                            user?.phoneNumber ?: SessionManager.phoneNumber
+                        )
+                        updateVerificationStatus(
+                            dialogBinding.textPhoneVerificationStatus,
+                            user?.phoneVerified == true
+                        )
+
+                        updateVerificationStatus(
+                            dialogBinding.textEmailVerificationStatus,
+                            user?.emailVerified == true
+                        )
+                        dialogBinding.textVerifyEmail.setTextColor(
+                            ContextCompat.getColor(
+                                requireContext(),
+                                R.color.link_colour
+                            )
+                        )
+                        dialogBinding.textVerifyEmail.visibility =
+                            if (!isEmailVerified) View.VISIBLE else View.GONE
+
+
 
                         val dialog = AlertDialog.Builder(requireContext())
                             .setTitle(getString(R.string.title_edit_profile))
-                            .setView(dialogView)
+                            .setView(dialogBinding.root)
                             .setPositiveButton(
                                 getString(R.string.text_save),
                                 null
@@ -121,31 +160,73 @@ class SideMenuDialogFragment : DialogFragment() {
                             .setNegativeButton(getString(R.string.text_cancel_button), null)
                             .create()
 
-                        dialog.setOnShowListener {
-                            val saveBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                        dialogBinding.textVerifyEmail.setOnClickListener {
 
-                            saveBtn.setOnClickListener {
-                                // Run suspending work in a coroutine tied to the Fragment lifecycle
+                            dialog.dismiss()
+
+                            val action =
+                                SideMenuDialogFragmentDirections
+                                    .actionSideMenuDialogFragmentToVerifyEmailFragment(
+                                        userId = SessionManager.userId,
+                                        email = dialogBinding.editTextEmail.text.toString(),
+                                        userName = SessionManager.userName,
+                                        shouldSetPin = false,
+                                        emailOtpExpiresAtMillis = 0,
+                                        purpose = ApnaBankConstants.TEXT_PROFILE_EMAIL_VERIFY
+                                    )
+
+                            findNavController().navigate(action)
+                        }
+
+                        dialog.setOnShowListener {
+                            val positiveBtn =
+                                dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+
+                            val negativeBtn =
+                                dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                            positiveBtn.text = getString(R.string.text_edit)
+                            negativeBtn.text = getString(R.string.text_close)
+
+                            positiveBtn.setOnClickListener {
+
+                                if (!isEditMode) {
+
+                                    isEditMode = true
+
+                                    positiveBtn.text =
+                                        getString(R.string.text_save)
+
+                                    negativeBtn.text =
+                                        getString(R.string.text_cancel_button)
+
+                                    updateUiForMode(dialogBinding, isEditMode)
+
+                                    return@setOnClickListener
+                                }
+
                                 lifecycleScope.launch {
-                                    val firstName = firstNameEdit.text.toString().trim()
-                                    val lastName = lastNameEdit.text.toString().trim()
-                                    val email = emailEdit.text.toString().trim().lowercase()
-                                    val phone = phoneEdit.text.toString().trim()
+                                    val firstName =
+                                        dialogBinding.editTextFirstName.text.toString().trim()
+                                    val lastName =
+                                        dialogBinding.editTextLastName.text.toString().trim()
+                                    val email = dialogBinding.editTextEmail.text.toString().trim()
+                                        .lowercase()
+                                    val phone = dialogBinding.editTextPhone.text.toString().trim()
 
                                     // 1) Basic validation
                                     var isValid = true
                                     if (!UserInputValidator.isFirstNameValid(firstName)) {
-                                        firstNameEdit.error =
+                                        dialogBinding.editTextFirstName.error =
                                             ApnaBankConstants.FIRST_NAME_ERROR_MESSAGE
                                         isValid = false
                                     }
                                     if (!UserInputValidator.isEmailValid(email)) {
-                                        emailEdit.error =
+                                        dialogBinding.editTextEmail.error =
                                             ApnaBankConstants.INVALID_EMAIL_ERROR_MESSAGE
                                         isValid = false
                                     }
                                     if (!UserInputValidator.isPhoneValid(phone)) {
-                                        phoneEdit.error =
+                                        dialogBinding.editTextPhone.error =
                                             ApnaBankConstants.INVALID_PHONE_ERROR_MESSAGE
                                         isValid = false
                                     }
@@ -184,10 +265,10 @@ class SideMenuDialogFragment : DialogFragment() {
                                     )
 
                                     // 4) Disable button while saving
-                                    saveBtn.isEnabled = false
+                                    positiveBtn.isEnabled = false
 
                                     try {
-                                        saveBtn.isEnabled = false
+                                        positiveBtn.isEnabled = false
 
                                         val result = userViewModel.saveOrUpdateUser(
                                             updatedUser,
@@ -238,7 +319,7 @@ class SideMenuDialogFragment : DialogFragment() {
                                                 ).show()
                                             }
 
-                                        saveBtn.isEnabled = true
+                                        positiveBtn.isEnabled = true
                                     } catch (t: Throwable) {
                                         // ONLY for unexpected crashes (not API errors)
                                         Log.e("ProfileUpdate", "Unexpected error", t)
@@ -250,10 +331,40 @@ class SideMenuDialogFragment : DialogFragment() {
                                         ).show()
 
                                     } finally {
-                                        saveBtn.isEnabled = true
+                                        positiveBtn.isEnabled = true
                                     }
                                 }
+
                             }
+
+                            negativeBtn.setOnClickListener {
+
+                                if (isEditMode) {
+
+                                    // restore original values
+
+                                    dialogBinding.editTextFirstName.setText(originalFirstName)
+                                    dialogBinding.editTextLastName.setText(originalLastName)
+                                    dialogBinding.editTextEmail.setText(originalEmail)
+                                    dialogBinding.editTextPhone.setText(originalPhone)
+
+                                    isEditMode = false
+
+                                    positiveBtn.text =
+                                        getString(R.string.text_edit)
+
+                                    negativeBtn.text =
+                                        getString(R.string.text_close)
+
+                                    updateUiForMode(dialogBinding, isEditMode)
+
+                                    return@setOnClickListener
+                                }
+
+                                dialog.dismiss()
+                            }
+
+
                         }
 
                         dialog.show()
@@ -315,6 +426,24 @@ class SideMenuDialogFragment : DialogFragment() {
         }
     }
 
+    private fun updateUiForMode(
+        binding: DialogEditProfileBinding,
+        isEditMode: Boolean
+    ) {
+        binding.editTextFirstName.isEnabled = isEditMode
+        binding.editTextLastName.isEnabled = isEditMode
+        binding.editTextEmail.isEnabled = isEditMode
+
+        // Phone remains readonly
+        binding.editTextPhone.isEnabled = false
+
+        binding.layoutEmailVerification.visibility =
+            if (isEditMode) View.GONE else View.VISIBLE
+
+        binding.textPhoneVerificationStatus.visibility =
+            if (isEditMode) View.GONE else View.VISIBLE
+    }
+
     private fun showFeedbackDialog() {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle(getString(R.string.title_submit_feedback))
@@ -349,6 +478,28 @@ class SideMenuDialogFragment : DialogFragment() {
 
         builder.setNegativeButton(getString(R.string.text_cancel_button)) { dialog, _ -> dialog.cancel() }
         builder.show()
+    }
+
+    private fun updateVerificationStatus(
+        textView: TextView,
+        verified: Boolean
+    ) {
+
+        textView.text =
+            if (verified)
+                getString(R.string.text_verified)
+            else
+                getString(R.string.text_not_verified)
+
+        textView.setTextColor(
+            ContextCompat.getColor(
+                requireContext(),
+                if (verified)
+                    R.color.status_verified
+                else
+                    R.color.status_not_verified
+            )
+        )
     }
 
     private fun showToast(

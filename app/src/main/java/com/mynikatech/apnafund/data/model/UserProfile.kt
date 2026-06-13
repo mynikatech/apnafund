@@ -14,7 +14,7 @@ data class UserProfile(
     var firstName: String,
     var lastName: String?,
     var emailId: String?,
-    var phoneNumber: String,
+    var phoneNumber: String?,
 ){
     var roles: List<RolesDto> = emptyList()
     var groups: List<UserGroup> = emptyList()

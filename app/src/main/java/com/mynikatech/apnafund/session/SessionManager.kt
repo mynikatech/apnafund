@@ -13,7 +13,7 @@ object SessionManager {
     var firstName: String = ""
     var lastName: String = ""
     var emailId: String? = null
-    var phoneNumber: String = ""
+    var phoneNumber: String ? = null
     var roleIds: List<Int> = emptyList()
     var roleNames: List<String> = emptyList()
     var groupId: Int? = null

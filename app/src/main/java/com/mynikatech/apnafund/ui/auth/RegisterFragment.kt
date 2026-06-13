@@ -31,6 +31,7 @@ import com.mynikatech.apnafund.data.model.Groups
 import com.mynikatech.apnafund.data.model.Users
 import com.mynikatech.apnafund.databinding.FragmentRegisterBinding
 import com.mynikatech.apnafund.net.ApiException
+import com.mynikatech.apnafund.net.dto.Channel
 import com.mynikatech.apnafund.net.dto.ModeratorRegistrationResponse
 import com.mynikatech.apnafund.net.dto.RegisterModeratorRequest
 import com.mynikatech.apnafund.net.dto.SaveOrUpdateUserResponse
@@ -256,17 +257,18 @@ class RegisterFragment : Fragment() {
                         email, phone, groupName, groupDesc, password
                     ).onSuccess { resp ->
                         showToast(getString(R.string.message_submit_approval))
-                        if (!resp.emailVerified) {
+                        if (!resp.phoneVerified) {
 
                             val action =
                                 RegisterFragmentDirections
-                                    .actionRegisterFragmentToVerifyEmailFragment(
+                                    .actionRegisterFragmentToVerifyOtpFragment(
                                         userId = resp.userId,
-                                        email = email,
+                                        phoneNumber = phone,
+                                        channel = Channel.WHATSAPP.name,
                                         userName = "$firstName $lastName",
                                         shouldSetPin = binding.setPinFlag.isChecked,
-                                        emailOtpExpiresAtMillis = resp.emailOtpExpiresAtMillis ?: 0,
-                                        purpose = ApnaBankConstants.TEXT_EMAIL_VERIFY
+                                        otpExpiresAtMillis = resp.otpExpiresAtMillis ?: 0,
+                                        purpose = ApnaBankConstants.MODERATOR_REGISTER_VERIFY
                                     )
                             findNavController().navigate(action)
                         } else {

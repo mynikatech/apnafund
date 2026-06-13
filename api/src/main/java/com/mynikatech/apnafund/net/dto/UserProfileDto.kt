@@ -13,7 +13,7 @@ data class UserProfileDto(
     var firstName: String,
     var lastName: String? = null,
     var emailId: String?,
-    var phoneNumber: String
+    var phoneNumber: String?
 
 ){
     var roles: List<RolesDto> = emptyList()

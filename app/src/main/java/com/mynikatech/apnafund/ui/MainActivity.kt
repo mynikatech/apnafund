@@ -112,7 +112,7 @@ class MainActivity : AppCompatActivity() {
             R.id.loginPinFragment, R.id.fundMemberDetailsFragment,
             R.id.fundAddMembersFragment, R.id.verifyEmailFragment,
             R.id.resetPasswordFragment, R.id.fundLoanSummaryFragment,
-            R.id.inviteEntryFragment, R.id.helpFragment
+            R.id.inviteEntryFragment, R.id.helpFragment, R.id.verifyOtpFragment
         )
         navController.addOnDestinationChangedListener { _, destination, _ ->
             toolbarRef.get()?.visibility = when (destination.id) {
@@ -124,7 +124,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.fundMemberDetailsFragment, R.id.fundAddMembersFragment,
                 R.id.verifyEmailFragment, R.id.resetPasswordFragment,
                 R.id.loginPinFragment, R.id.fundLoanSummaryFragment,
-                R.id.inviteEntryFragment, R.id.aiChatFragment,
+                R.id.inviteEntryFragment, R.id.aiChatFragment,R.id.verifyOtpFragment,
                 R.id.helpFragment, R.id.monthlySummaryFragment -> View.GONE
 
                 else -> View.VISIBLE

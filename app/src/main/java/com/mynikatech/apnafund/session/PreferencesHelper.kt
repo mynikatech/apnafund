@@ -19,7 +19,7 @@ class PreferencesHelper(context: Context) {
         firstName: String,
         lastName: String,
         emailId: String?,
-        phoneNumber: String,
+        phoneNumber: String?,
         firebaseUid: String,
         groupName: String
     ) {

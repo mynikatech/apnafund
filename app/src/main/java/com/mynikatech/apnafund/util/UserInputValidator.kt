@@ -11,6 +11,7 @@ object UserInputValidator {
     }
 
     fun isPhoneValid(phone: String?): Boolean {
-        return !phone.isNullOrBlank() && phone.matches(Regex("^[1-9][0-9]{9}$"))
+        return phone.isNullOrBlank() ||
+                phone.matches(Regex("^[1-9][0-9]{9}$"))
     }
 }
