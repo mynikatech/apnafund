@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 121-make-phone-optional
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/121-make-phone-optional.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

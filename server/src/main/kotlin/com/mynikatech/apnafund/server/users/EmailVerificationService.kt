@@ -103,6 +103,35 @@ class EmailVerificationService(
                 }
             }
 
+            "PROFILE_EMAIL_VERIFY" -> {
+
+                usersSql.markUserEmailVerified(verifiedUserId)
+
+                val user = usersSql.getUser(verifiedUserId).firstOrNull()
+                    ?: run {
+                        logger.error(
+                            "Email verification token valid but user not found. userId={}",
+                            verifiedUserId
+                        )
+                        throw IllegalStateException("User not found after OTP verification")
+                    }
+
+                val email = user.emailId
+
+                if (!email.isNullOrBlank()) {
+
+                    eventDispatchService.dispatchUser(
+                        UserNotificationFactory.profileEmailVerified(
+                            userId = user.userId.toString(),
+                            email = email,
+                            userName = "${user.firstName} ${user.lastName}"
+                        )
+                    )
+                }
+
+                // WhatsApp notification can be added later
+            }
+
             "RESET_PASSWORD" -> {
                 // do nothing
             }

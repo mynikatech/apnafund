@@ -55,7 +55,7 @@ interface UsersSql {
 
     @SqlQuery(
         """
-        SELECT upsert_user_by_email(:firstName,:lastName,:emailId,:phoneNumber,:status,
+        SELECT upsert_user_by_email(:userId, :firstName,:lastName,:emailId,:phoneNumber,:status,
                                     :createdDate,:isPinSet,:hashPIN,:passwordHash,:firebaseUserId,:userCode, :isInvited, :actorUserId, :userSaveSource)
     """
     )
@@ -250,6 +250,15 @@ interface UsersSql {
     """
     )
     fun markUserEmailVerified(
+        @Bind("userId") userId: Int
+    )
+
+    @SqlUpdate(
+        """
+    SELECT * from mark_user_email_unverified(:userId)
+    """
+    )
+    fun markUserEmailUnverified(
         @Bind("userId") userId: Int
     )
 

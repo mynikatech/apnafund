@@ -116,6 +116,17 @@ object UserNotificationContentRegistry {
                 )
             }
         ),
+        "PROFILE_EMAIL_VERIFIED" to Content(
+            subject = "Email Address Verified",
+            message = { event ->
+                val email = event.email
+                    ?: error("Email payload missing for PROFILE_EMAIL_VERIFIED")
+
+                ProfileEmailVerifiedEmail.body(
+                    userName = email.userName
+                )
+            }
+        ),
         "INVITE_NOTICE" to Content(
             subject = "You’re invited to join Apna Fund 🎉",
             message = { event ->

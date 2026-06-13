@@ -4,6 +4,7 @@ import com.mynikatech.apnafund.net.api.ValidationException
 import com.mynikatech.apnafund.net.dto.RegisterOrUpdateUserRequest
 import com.mynikatech.apnafund.net.dto.SaveOrUpdateUserResponse
 import com.mynikatech.apnafund.net.dto.UserSaveSource
+import com.mynikatech.apnafund.net.dto.UsersDto
 import com.mynikatech.apnafund.server.auth.FirebaseGroupService
 import com.mynikatech.apnafund.server.common.messaging.dispatch.EventDispatchService
 import com.mynikatech.apnafund.server.common.messaging.factories.UserNotificationFactory
@@ -35,6 +36,10 @@ class UserManagementService(
         val user = req.user
         val requestorId = req.requestorId
         val groupRole = req.groupRole
+        val existingUser =
+            user.userId?.let {
+                usersSql.getUser(it).firstOrNull()
+            }
 
         val isDeactivating =
 
@@ -71,7 +76,7 @@ class UserManagementService(
         val userId: Int = usersSql.upsertUserByEmail(user, requestorId)
         val email = user.emailId
 
-        var emailVerified = false
+        var emailVerified = user.emailVerified
         var expiresOtpAtMillis: Long? = null
 
         when (req.source) {
@@ -117,11 +122,43 @@ class UserManagementService(
             }
 
             UserSaveSource.SELF_UPDATE -> {
+
+                val oldEmail = existingUser?.emailId?.trim()?.lowercase()
+                val newEmail = user.emailId?.trim()?.lowercase()
+
+                val emailChanged =
+                    !oldEmail.isNullOrBlank() &&
+                            !newEmail.isNullOrBlank() &&
+                            oldEmail != newEmail
+
+                if (emailChanged) {
+
+                    logger.info(
+                        "Email changed for userId={} oldEmail={} newEmail={}",
+                        userId,
+                        oldEmail,
+                        newEmail
+                    )
+
+                    if (emailVerificationEnabled) {
+
+                        usersSql.markUserEmailUnverified(userId)
+
+                        emailVerified = false
+
+                    } else {
+
+                        usersSql.markUserEmailVerified(userId)
+
+                        emailVerified = true
+                    }
+                }
+
                 eventDispatchService.dispatchUser(
                     UserNotificationFactory.userUpdated(
                         userId = userId.toString(),
                         email = user.emailId,
-                        phone = "91${user.phoneNumber} ?: ",
+                        phone = "91${user.phoneNumber}",
                         userName = "${user.firstName} ${user.lastName}"
                     )
                 )
@@ -180,15 +217,62 @@ class UserManagementService(
             }
 
             UserSaveSource.ADMIN_UPDATE -> {
+
                 handleGroup(userId, req.groupId, groupRole, requestorId)
-                // explicitly NO EMAIL
-                emailVerified = true
+                val sendInvite = shouldSendInviteOnUpdate(existingUser, user)
+                if (sendInvite) {
+                    val group = groupsSql.getGroup(req.groupId).firstOrNull()
+                    if (null != group) {
+                        val moderatorId = group.moderator
+                        val moderatorUser = moderatorId?.let {
+                            usersSql.getUser(it).firstOrNull()
+                        }
+                        val invitedByName = moderatorUser?.fullName ?: "Group Moderator"
+                        // INVITE EMAIL
+                        logger.info("Sending invite notifications")
+                        eventDispatchService.dispatchUser(
+                            UserNotificationFactory.inviteNotice(
+                                userId = userId,
+                                email = user.emailId,
+                                phone = user.phoneNumber,
+                                userName = "${user.firstName} ${user.lastName}",
+                                invitedBy = invitedByName, // moderator name
+                                groupName = group.groupName
+                            )
+                        )
+                    }
+
+
+                }
             }
 
             UserSaveSource.MODERATOR_UPDATE -> {
                 handleGroup(userId, req.groupId, groupRole, requestorId)
-                // explicitly NO EMAIL
-                emailVerified = true
+                val sendInvite = shouldSendInviteOnUpdate(existingUser, user)
+                if (sendInvite) {
+                    val group = groupsSql.getGroup(req.groupId).firstOrNull()
+                    if (null != group) {
+                        val moderatorId = group.moderator
+                        val moderatorUser = moderatorId?.let {
+                            usersSql.getUser(it).firstOrNull()
+                        }
+                        val invitedByName = moderatorUser?.fullName ?: "Group Moderator"
+                        // INVITE EMAIL
+                        logger.info("Sending invite notifications")
+                        eventDispatchService.dispatchUser(
+                            UserNotificationFactory.inviteNotice(
+                                userId = userId,
+                                email = user.emailId,
+                                phone = user.phoneNumber,
+                                userName = "${user.firstName} ${user.lastName}",
+                                invitedBy = invitedByName, // moderator name
+                                groupName = group.groupName
+                            )
+                        )
+                    }
+
+
+                }
             }
         }
         return SaveOrUpdateUserResponse(
@@ -266,5 +350,27 @@ class UserManagementService(
         val newHash = Converters.hashPassword(rawPassword)
 
         usersSql.updatePassword(userId, newHash)
+    }
+
+    private fun shouldSendInviteOnUpdate(
+        oldUser: UsersDto?,
+        newUser: UsersDto
+    ): Boolean {
+
+        val oldPhone = oldUser?.phoneNumber
+        val newPhone = newUser.phoneNumber
+
+        val sendInvite =
+            !newPhone.isNullOrBlank() &&
+                    oldPhone != newPhone
+
+        logger.info(
+            "Invite check oldPhone={} newPhone={} sendInvite={}",
+            oldPhone,
+            newPhone,
+            sendInvite
+        )
+
+        return sendInvite
     }
 }

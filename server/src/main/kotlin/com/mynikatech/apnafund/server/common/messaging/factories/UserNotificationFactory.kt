@@ -199,6 +199,23 @@ object UserNotificationFactory {
         )
     )
 
+    fun profileEmailVerified(
+        userId: String,
+        email: String,
+        userName: String
+    ) = NotificationEvent(
+        eventType = "PROFILE_EMAIL_VERIFIED",
+        userId = userId,
+        channels = setOf(Channel.EMAIL),
+        email = NotificationHelper.buildEmailPayload(
+            email = email,
+            userName = userName,
+            data = mapOf(
+                "userName" to userName
+            )
+        )
+    )
+
     fun devRegistrationNotice(
         userId: Int,
         email: String,
