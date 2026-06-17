@@ -541,7 +541,7 @@ class DepositEntryFragment : BaseEntryFragment() {
                 )
             )
         }
-
+        row.tag = deposit?.depositorId
         row.addView(tvName)
         row.addView(etAmount)
         row.addView(lateFeeContainer)
@@ -676,11 +676,11 @@ class DepositEntryFragment : BaseEntryFragment() {
 
             if (amountText.isBlank()) continue
 
-            val member = memberMap[name] ?: continue
+            val depositorId = row.tag as? Int ?: continue
 
             deposits.add(
                 Deposits(
-                    depositorId = member.userId,
+                    depositorId = depositorId,
                     fundId = fundId,
                     depositAmount = amountText.trim().toDouble(),
                     depositMonth = selectedMonth.toString(),

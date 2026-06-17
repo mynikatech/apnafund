@@ -28,22 +28,58 @@ interface LoansSql {
     @SqlQuery("""SELECT * FROM get_loan_complete(:loanId)""")
     fun getLoanComplete(@Bind("loanId") loanId: Int): List<LoanCmplDetailsDto>
 
-    @SqlQuery("""SELECT add_loan(:loanNumber,:borrowerId,:issuedDate,:period,:loanAmount,:maturityDate,:rateOfInterest,:status,:fundId)""")
+    @SqlQuery("""
+    SELECT add_loan(
+        :loanNumber,:borrowerId,:issuedDate,:period,
+        :loanAmount,:maturityDate,:rateOfInterest,
+        :hasVariableInterestRate,:revisedLoanInterestRate,:interestRateRevisionAfterMonths,
+        :status,:fundId
+    )
+    """)
     fun addLoan(@BindKotlin l: LoansDto): Int
 
-    @SqlQuery("""SELECT update_loan(:loanId,:loanNumber,:borrowerId,:issuedDate,:period,:loanAmount,:maturityDate,:rateOfInterest,:status,:fundId)""")
+    @SqlQuery("""
+    SELECT update_loan(
+        :loanId,:loanNumber,:borrowerId,:issuedDate,:period,
+        :loanAmount,:maturityDate,:rateOfInterest,
+        :hasVariableInterestRate,:revisedLoanInterestRate,:interestRateRevisionAfterMonths,
+        :status,:fundId
+    )
+    """)
     fun updateLoan(@Bind("loanId") loanId: Int, @BindKotlin l: LoansDto): Boolean
 
     @SqlQuery("""SELECT delete_loan(:loanId)""")
     fun deleteLoan(@Bind("loanId") loanId: Int): Boolean
 
-    @SqlQuery("""SELECT insert_loan_with_details(:loanNumber,:borrowerId,:issuedDate,:period,:loanAmount,:maturityDate,:rateOfInterest,:status,:fundId,
-                                                  :origPrincipal,:totalInterest,:totalAmount,:emiInterest,:currTotalIntPaid,:currPrincipal)""")
-    fun insertLoanWithDetails(@BindKotlin loan: LoansDto, @BindKotlin details: LoanDetailsDto): Int
+    @SqlQuery("""
+    SELECT insert_loan_with_details(
+        :loanNumber,:borrowerId,:issuedDate,:period,
+        :loanAmount,:maturityDate,:rateOfInterest,
+        :hasVariableInterestRate,:revisedLoanInterestRate,:interestRateRevisionAfterMonths,
+        :status,:fundId,
+        :origPrincipal,:totalInterest,:totalAmount,
+        :emiInterest,:currTotalIntPaid,:currPrincipal
+    )
+    """)
+    fun insertLoanWithDetails(
+        @BindKotlin loan: LoansDto,
+        @BindKotlin details: LoanDetailsDto
+    ): Int
 
-    @SqlQuery("""SELECT update_loan_with_details(:loanId,:loanNumber,:borrowerId,:issuedDate,:period,:loanAmount,:maturityDate,:rateOfInterest,:status,:fundId,
-                                                 :loanDetailsId,:origPrincipal,:totalInterest,:totalAmount,:emiInterest,:currTotalIntPaid,:currPrincipal)""")
-    fun updateLoanWithDetails(@BindKotlin loan: LoansDto, @BindKotlin details: LoanDetailsDto): Boolean
+    @SqlQuery("""
+    SELECT update_loan_with_details(
+        :loanId,:loanNumber,:borrowerId,:issuedDate,:period,
+        :loanAmount,:maturityDate,:rateOfInterest,
+        :hasVariableInterestRate,:revisedLoanInterestRate,:interestRateRevisionAfterMonths,
+        :status,:fundId,
+        :loanDetailsId,:origPrincipal,:totalInterest,:totalAmount,
+        :emiInterest,:currTotalIntPaid,:currPrincipal
+    )
+    """)
+    fun updateLoanWithDetails(
+        @BindKotlin loan: LoansDto,
+        @BindKotlin details: LoanDetailsDto
+    ): Boolean
 
     @SqlQuery("""SELECT is_loan_for_user_for_fund(:userId,:fundId)""")
     fun isLoanForUserForFund(@Bind("userId") userId: Int, @Bind("fundId") fundId: Int): Boolean

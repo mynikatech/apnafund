@@ -2,6 +2,7 @@ package com.mynikatech.apnafund.ui.fund
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -193,9 +194,25 @@ class FundAdapter(
                 val years = fundWithDetails.fundPeriod / 12
                 val months = fundWithDetails.fundPeriod % 12
                 textViewFundPeriodValue.text = Converters.getFormattedPeriodDate(years, months)
+                Log.d("FundAdapter", "The fund ${fundWithDetails.fundName} has variable int rate: ${fundWithDetails.hasVariableInterestRate}")
+                val loanSummary =
+                    if (fundWithDetails.hasVariableInterestRate) {
+                        context.getString(
+                            R.string.text_variable_loan_summary,
+                            FundInputValidator.formatDecimal(fundWithDetails.loanInterestRate),
+                            FundInputValidator.formatDecimal(fundWithDetails.revisedLoanInterestRate),
+                            fundWithDetails.interestRateRevisionAfterMonths.toString()
+                        )
+                    } else {
+                        context.getString(
+                            R.string.text_loan_summary,
+                            FundInputValidator.formatDecimal(fundWithDetails.loanInterestRate)
+                        )
+                    }
                 textAmountSummary.text = context.getString(
-                    R.string.fund_amount_month,
-                    FundInputValidator.formatCurrency(fundWithDetails.recurringDepositAmount)
+                    R.string.fund_amount_month_with_loan,
+                    FundInputValidator.formatCurrency(fundWithDetails.recurringDepositAmount),
+                    loanSummary
                 )
                 textViewFundTotalExpectedValue.text =
                     FundInputValidator.formatCurrency(fundWithDetails.totalExpectedDeposit)

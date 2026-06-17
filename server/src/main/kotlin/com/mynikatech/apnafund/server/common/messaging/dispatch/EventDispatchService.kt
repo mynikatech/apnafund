@@ -33,7 +33,7 @@ class EventDispatchService(
             "Dispatching USER isEmailVerified={}",
             user.emailVerified
         )
-        var exemptEvents = mutableSetOf(
+        var emailVerificationExemptEvents  = mutableSetOf(
             "GROUP_INVITE",
             "EMAIL_VERIFY",
             "EMAIL_VERIFICATION",
@@ -42,11 +42,18 @@ class EventDispatchService(
             "GROUP_APPROVED",
             "GROUP_REJECTED"
         )
+
+        val whatsappVerificationExemptEvents  = mutableSetOf(
+            "WHATSAPP_OTP",
+            "INVITE_NOTICE",
+            "GROUP_APPROVED",
+            "GROUP_REJECTED"
+        )
         if (
             isEmailEnabled("INVITE_NOTICE")
         ) {
 
-            exemptEvents.add(
+            emailVerificationExemptEvents.add(
                 "INVITE_NOTICE"
             )
         }
@@ -54,18 +61,26 @@ class EventDispatchService(
         val canSendEmail =
             !event.email?.to.isNullOrBlank() &&
                     (
-                            user.emailVerified == true || event.eventType in exemptEvents
+                            user.emailVerified == true || event.eventType in emailVerificationExemptEvents
                             )
-        val filteredChannels =
-            if (!canSendEmail) {
+        val canSendWhatsapp =
+            !event.whatsapp?.phone.isNullOrBlank() &&
+                    (
+                            user.phoneVerified == true ||
+                                    event.eventType in whatsappVerificationExemptEvents
+                            )
 
-                event.channels - Channel.EMAIL
+        var filteredChannels = event.channels
 
-            } else {
+        if (!canSendEmail) {
+            filteredChannels =
+                filteredChannels - Channel.EMAIL
+        }
 
-                event.channels
-            }
-
+        if (!canSendWhatsapp) {
+            filteredChannels =
+                filteredChannels - Channel.WHATSAPP
+        }
         // No channels left
         if (filteredChannels.isEmpty()) {
 

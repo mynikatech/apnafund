@@ -241,14 +241,14 @@ class FundViewModel : ViewModel() {
 
     }
 
-    fun updateFundMember(fundMember: FundMembers) {
-        viewModelScope.launch {
+    suspend fun updateFundMember(fundMember: FundMembers) {
+
             try {
                 fundRepository.updateFundMember(fundMember.toDto())
             } catch (e: Exception) {
                 Log.e("FundViewModel", "Error updating fund member", e)
             }
-        }
+
     }
 
 }

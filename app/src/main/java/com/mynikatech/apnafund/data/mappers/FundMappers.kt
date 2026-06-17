@@ -3,6 +3,7 @@ package com.mynikatech.apnafund.data.mappers
 import com.mynikatech.apnafund.data.model.*
 import com.mynikatech.apnafund.net.dto.FundDetailsDto
 import com.mynikatech.apnafund.net.dto.FundsDto
+import kotlin.Boolean
 
 // -------- Funds --------
 fun FundsDto.toEntity(): Funds = Funds(
@@ -16,6 +17,9 @@ fun FundsDto.toEntity(): Funds = Funds(
     recurringDepositAmount = recurringDepositAmount,
     fundStatus = fundStatus,
     loanInterestRate = loanInterestRate,
+    hasVariableInterestRate= hasVariableInterestRate,
+    revisedLoanInterestRate = revisedLoanInterestRate,
+    interestRateRevisionAfterMonths = interestRateRevisionAfterMonths,
     lateFeeRate = lateFeeRate,
     monthlyDepDateBy = monthlyDepDateBy,
     groupId = groupId,
@@ -33,6 +37,9 @@ fun Funds.toDto(): FundsDto = FundsDto(
     recurringDepositAmount = recurringDepositAmount,
     fundStatus = fundStatus,
     loanInterestRate = loanInterestRate,
+    hasVariableInterestRate= hasVariableInterestRate,
+    revisedLoanInterestRate = revisedLoanInterestRate,
+    interestRateRevisionAfterMonths = interestRateRevisionAfterMonths,
     lateFeeRate = lateFeeRate,
     monthlyDepDateBy = monthlyDepDateBy,
     groupId = groupId,

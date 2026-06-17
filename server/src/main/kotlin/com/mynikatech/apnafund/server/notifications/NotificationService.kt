@@ -2,7 +2,6 @@ package com.mynikatech.apnafund.server.notifications
 
 import com.mynikatech.apnafund.net.dto.AdminUserDto
 import com.mynikatech.apnafund.net.dto.Channel
-import com.mynikatech.apnafund.net.dto.EmailPayload
 import com.mynikatech.apnafund.net.dto.FundModeratorDto
 import com.mynikatech.apnafund.net.dto.NotificationEvent
 import com.mynikatech.apnafund.net.dto.UserBasicDto
@@ -37,6 +36,19 @@ class NotificationService(
         try {
 
             logger.info("The group id is : $groupId")
+            val group =
+                groupsSql.getGroup(groupId)
+                    .firstOrNull()
+                    ?: return
+
+            val moderatorName =
+                group.moderator?.let { moderatorId ->
+
+                    usersSql
+                        .getUserById(moderatorId)
+                        ?.fullName
+
+                } ?: "Group Moderator"
 
             val groupMembers =
                 groupsSql.getAllMembersofGroupWithNames(groupId, true)
@@ -88,6 +100,8 @@ class NotificationService(
                 val event = GroupNotificationFactory.fundCreated(
                     fundId = fundId.toString(),
                     fundName = fundName,
+                    groupName = group.groupName,
+                    moderatorName = moderatorName,
                     recipient = member,
                     fundMemberNames = fundMemberNames
                 )
@@ -127,17 +141,25 @@ class NotificationService(
                 )
             )
         }
+        val fund = fundsSql.getFund(fundId).firstOrNull() ?: return
+        val group =
+            groupsSql.getGroup(fund.groupId)
+                .firstOrNull()
+                ?: return
 
         // Dispatch email per newly added member
 
         newMembers.forEach { member ->
 
+            val phone =
+                member.phoneNumber?.let { "91$it" }
             val event = NotificationEvent(
                 eventType = "FUND_MEMBER_ADDED",
                 userId = member.userId.toString(),
+
                 channels = NotificationHelper.buildChannels(
                     member.emailId,
-                    null
+                    phone,
                 ),
 
                 email = NotificationHelper.buildEmailPayload(
@@ -147,7 +169,15 @@ class NotificationService(
                         "fundName" to fundName
                     )
                 ),
-                whatsapp = null,
+                whatsapp = NotificationHelper.buildWhatsAppPayload(
+                    phone = phone,
+                    template = WhatsAppTemplates.FUND_MEMBER_ADDED,
+                    templateParams = listOf(
+                        member.fullName,
+                        fundName,
+                        group.groupName
+                    )
+                ),
 
                 eventData = mapOf(
                     "fundId" to fundId.toString(),
@@ -175,7 +205,11 @@ class NotificationService(
                 logger.info("No fund members found for closure notification")
                 return
             }
-
+            val fund = fundsSql.getFund(fundId).firstOrNull() ?: return
+            val group =
+                groupsSql.getGroup(fund.groupId)
+                    .firstOrNull()
+                    ?: return
             logger.info("Sending FUND_CLOSED notification to ${fundMembers.size} members")
 
             // ---------- IN APP NOTIFICATIONS ----------
@@ -203,7 +237,7 @@ class NotificationService(
                     userId = member.userId.toString(),
                     channels = NotificationHelper.buildChannels(
                         member.emailId,
-                        null
+                        member.phoneNumber?.let { "91$it" }
                     ),
 
                     email = NotificationHelper.buildEmailPayload(
@@ -215,7 +249,14 @@ class NotificationService(
                             "reason" to reason
                         )
                     ),
-                    whatsapp = null,
+                    whatsapp = NotificationHelper.buildWhatsAppPayload(
+                        phone = member.phoneNumber?.let { "91$it" },
+                        template = WhatsAppTemplates.FUND_CLOSED,
+                        templateParams = listOf(
+                            fundName,
+                            group.groupName
+                        )
+                    ),
                     eventData = mapOf(
                         "fundId" to fundId.toString(),
                         "fundName" to fundName
@@ -388,6 +429,37 @@ class NotificationService(
                         status = "ACTIVE"
                     )
                 )
+                val phone =
+                    member.phoneNumber?.let { "91$it" }
+
+                val event = NotificationEvent(
+
+                    eventType = "LOAN_APPROVED",
+
+                    userId = member.userId.toString(),
+
+                    channels = NotificationHelper.buildChannels(
+                        null, // email intentionally disabled
+                        phone
+                    ),
+
+                    whatsapp = NotificationHelper.buildWhatsAppPayload(
+                        phone = phone,
+                        template = WhatsAppTemplates.LOAN_APPROVED,
+                        templateParams = listOf(
+                            borrower.fullName,
+                            fundName,
+                            loan.loanNumber
+                        )
+                    ),
+
+                    eventData = mapOf(
+                        "loanId" to loanId.toString(),
+                        "fundId" to fundId.toString()
+                    )
+                )
+
+                eventDispatchService.dispatchUser(event)
 
                 // ---------- EMAIL ----------
                 // dont send email now. too much load, not needed as of now, will send a whatsapp when it is available
@@ -477,7 +549,7 @@ class NotificationService(
                 ),
                 whatsapp = NotificationHelper.buildWhatsAppPayload(
                     borrower.phoneNumber?.let { "91$it" },
-                    template = "apnafund_loan_requested",
+                    template = WhatsAppTemplates.LOAN_REJECTED,
                     templateParams = listOf(
                         rejectedBy,
                         fundName
@@ -544,49 +616,47 @@ class NotificationService(
                             status = "ACTIVE"
                         )
                     )
-
                     // ---------- EMAIL ----------
-                    val email = approver.emailId
-                    if (!email.isNullOrBlank()) {
-                        val event = NotificationEvent(
+                    val event = NotificationEvent(
 
-                            eventType = "GROUP_REQUESTED",
+                        eventType = "GROUP_REQUESTED",
 
-                            userId =
-                                approver.userId.toString(),
+                        userId = approver.userId.toString(),
 
-                            channels =
-                                setOf(Channel.EMAIL),
+                        channels = NotificationHelper.buildChannels(
+                            approver.emailId,
+                            approver.phoneNumber?.let { "91$it" }
+                        ),
 
-                            email = EmailPayload(
-                                to = email,
-
-                                userName =
-                                    approver.fullName,
-
-                                data = mapOf(
-                                    "requestorName" to requestorName,
-
-                                    "groupName" to groupName,
-
-                                    "groupDescription" to
-                                            (
-                                                    group.description
-                                                        ?: ""
-                                                    )
-                                )
-                            ),
-
-                            eventData = mapOf(
-                                "groupId" to groupId.toString(),
-                                "groupName" to groupName
+                        email = NotificationHelper.buildEmailPayload(
+                            email = approver.emailId,
+                            userName = approver.fullName,
+                            data = mapOf(
+                                "requestorName" to requestorName,
+                                "groupName" to groupName,
+                                "groupDescription" to (group.description ?: "")
                             )
-                        )
+                        ),
 
-                        eventDispatchService.dispatchUser(
-                            event
+                        whatsapp = NotificationHelper.buildWhatsAppPayload(
+                            phone = approver.phoneNumber?.let { "91$it" },
+                            template = WhatsAppTemplates.GROUP_REQUESTED,
+                            templateParams = listOf(
+                                requestorName,
+                                groupName
+                            )
+                        ),
+
+                        eventData = mapOf(
+                            "groupId" to groupId.toString(),
+                            "groupName" to groupName
                         )
-                    }
+                    )
+
+                    eventDispatchService.dispatchUser(
+                        event
+                    )
+
 
                 } catch (e: Exception) {
 
@@ -857,6 +927,8 @@ class NotificationService(
                         status = "ACTIVE"
                     )
                 )
+                val phone =
+                    member.phoneNumber?.let { "91$it" }
 
                 // ---------- EMAIL ----------
                 val event = NotificationEvent(
@@ -864,7 +936,7 @@ class NotificationService(
                     userId = member.userId.toString(),
                     channels = NotificationHelper.buildChannels(
                         member.emailId,
-                        null
+                        phone
                     ),
 
                     email = NotificationHelper.buildEmailPayload(
@@ -877,6 +949,15 @@ class NotificationService(
                             "closureType" to closureType,
                             "closedBy" to closedByName,
                             "loanId" to loanId.toString()
+                        )
+                    ),
+                    whatsapp = NotificationHelper.buildWhatsAppPayload(
+                        phone = phone,
+                        template = WhatsAppTemplates.LOAN_CLOSED,
+                        templateParams = listOf(
+                            borrower.fullName,
+                            fundName,
+                            loan.loanNumber
                         )
                     ),
 
@@ -930,38 +1011,55 @@ class NotificationService(
                             status = "ACTIVE"
                         )
                     )
-                    if (!moderator.emailId.isNullOrBlank()) {
-                        // ---------- EMAIL ----------
-                        val event = NotificationEvent(
-                            eventType = "LOAN_CLOSURE_REQUESTED",
-                            userId = moderator.userId.toString(),
-                            channels = setOf(Channel.EMAIL),
+                    val phone =
+                        moderator.phoneNumber?.let { "91$it" }
 
-                            email = EmailPayload(
-                                to = moderator.emailId ?: "",
-                                userName = moderator.fullName!!,
-                                data = mapOf(
-                                    "borrowerName" to borrowerName,
-                                    "fundName" to fundName,
-                                    "loanId" to loanId.toString(),
-                                    "loanAmount" to loan.loanAmount.toString(),
-                                    "loanNumber" to loan.loanNumber,
-                                    "issuedDate" to loan.issuedDate,
-                                    "maturityDate" to loan.maturityDate,
-                                    "requestedAmount" to (requestedAmount?.toString() ?: ""),
-                                    "remarks" to (remarks ?: "")
-                                )
-                            ),
+                    val event = NotificationEvent(
 
-                            eventData = mapOf(
+                        eventType = "LOAN_CLOSURE_REQUESTED",
+
+                        userId = moderator.userId.toString(),
+
+                        channels = NotificationHelper.buildChannels(
+                            moderator.emailId,
+                            phone
+                        ),
+
+                        email = NotificationHelper.buildEmailPayload(
+                            email = moderator.emailId,
+                            userName = moderator.fullName ?: "",
+                            data = mapOf(
+                                "borrowerName" to borrowerName,
+                                "fundName" to fundName,
                                 "loanId" to loanId.toString(),
-                                "fundId" to fundId.toString(),
-                                "fundName" to fundName
+                                "loanAmount" to loan.loanAmount.toString(),
+                                "loanNumber" to loan.loanNumber,
+                                "issuedDate" to loan.issuedDate,
+                                "maturityDate" to loan.maturityDate,
+                                "requestedAmount" to (requestedAmount?.toString() ?: ""),
+                                "remarks" to (remarks ?: "")
                             )
-                        )
+                        ),
 
-                        eventDispatchService.dispatchUser(event)
-                    }
+                        whatsapp = NotificationHelper.buildWhatsAppPayload(
+                            phone = phone,
+                            template = WhatsAppTemplates.LOAN_CLOSURE_REQUESTED,
+                            templateParams = listOf(
+                                borrowerName,
+                                fundName,
+                                loan.loanNumber
+                            )
+                        ),
+
+                        eventData = mapOf(
+                            "loanId" to loanId.toString(),
+                            "fundId" to fundId.toString(),
+                            "fundName" to fundName
+                        )
+                    )
+
+                    eventDispatchService.dispatchUser(event)
+
                 } catch (e: Exception) {
 
                     logger.error(
@@ -1052,6 +1150,358 @@ class NotificationService(
 
         } catch (e: Exception) {
             logger.error("ERROR inside notifyLoanClosureRejected", e)
+        }
+    }
+
+    fun notifyFundMemberPromoted(
+        fundId: Int,
+        userId: Int
+    ) {
+
+        try {
+
+            val fund =
+                fundsSql.getFund(fundId).firstOrNull()
+                    ?: return
+
+            val group =
+                groupsSql.getGroup(fund.groupId)
+                    .firstOrNull()
+                    ?: return
+
+            val member =
+                usersSql.getUserById(userId)
+                    ?: return
+            val userId =
+                member.userId
+                    ?: run {
+                        logger.error(
+                            "Missing userId while sending FUND_MEMBER_REMOVED notification"
+                        )
+                        return
+                    }
+            sql.addUserNotification(
+                UserNotificationsDto(
+                    notificationType = "FUND_MEMBER_PROMOTED",
+                    userId = userId,
+                    message = "You have been promoted to Fund Moderator for \"${fund.fundName}\".",
+                    publishedFlag = true,
+                    readFlag = false,
+                    isExpiredFlag = false,
+                    status = "ACTIVE"
+                )
+            )
+
+            val phone =
+                member.phoneNumber?.let { "91$it" }
+
+            val event = NotificationEvent(
+                eventType = "FUND_MEMBER_PROMOTED",
+                userId = member.userId.toString(),
+
+                channels = NotificationHelper.buildChannels(
+                    member.emailId,
+                    phone
+                ),
+
+                email = NotificationHelper.buildEmailPayload(
+                    email = member.emailId,
+                    userName = member.fullName,
+                    data = mapOf(
+                        "fundName" to fund.fundName,
+                        "groupName" to group.groupName
+                    )
+                ),
+
+                whatsapp = NotificationHelper.buildWhatsAppPayload(
+                    phone = phone,
+                    template = WhatsAppTemplates.FUND_MEMBER_PROMOTED,
+                    templateParams = listOf(
+                        member.fullName,
+                        fund.fundName,
+                        group.groupName
+                    )
+                ),
+
+                eventData = mapOf(
+                    "fundId" to fundId.toString(),
+                    "fundName" to fund.fundName,
+                    "groupName" to group.groupName
+                )
+            )
+
+            eventDispatchService.dispatchUser(event)
+
+        } catch (e: Exception) {
+            logger.error("notifyFundMemberPromoted failed", e)
+        }
+    }
+
+    fun notifyFundModeratorRemoved(
+        fundId: Int,
+        userId: Int
+    ) {
+
+        try {
+
+            val fund =
+                fundsSql.getFund(fundId).firstOrNull()
+                    ?: return
+
+            val group =
+                groupsSql.getGroup(fund.groupId)
+                    .firstOrNull()
+                    ?: return
+
+            val member =
+                usersSql.getUserById(userId)
+                    ?: return
+            val userId =
+                member.userId
+                    ?: run {
+                        logger.error(
+                            "Missing userId while sending FUND_MEMBER_REMOVED notification"
+                        )
+                        return
+                    }
+            sql.addUserNotification(
+                UserNotificationsDto(
+                    notificationType = "FUND_MODERATOR_REMOVED",
+                    userId = userId,
+                    message = "Your moderator privileges for \"${fund.fundName}\" have been removed.",
+                    publishedFlag = true,
+                    readFlag = false,
+                    isExpiredFlag = false,
+                    status = "ACTIVE"
+                )
+            )
+
+            val phone =
+                member.phoneNumber?.let { "91$it" }
+
+            val event = NotificationEvent(
+                eventType = "FUND_MODERATOR_REMOVED",
+                userId = member.userId.toString(),
+
+                channels = NotificationHelper.buildChannels(
+                    member.emailId,
+                    phone
+                ),
+
+                email = NotificationHelper.buildEmailPayload(
+                    email = member.emailId,
+                    userName = member.fullName,
+                    data = mapOf(
+                        "fundName" to fund.fundName,
+                        "groupName" to group.groupName
+                    )
+                ),
+
+                whatsapp = NotificationHelper.buildWhatsAppPayload(
+                    phone = phone,
+                    template = WhatsAppTemplates.FUND_MODERATOR_REMOVED,
+                    templateParams = listOf(
+                        member.fullName,
+                        fund.fundName,
+                        group.groupName
+                    )
+                ),
+
+                eventData = mapOf(
+                    "fundId" to fundId.toString(),
+                    "fundName" to fund.fundName,
+                    "groupName" to group.groupName
+                )
+            )
+
+            eventDispatchService.dispatchUser(event)
+
+        } catch (e: Exception) {
+
+            logger.error(
+                "notifyFundModeratorRemoved failed",
+                e
+            )
+        }
+    }
+
+    fun notifyFundMemberRemoved(
+        fundId: Int,
+        userId: Int
+    ) {
+
+        try {
+
+            val fund =
+                fundsSql.getFund(fundId).firstOrNull()
+                    ?: return
+
+            val group =
+                groupsSql.getGroup(fund.groupId)
+                    .firstOrNull()
+                    ?: return
+
+            val member =
+                usersSql.getUserById(userId)
+                    ?: return
+
+            val userId =
+                member.userId
+                    ?: run {
+                        logger.error(
+                            "Missing userId while sending FUND_MEMBER_REMOVED notification"
+                        )
+                        return
+                    }
+
+            sql.addUserNotification(
+                UserNotificationsDto(
+                    notificationType = "FUND_MEMBER_REMOVED",
+                    userId = userId,
+                    message = "You have been removed from fund \"${fund.fundName}\".",
+                    publishedFlag = true,
+                    readFlag = false,
+                    isExpiredFlag = false,
+                    status = "ACTIVE"
+                )
+            )
+
+            val phone =
+                member.phoneNumber?.let { "91$it" }
+
+            val event = NotificationEvent(
+                eventType = "FUND_MEMBER_REMOVED",
+                userId = member.userId.toString(),
+
+                channels = NotificationHelper.buildChannels(
+                    member.emailId,
+                    phone
+                ),
+
+                email = NotificationHelper.buildEmailPayload(
+                    email = member.emailId,
+                    userName = member.fullName,
+                    data = mapOf(
+                        "fundName" to fund.fundName,
+                        "groupName" to group.groupName
+                    )
+                ),
+
+                whatsapp = NotificationHelper.buildWhatsAppPayload(
+                    phone = phone,
+                    template = WhatsAppTemplates.FUND_MEMBER_REMOVED,
+                    templateParams = listOf(
+                        member.fullName,
+                        fund.fundName,
+                        group.groupName
+                    )
+                ),
+
+                eventData = mapOf(
+                    "fundId" to fundId.toString(),
+                    "fundName" to fund.fundName,
+                    "groupName" to group.groupName
+                )
+            )
+
+            eventDispatchService.dispatchUser(event)
+
+        } catch (e: Exception) {
+
+            logger.error(
+                "notifyFundMemberRemoved failed",
+                e
+            )
+        }
+    }
+
+    fun notifyFundMemberAdded(
+        fundId: Int,
+        userId: Int
+    ) {
+
+        try {
+
+            val fund =
+                fundsSql.getFund(fundId).firstOrNull()
+                    ?: return
+
+            val group =
+                groupsSql.getGroup(fund.groupId)
+                    .firstOrNull()
+                    ?: return
+
+            val member =
+                usersSql.getUserById(userId)
+                    ?: return
+
+            val actualUserId =
+                member.userId
+                    ?: run {
+                        logger.error(
+                            "Missing userId while sending FUND_MEMBER_ADDED notification"
+                        )
+                        return
+                    }
+
+            sql.addUserNotification(
+                UserNotificationsDto(
+                    notificationType = "FUND_MEMBER_ADDED",
+                    userId = actualUserId,
+                    message = "You have been added to fund \"${fund.fundName}\".",
+                    publishedFlag = true,
+                    readFlag = false,
+                    isExpiredFlag = false,
+                    status = "ACTIVE"
+                )
+            )
+
+            val phone =
+                member.phoneNumber?.let { "91$it" }
+
+            val event = NotificationEvent(
+                eventType = "FUND_MEMBER_ADDED",
+                userId = actualUserId.toString(),
+
+                channels = NotificationHelper.buildChannels(
+                    member.emailId,
+                    phone
+                ),
+
+                email = NotificationHelper.buildEmailPayload(
+                    email = member.emailId,
+                    userName = member.fullName,
+                    data = mapOf(
+                        "fundName" to fund.fundName,
+                        "groupName" to group.groupName
+                    )
+                ),
+
+                whatsapp = NotificationHelper.buildWhatsAppPayload(
+                    phone = phone,
+                    template = WhatsAppTemplates.FUND_MEMBER_ADDED,
+                    templateParams = listOf(
+                        member.fullName,
+                        fund.fundName,
+                        group.groupName
+                    )
+                ),
+
+                eventData = mapOf(
+                    "fundId" to fundId.toString(),
+                    "fundName" to fund.fundName,
+                    "groupName" to group.groupName
+                )
+            )
+
+            eventDispatchService.dispatchUser(event)
+
+        } catch (e: Exception) {
+
+            logger.error(
+                "notifyFundMemberAdded failed",
+                e
+            )
         }
     }
 }

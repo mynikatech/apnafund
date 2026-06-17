@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 128-Whats-app-mess-persistence
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/128-Whats-app-mess-persistence.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

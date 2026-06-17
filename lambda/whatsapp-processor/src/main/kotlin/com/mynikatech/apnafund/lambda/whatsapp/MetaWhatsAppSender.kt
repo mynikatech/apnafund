@@ -1,9 +1,12 @@
 package com.mynikatech.apnafund.lambda.whatsapp
 
+import com.mynikatech.apnafund.net.dto.WhatsAppSendResponse
+import com.mynikatech.apnafund.net.dto.WhatsAppSendResult
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import org.slf4j.LoggerFactory
+import kotlinx.serialization.json.Json
 
 class MetaWhatsAppSender {
 
@@ -20,7 +23,7 @@ class MetaWhatsAppSender {
         templateName: String,
         params: List<String>,
         languageCode: String = "en"
-    ) {
+    ): WhatsAppSendResult {
         val url = URL("https://graph.facebook.com/v25.0/$phoneNumberId/messages")
         val conn = url.openConnection() as HttpURLConnection
 
@@ -107,7 +110,31 @@ class MetaWhatsAppSender {
             code in 200..299 -> conn.inputStream
             else -> conn.errorStream
         }?.bufferedReader()?.readText()
+        val responseBody = response ?: ""
+        val whatsappResponse =
+            Json {
+                ignoreUnknownKeys = true
+            }.decodeFromString<WhatsAppSendResponse>(
+                responseBody
+            )
 
+        val metaMessageId =
+            whatsappResponse
+                .messages
+                .firstOrNull()
+                ?.id
+
+        val waId =
+            whatsappResponse
+                .contacts
+                .firstOrNull()
+                ?.wa_id
+
+        log.info(
+            "Meta Message Id={} WA Id={}",
+            metaMessageId,
+            waId
+        )
         if (code !in 200..299) {
             log.error(
                 "WhatsApp template send failed | to={} | template={} | status={} | response={}",
@@ -130,9 +157,14 @@ class MetaWhatsAppSender {
             templateName,
             response
         )
+        return WhatsAppSendResult(
+            metaMessageId = metaMessageId,
+            waId = waId,
+            rawResponse = responseBody
+        )
     }
 
-    fun sendText(to: String, message: String) {
+    fun sendText(to: String, message: String): WhatsAppSendResult {
         val url = URL("https://graph.facebook.com/v19.0/$phoneNumberId/messages")
         val conn = url.openConnection() as HttpURLConnection
 
@@ -166,6 +198,26 @@ class MetaWhatsAppSender {
             code in 200..299 -> conn.inputStream
             else -> conn.errorStream
         }?.bufferedReader()?.readText()
+        log.info(
+            "WhatsApp message sent | to={} | response={}",
+            to,
+            response
+        )
+
+        val body =
+            Json {
+                ignoreUnknownKeys = true
+            }.decodeFromString<WhatsAppSendResponse>(
+                response ?: "{}"
+            )
+
+        return WhatsAppSendResult(
+            metaMessageId =
+                body.messages.firstOrNull()?.id,
+            waId =
+                body.contacts.firstOrNull()?.wa_id,
+            rawResponse = response
+        )
 
         if (code !in 200..299) {
             log.error("WhatsApp send failed | to={} | status={} | response={}", to, code, response)

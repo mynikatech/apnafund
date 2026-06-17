@@ -5,6 +5,7 @@ import com.mynikatech.apnafund.net.dto.FundMemberWithNameDto
 import com.mynikatech.apnafund.net.dto.GroupMemberWithNameDto
 import com.mynikatech.apnafund.net.dto.NotificationEvent
 import com.mynikatech.apnafund.server.common.messaging.NotificationHelper
+import com.mynikatech.apnafund.server.notifications.WhatsAppTemplates
 
 object GroupNotificationFactory {
 
@@ -41,14 +42,25 @@ object GroupNotificationFactory {
     fun fundCreated(
         fundId: String,
         fundName: String,
+        groupName: String,
+        moderatorName: String,
         recipient: GroupMemberWithNameDto,
         fundMemberNames: String
     ): NotificationEvent {
 
+        val phone =
+            recipient.phoneNumber?.let { "91$it" }
+
         return NotificationEvent(
+
             eventType = "FUND_CREATED",
+
             userId = recipient.userId.toString(),
-            channels = setOf(Channel.EMAIL),
+
+            channels = NotificationHelper.buildChannels(
+                recipient.emailId,
+                phone
+            ),
 
             email = NotificationHelper.buildEmailPayload(
                 email = recipient.emailId,
@@ -56,6 +68,16 @@ object GroupNotificationFactory {
                 data = mapOf(
                     "fundName" to fundName,
                     "fundMembers" to fundMemberNames
+                )
+            ),
+
+            whatsapp = NotificationHelper.buildWhatsAppPayload(
+                phone = phone,
+                template = WhatsAppTemplates.FUND_CREATED,
+                templateParams = listOf(
+                    fundName,
+                    groupName,
+                    moderatorName
                 )
             ),
 

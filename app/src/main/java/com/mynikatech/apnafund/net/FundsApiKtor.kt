@@ -87,10 +87,15 @@ class FundsApiKtor(
             val result = client
                 .get("/funds/get/with-details/group/$groupId")
                 .unwrap<List<FundWithDetailsDto>>()
+            result.forEach {
+                Log.d(
+                    "FUNDS_REPO",
+                    "Fund=${it.fundName}, variable=${it.hasVariableInterestRate}, revised=${it.revisedLoanInterestRate}, months=${it.interestRateRevisionAfterMonths}"
+                )
+            }
 
             val end = System.currentTimeMillis()
             println("CLIENT SUCCESS TIME: ${end - start} ms")
-
             result
 
         } catch (e: io.ktor.client.plugins.HttpRequestTimeoutException) {

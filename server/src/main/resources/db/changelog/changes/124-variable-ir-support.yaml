@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 124-add-variable-ir-support
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/124-add-variable-ir-support.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

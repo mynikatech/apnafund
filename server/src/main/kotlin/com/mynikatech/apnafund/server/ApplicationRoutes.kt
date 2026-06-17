@@ -42,6 +42,8 @@ import com.mynikatech.apnafund.server.users.ModeratorRegistrationService
 import com.mynikatech.apnafund.server.users.OtpService
 import com.mynikatech.apnafund.server.users.UserManagementService
 import com.mynikatech.apnafund.server.users.UsersSql
+import com.mynikatech.apnafund.server.whatsapp.WhatsAppMessagesSql
+import com.mynikatech.apnafund.server.whatsapp.whatsAppWebhookRoutes
 
 fun Application.registerRoutes(
     usersDao: UsersSql, deposistsDao: DepositsSql,
@@ -57,7 +59,7 @@ fun Application.registerRoutes(
     emailVerificationService: EmailVerificationService,
     notificationService: NotificationService,
     approvalDao: ApprovalSql, approvalService: ApprovalService,
-    aiService: AIService, otpService: OtpService
+    aiService: AIService, otpService: OtpService, whatsAppDao: WhatsAppMessagesSql
 ) {
     routing {
         usersRoutes(usersDao,eventDispatchService, moderatorRegistrationService,userManagementService,emailVerificationService, userRolesDao, otpService)
@@ -78,5 +80,6 @@ fun Application.registerRoutes(
         userDetailsRoute(usersDao,userRolesDao,notificationsDao)
         approvalRoutes(approvalDao, approvalService)
         aiRoutes(aiService)
+        whatsAppWebhookRoutes(whatsAppDao)
     }
 }

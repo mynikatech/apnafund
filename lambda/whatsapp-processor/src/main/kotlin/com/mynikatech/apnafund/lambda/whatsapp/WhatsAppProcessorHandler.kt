@@ -19,6 +19,7 @@ class WhatsAppProcessorHandler : RequestHandler<SQSEvent, Unit> {
     override fun handleRequest(event: SQSEvent, context: Context) {
 
         event.records.forEach { record ->
+
             try {
                 // Decode SNS envelope
                 val sns = json.decodeFromString<SnsEnvelope>(record.body)
@@ -39,18 +40,30 @@ class WhatsAppProcessorHandler : RequestHandler<SQSEvent, Unit> {
 
                 val message = WhatsAppRenderer.render(notification)
                 val template = wa.template
-                if (!template.isNullOrBlank()) {
-                    sender.sendTemplate(
-                        to = wa.phone,
-                        templateName = template,
-                        params = wa.templateParams
-                    )
-                } else {
-                    sender.sendText(
-                        to = wa.phone,
-                        message = message
-                    )
-                }
+                val result =
+                    if (!template.isNullOrBlank()) {
+
+                        sender.sendTemplate(
+                            to = wa.phone,
+                            templateName = template,
+                            params = wa.templateParams
+                        )
+
+                    } else {
+
+                        sender.sendText(
+                            to = wa.phone,
+                            message = message
+                        )
+                    }
+
+                log.info(
+                    "WhatsApp sent eventType={} userId={} messageId={} rawResponse={}",
+                    notification.eventType,
+                    notification.userId,
+                    result.metaMessageId,
+                    result.rawResponse
+                )
 
             } catch (e: NonRetryableWhatsAppException) {
                 // IMPORTANT: swallow → message is ACKed

@@ -25,22 +25,24 @@ interface FundsSql {
     fun getFund(@Bind("id") id: Int): List<FundsDto>
 
     @SqlQuery("""
-        SELECT add_fund(
-            :fundName, :fundStartDate, :fundMaturityDate, :fundPeriod,
-            :depositionFrequency, :moderator, :recurringDepositAmount,
-            :fundStatus, :loanInterestRate, :lateFeeRate,
-            :monthlyDepDateBy, :groupId, :fundCode
-        )
+    SELECT add_fund(
+        :fundName, :fundStartDate, :fundMaturityDate, :fundPeriod,
+        :depositionFrequency, :moderator, :recurringDepositAmount,
+        :fundStatus, :loanInterestRate,
+        :hasVariableInterestRate, :revisedLoanInterestRate, :interestRateRevisionAfterMonths,
+        :lateFeeRate, :monthlyDepDateBy, :groupId, :fundCode
+    )
     """)
     fun addFund(@BindKotlin f: FundsDto): Int
 
     @SqlQuery("""
-        SELECT update_fund(
-            :id, :fundName, :fundStartDate, :fundMaturityDate, :fundPeriod,
-            :depositionFrequency, :moderator, :recurringDepositAmount,
-            :fundStatus, :loanInterestRate, :lateFeeRate,
-            :monthlyDepDateBy, :groupId, :fundCode
-        )
+    SELECT update_fund(
+        :id, :fundName, :fundStartDate, :fundMaturityDate, :fundPeriod,
+        :depositionFrequency, :moderator, :recurringDepositAmount,
+        :fundStatus, :loanInterestRate,
+        :hasVariableInterestRate, :revisedLoanInterestRate, :interestRateRevisionAfterMonths,
+        :lateFeeRate, :monthlyDepDateBy, :groupId, :fundCode
+    )
     """)
     fun updateFund(
         @Bind("id") id: Int,
@@ -53,6 +55,9 @@ interface FundsSql {
         @Bind("recurringDepositAmount") recurringDepositAmount: Double?,
         @Bind("fundStatus") fundStatus: String?,
         @Bind("loanInterestRate") loanInterestRate: Double?,
+        @Bind("hasVariableInterestRate") hasVariableInterestRate: Boolean?,
+        @Bind("revisedLoanInterestRate") revisedLoanInterestRate: Double?,
+        @Bind("interestRateRevisionAfterMonths") interestRateRevisionAfterMonths: Int?,
         @Bind("lateFeeRate") lateFeeRate: Double?,
         @Bind("monthlyDepDateBy") monthlyDepDateBy: Int?,
         @Bind("groupId") groupId: Int?,

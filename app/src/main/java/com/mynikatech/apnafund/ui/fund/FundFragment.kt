@@ -278,6 +278,24 @@ class FundFragment : Fragment() {
             }
         }
         dialogBinding.buttonSaveFund.isEnabled = false
+        dialogBinding.checkBoxVariableInterestRate.setOnCheckedChangeListener { _, checked ->
+
+            dialogBinding.layoutInterestRevision.visibility =
+                if (checked) View.VISIBLE else View.GONE
+
+            if (!checked) {
+
+                dialogBinding.editTextRevisedLoanInterestRate.text?.clear()
+
+                dialogBinding.editTextInterestRateRevisionMonths.text?.clear()
+            }
+
+            updateSaveButtonState(
+                dialogBinding,
+                groupId,
+                moderator
+            )
+        }
         dialogBinding.setupForm()
         if (existingFund != null) {
             dialogBinding.buttonSaveFund.text = getString(R.string.text_update_fund)
@@ -290,6 +308,19 @@ class FundFragment : Fragment() {
             dialogBinding.editTextLateFeeRate.setText(existingFund.lateFeeRate.toString())
             dialogBinding.editTextDepositLastDate.setText(existingFund.monthlyDepDateBy.toString())
             dialogBinding.checkBoxExcludeCreator.visibility = View.GONE
+            dialogBinding.checkBoxVariableInterestRate.isChecked =
+                existingFund.hasVariableInterestRate
+            dialogBinding.editTextRevisedLoanInterestRate.setText(
+                existingFund.revisedLoanInterestRate?.toString() ?: ""
+            )
+            dialogBinding.editTextInterestRateRevisionMonths.setText(
+                existingFund.interestRateRevisionAfterMonths?.toString() ?: ""
+            )
+            dialogBinding.layoutInterestRevision.visibility =
+                if (existingFund.hasVariableInterestRate)
+                    View.VISIBLE
+                else
+                    View.GONE
             moderator = existingFund.moderator
             groupId = existingFund.groupId
 
@@ -455,6 +486,13 @@ class FundFragment : Fragment() {
         dialogBinding.editTextLoanIntRate.addTextChangedListener {
             updateSaveButtonState(dialogBinding, groupId, moderator)
         }
+        dialogBinding.editTextRevisedLoanInterestRate.addTextChangedListener {
+            updateSaveButtonState(dialogBinding, groupId, moderator)
+        }
+
+        dialogBinding.editTextInterestRateRevisionMonths.addTextChangedListener {
+            updateSaveButtonState(dialogBinding, groupId, moderator)
+        }
         dialogBinding.editTextLateFeeRate.addTextChangedListener {
             updateSaveButtonState(dialogBinding, groupId, moderator)
         }
@@ -512,8 +550,32 @@ class FundFragment : Fragment() {
                     val recurringDepositAmount =
                         dialogBinding.editTextDepAmount.text.toString().trim()
                             .toDouble()
-                    if (existingFund?.fundPeriod != fundPeriod || existingFund.recurringDepositAmount != recurringDepositAmount)
+
+                    val loanInterestRate =
+                        dialogBinding.editTextLoanIntRate.text.toString().trim().toDouble()
+
+                    val hasVariableInterestRate =
+                        dialogBinding.checkBoxVariableInterestRate.isChecked
+
+                    val revisedLoanInterestRate =
+                        if (hasVariableInterestRate)
+                            dialogBinding.editTextRevisedLoanInterestRate.text.toString().trim().toDouble()
+                        else null
+
+                    val interestRateRevisionAfterMonths =
+                        if (hasVariableInterestRate)
+                            dialogBinding.editTextInterestRateRevisionMonths.text.toString().trim().toInt()
+                        else null
+                    if (
+                        existingFund?.fundPeriod != fundPeriod ||
+                        existingFund.recurringDepositAmount != recurringDepositAmount ||
+                        existingFund.loanInterestRate != loanInterestRate ||
+                        existingFund.hasVariableInterestRate != hasVariableInterestRate ||
+                        existingFund.revisedLoanInterestRate != revisedLoanInterestRate ||
+                        existingFund.interestRateRevisionAfterMonths != interestRateRevisionAfterMonths
+                    ) {
                         recalculateFinance = true
+                    }
                     val fundToSave = Funds(
                         fundId = existingFund?.fundId ?: 0,
                         fundName = fundName,
@@ -527,6 +589,26 @@ class FundFragment : Fragment() {
                             .toDouble(),
                         loanInterestRate = dialogBinding.editTextLoanIntRate.text.toString().trim()
                             .toDouble(),
+                        hasVariableInterestRate =
+                            dialogBinding.checkBoxVariableInterestRate.isChecked,
+
+                        revisedLoanInterestRate =
+                            if (dialogBinding.checkBoxVariableInterestRate.isChecked)
+                                dialogBinding.editTextRevisedLoanInterestRate.text
+                                    .toString()
+                                    .trim()
+                                    .toDouble()
+                            else
+                                null,
+
+                        interestRateRevisionAfterMonths =
+                            if (dialogBinding.checkBoxVariableInterestRate.isChecked)
+                                dialogBinding.editTextInterestRateRevisionMonths.text
+                                    .toString()
+                                    .trim()
+                                    .toInt()
+                            else
+                                null,
                         lateFeeRate = dialogBinding.editTextLateFeeRate.text.toString().trim()
                             .toDouble(),
                         monthlyDepDateBy = dialogBinding.editTextDepositLastDate.text.toString()
@@ -674,6 +756,14 @@ class FundFragment : Fragment() {
                 R.string.title_fund_loan_int_rate_info,
                 R.string.info_fund_loan_int_rate
             ),
+            inputLayoutRevisedLoanInterestRate to Pair(
+                R.string.title_revised_loan_interest_rate_info,
+                R.string.info_revised_loan_interest_rate
+            ),
+            inputLayoutInterestRateRevisionMonths to Pair(
+                R.string.title_interest_rate_revision_months_info,
+                R.string.info_interest_rate_revision_months
+            ),
             inputLayoutLateFeeRate to Pair(
                 R.string.title_fund_late_fee_rate_info,
                 R.string.info_fund_late_fee_rate
@@ -733,6 +823,9 @@ class FundFragment : Fragment() {
             loanRate = dialogBinding.editTextLoanIntRate.text?.toString(),
             lateFee = dialogBinding.editTextLateFeeRate.text?.toString(),
             depLastDate = dialogBinding.editTextDepositLastDate.text?.toString(),
+            hasVariableInterestRate = dialogBinding.checkBoxVariableInterestRate.isChecked,
+            revisedLoanInterestRate = dialogBinding.editTextRevisedLoanInterestRate.text?.toString(),
+            interestRateRevisionAfterMonths = dialogBinding.editTextInterestRateRevisionMonths.text?.toString(),
             groupId = groupId,
             moderator = moderator
         )

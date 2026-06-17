@@ -56,6 +56,9 @@ object FundInputValidator {
         loanRate: String?,
         lateFee: String?,
         depLastDate: String?,
+        hasVariableInterestRate: Boolean,
+        revisedLoanInterestRate: String?,
+        interestRateRevisionAfterMonths: String?,
         groupId: Int,
         moderator: Int
     ): Boolean {
@@ -69,10 +72,56 @@ object FundInputValidator {
                 && isDepositLastDateValid(depLastDate)
                 && isGroupValid(groupId)
                 && isModeratorValid(moderator)
+                && isVariableInterestConfigValid(
+                hasVariableInterestRate,
+                loanRate,
+                revisedLoanInterestRate,
+                interestRateRevisionAfterMonths
+        )
+    }
+
+    private fun isVariableInterestConfigValid(
+        hasVariableInterestRate: Boolean,
+        loanRate: String?,
+        revisedLoanInterestRate: String?,
+        interestRateRevisionAfterMonths: String?
+    ): Boolean {
+
+        if (!hasVariableInterestRate) {
+            return true
+        }
+
+        val currentRate =
+            loanRate?.toDoubleOrNull()
+                ?: return false
+
+        val revisedRate =
+            revisedLoanInterestRate?.toDoubleOrNull()
+                ?: return false
+
+        val revisionMonths =
+            interestRateRevisionAfterMonths?.toIntOrNull()
+                ?: return false
+
+        return revisedRate > currentRate &&
+                revisionMonths > 0
     }
 
     fun formatCurrency(value: Double): String {
         return "₹" + String.format("%,.2f", value) // use NumberFormat if needed
+    }
+
+    fun formatDecimal(value: Double?): String {
+
+        if (value == null) {
+            return ""
+        }
+
+        return if (value % 1.0 == 0.0) {
+            value.toInt().toString()
+        } else {
+            value.toString()
+        }
     }
 
 }

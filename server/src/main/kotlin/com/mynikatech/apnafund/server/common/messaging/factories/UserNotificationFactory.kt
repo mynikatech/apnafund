@@ -4,6 +4,7 @@ import com.mynikatech.apnafund.net.dto.Channel
 import com.mynikatech.apnafund.net.dto.EmailPayload
 import com.mynikatech.apnafund.net.dto.NotificationEvent
 import com.mynikatech.apnafund.server.common.messaging.NotificationHelper
+import com.mynikatech.apnafund.server.notifications.WhatsAppTemplates
 
 object UserNotificationFactory {
 
@@ -15,14 +16,17 @@ object UserNotificationFactory {
     ) = NotificationEvent(
         eventType = "USER_REGISTERED",
         userId = userId,
-        channels = buildChannels(email, phone),
+        channels = NotificationHelper.buildChannels(
+            email,
+            phone
+        ),
         email = NotificationHelper.buildEmailPayload(
             email = email,
             userName = userName
         ),
         whatsapp = NotificationHelper.buildWhatsAppPayload(
             phone = phone,
-            template = "apnafund_user_registered",
+            template = WhatsAppTemplates.USER_REGISTERED,
             templateParams = listOf(userName)
         ),
         eventData = mapOf(
@@ -38,14 +42,17 @@ object UserNotificationFactory {
     ) = NotificationEvent(
         eventType = "USER_UPDATED",
         userId = userId,
-        channels = buildChannels(email, phone),
+        channels = NotificationHelper.buildChannels(
+            email,
+            phone
+        ),
         email = NotificationHelper.buildEmailPayload(
             email = email,
             userName = userName
         ),
         whatsapp = NotificationHelper.buildWhatsAppPayload(
             phone = phone,
-            template = "apnafund_user_updated",
+            template = WhatsAppTemplates.USER_UPDATED,
             templateParams = listOf(userName)
         ),
         eventData = mapOf(
@@ -61,14 +68,17 @@ object UserNotificationFactory {
     ) = NotificationEvent(
         eventType = "LOAN_APPROVED",
         userId = userId,
-        channels = buildChannels(email, phone),
+        channels = NotificationHelper.buildChannels(
+            email,
+            phone
+        ),
         email = NotificationHelper.buildEmailPayload(
             email = email,
             userName = userName
         ),
         whatsapp = NotificationHelper.buildWhatsAppPayload(
             phone = phone,
-            template = "apnafund_loan_approved",
+            template = WhatsAppTemplates.LOAN_APPROVED,
             templateParams = listOf(userName)
         ),
         eventData = mapOf(
@@ -117,7 +127,7 @@ object UserNotificationFactory {
         ),
         whatsapp = NotificationHelper.buildWhatsAppPayload(
             phone = moderatorPhone,
-            template = "group_approved",
+            template = WhatsAppTemplates.GROUP_APPROVED,
             templateParams = listOf(
                 moderatorName,
                 groupName
@@ -149,7 +159,7 @@ object UserNotificationFactory {
         ),
         whatsapp = NotificationHelper.buildWhatsAppPayload(
             phone = moderatorPhone,
-            template = "apnafund_group_rejected",
+            template = WhatsAppTemplates.GROUP_REJECTED,
             templateParams = listOf(
                 moderatorName,
                 groupName
@@ -244,7 +254,10 @@ object UserNotificationFactory {
     ) = NotificationEvent(
         eventType = "INVITE_NOTICE",
         userId = userId.toString(),
-        channels = buildChannels(email, phone),
+        channels = NotificationHelper.buildChannels(
+            email,
+            phone
+        ),
         email = NotificationHelper.buildEmailPayload(
             email = email,
             userName = userName,
@@ -257,7 +270,7 @@ object UserNotificationFactory {
         ),
         whatsapp = NotificationHelper.buildWhatsAppPayload(
             phone = phone,
-            template = "apnafund_member_invite",
+            template = WhatsAppTemplates.MEMBER_INVITE,
             templateParams = listOf(
                 userName,
                 groupName,
@@ -279,7 +292,10 @@ object UserNotificationFactory {
     ) = NotificationEvent(
         eventType = "PASSWORD_UPDATED",
         userId = userId,
-        channels = buildChannels(email, phone),
+        channels = NotificationHelper.buildChannels(
+            email,
+            phone
+        ),
 
         email = NotificationHelper.buildEmailPayload(
             email = email,
@@ -288,7 +304,7 @@ object UserNotificationFactory {
 
         whatsapp = NotificationHelper.buildWhatsAppPayload(
             phone = phone,
-            template = "apnafund_password_updated",
+            template = WhatsAppTemplates.PASSWORD_UPDATED,
             templateParams = listOf(userName)
         ),
 
@@ -327,7 +343,7 @@ object UserNotificationFactory {
         channels = setOf(Channel.WHATSAPP),
         whatsapp = NotificationHelper.buildWhatsAppPayload(
             phone = phone,
-            template = "apnafund_otp",
+            template = WhatsAppTemplates.OTP,
             templateParams = listOf(
                 otp
             )

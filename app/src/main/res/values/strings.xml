@@ -18,7 +18,7 @@
     <string name="text_fund_start_date">Start Date</string>
     <string name="text_fund_maturity_date">Maturity Date</string>
     <string name="text_fund_period">Period:</string>
-    <string name="text_deposit_frequency">Deposit Frequency:</string>
+    <string name="text_deposit_frequency">Frequency</string>
     <string name="text_deposit_amount">Deposit Amount</string>
     <string name="text_group">Groups</string>
     <string name="text_fund_summary">Fund Summary</string>
@@ -60,7 +60,7 @@
     <string name="text_save_loan">Save Loan</string>
     <string name="text_amount">Amount</string>
     <string name="text_last_name_optional">Last Name <i>(optional)</i></string>
-    <string name="text_period">Period <i>(in months)</i></string>
+    <string name="text_period">Period <i>(months)</i></string>
     <string name="text_save_button">Save</string>
     <string name="text_cancel_button">Cancel</string>
     <string name="text_start_date">Start Date</string>
@@ -727,5 +727,29 @@
     <string name="text_not_verified">⚠ Not Verified</string>
     <string name="text_verified">✓ Verified</string>
     <string name="text_close">Close</string>
+    <string name="label_inc_loan_int_after_fixed_duration">Increase Loan Interest After Fixed Duration?</string>
+    <string name="text_revised_loan_interest_rate">Revised Loan Interest Rate (%)</string>
+    <string name="text_interest_revision_after_months">Interest Revision After Months</string>
+    <string name="text_loan_summary">Loan %1$s%%</string>
+    <string name="text_variable_loan_summary">Loan %1$s%%→%2$s%% (%3$s months)</string>
+    <string name="fund_amount_month_with_loan">%1$s/month • %2$s</string>
+    <string name="title_revised_loan_interest_rate_info">
+    Revised Loan Interest Rate
+    </string>
+
+    <string name="info_revised_loan_interest_rate">
+    Applicable only when Variable Interest Rate is enabled. This is the new annual interest rate that will apply after the specified number of months from the loan issue date. It must be greater than the initial loan interest rate.
+    </string>
+
+    <string name="title_interest_rate_revision_months_info">
+    Interest Rate Revision After Months
+    </string>
+
+    <string name="info_interest_rate_revision_months">
+    Number of months after the loan issue date when the revised loan interest rate becomes effective. For example, entering 6 means the revised rate will apply from the 7th month onwards.
+    </string>
+    <string name="error_loan_exceeds_fund_maturity">
+    Loan maturity date cannot be later than the fund maturity date.
+    </string>
 
 </resources>

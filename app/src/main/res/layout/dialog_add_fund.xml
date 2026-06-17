@@ -9,7 +9,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="14dp"
+        android:padding="8dp"
         android:paddingBottom="24dp">
 
         <!-- Fund Name -->
@@ -33,7 +33,7 @@
             android:id="@+id/input_layout_start_date"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="2dp"
             android:hint="@string/text_start_date"
             app:layout_constraintTop_toBottomOf="@id/input_layout_fund_name">
 
@@ -45,54 +45,62 @@
                 android:inputType="date" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Period -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/input_layout_period"
+        <LinearLayout
+            android:id="@+id/layout_period_frequency"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:hint="@string/text_period"
-            app:endIconDrawable="@drawable/ic_info"
-            app:endIconMode="custom"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal"
             app:layout_constraintTop_toBottomOf="@id/input_layout_start_date">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_text_period"
-                android:layout_width="match_parent"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/input_layout_period"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:importantForAutofill="no"
-                android:inputType="text" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:hint="@string/text_period"
+                app:endIconDrawable="@drawable/ic_info"
+                app:endIconMode="custom">
 
-        <!-- Deposit Frequency -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/input_layout_dep_frequency"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:hint="@string/text_deposit_frequency"
-            app:endIconDrawable="@drawable/ic_info"
-            app:endIconMode="custom"
-            app:layout_constraintTop_toBottomOf="@id/input_layout_period">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_text_period"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:importantForAutofill="no"
+                    android:inputType="numberDecimal" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_text_dep_frequency"
-                android:layout_width="match_parent"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/input_layout_dep_frequency"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:importantForAutofill="no"
-                android:inputType="text" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:hint="@string/text_deposit_frequency"
+                app:endIconDrawable="@drawable/ic_info"
+                app:endIconMode="custom">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_text_dep_frequency"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:importantForAutofill="no"
+                    android:inputType="text" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </LinearLayout>
 
         <!-- Loan Interest Rate-->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/input_layout_loan_int_rate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="2dp"
             android:hint="@string/text_loan_interest_rate"
             app:endIconDrawable="@drawable/ic_info"
             app:endIconMode="custom"
-            app:layout_constraintTop_toBottomOf="@id/input_layout_dep_frequency">
+            app:layout_constraintTop_toBottomOf="@id/layout_period_frequency">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edit_text_loan_int_rate"
@@ -102,16 +110,72 @@
                 android:inputType="text" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/check_box_variable_interest_rate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="@string/label_inc_loan_int_after_fixed_duration"
+            app:layout_constraintTop_toBottomOf="@id/input_layout_loan_int_rate" />
+
+        <LinearLayout
+            android:id="@+id/layout_interest_revision"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/check_box_variable_interest_rate">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/input_layout_revised_loan_interest_rate"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                app:endIconMode="custom"
+                app:endIconDrawable="@drawable/ic_info"
+                android:hint="Revised %">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_text_revised_loan_interest_rate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:importantForAutofill="no"
+                    android:inputType="numberDecimal" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/input_layout_interest_rate_revision_months"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                app:endIconMode="custom"
+                app:endIconDrawable="@drawable/ic_info"
+                android:hint="After Months">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_text_interest_rate_revision_months"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:importantForAutofill="no"
+                    android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+    </LinearLayout>
+
         <!-- Late Fee Rate-->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/input_layout_late_fee_rate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="2dp"
             android:hint="@string/text_late_fee_rate_in_per_day"
             app:endIconDrawable="@drawable/ic_info"
             app:endIconMode="custom"
-            app:layout_constraintTop_toBottomOf="@id/input_layout_loan_int_rate">
+            app:layout_constraintTop_toBottomOf="@id/layout_interest_revision">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edit_text_late_fee_rate"
@@ -126,7 +190,7 @@
             android:id="@+id/input_layout_deposit_last_date"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="2dp"
             android:hint="@string/text_monthly_deposit_last_date"
             app:endIconDrawable="@drawable/ic_info"
             app:endIconMode="custom"
@@ -145,7 +209,7 @@
             android:id="@+id/text_input_dep_amount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="2dp"
             android:hint="@string/text_deposit_amount"
             app:layout_constraintTop_toBottomOf="@id/input_layout_deposit_last_date"
             app:startIconContentDescription="Rupee symbol"
@@ -164,7 +228,7 @@
             android:id="@+id/input_layout_group"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="2dp"
             android:hint="@string/text_select_group"
             app:layout_constraintTop_toBottomOf="@id/text_input_dep_amount">
 
@@ -187,7 +251,7 @@
             android:id="@+id/input_layout_moderator"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="2dp"
             android:hint="@string/text_select_moderator"
             app:endIconDrawable="@drawable/ic_info"
             app:endIconMode="custom"
@@ -211,7 +275,7 @@
             android:id="@+id/layout_exclude_creator"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="4dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             app:layout_constraintTop_toBottomOf="@id/input_layout_moderator">

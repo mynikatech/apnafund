@@ -3,9 +3,7 @@ package com.mynikatech.apnafund.server.mapper
 import com.mynikatech.apnafund.net.dto.FundWithDetailsDto
 import org.jdbi.v3.core.mapper.RowMapper
 import org.jdbi.v3.core.statement.StatementContext
-
 import java.sql.ResultSet
-import java.sql.SQLException
 
 class FundWithDetailsMapper : RowMapper<FundWithDetailsDto> {
     override fun map(rs: ResultSet, ctx: StatementContext): FundWithDetailsDto {
@@ -20,6 +18,21 @@ class FundWithDetailsMapper : RowMapper<FundWithDetailsDto> {
             recurringDepositAmount = rs.getDouble("recurringDepositAmount"),
             fundStatus = rs.getString("fundStatus"),
             loanInterestRate = rs.getDouble("loanInterestRate"),
+            hasVariableInterestRate =
+                rs.getBoolean("hasVariableInterestRate"),
+
+            revisedLoanInterestRate =
+                rs.getObject(
+                    "revisedLoanInterestRate",
+                    java.lang.Double::class.java
+                )?.toDouble(),
+
+            interestRateRevisionAfterMonths =
+                rs.getObject(
+                    "interestRateRevisionAfterMonths",
+                    Integer::class.java
+                )?.toInt(),
+
             lateFeeRate = rs.getDouble("lateFeeRate"),
             monthlyDepDateBy = rs.getInt("monthlyDepDateBy"),
             groupId = rs.getInt("groupId"),

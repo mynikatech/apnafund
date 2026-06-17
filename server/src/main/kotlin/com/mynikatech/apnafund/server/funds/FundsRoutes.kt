@@ -92,6 +92,9 @@ fun Route.fundsRoutes(
             recurringDepositAmount = dto.recurringDepositAmount,
             fundStatus = dto.fundStatus,
             loanInterestRate = dto.loanInterestRate,
+            hasVariableInterestRate = dto.hasVariableInterestRate,
+            revisedLoanInterestRate = dto.revisedLoanInterestRate,
+            interestRateRevisionAfterMonths = dto.interestRateRevisionAfterMonths,
             lateFeeRate = dto.lateFeeRate,
             monthlyDepDateBy = dto.monthlyDepDateBy,
             groupId = dto.groupId,
@@ -176,6 +179,12 @@ fun Route.fundsRoutes(
                 "groupId required"
             )
         val result = sql.allWithDetailsForGroup(gid)
+        result.forEach {
+            call.application.log.info(
+                "FUND_ROUTE -> id=${it.fundId}, name=${it.fundName}, variable=${it.hasVariableInterestRate}, revised=${it.revisedLoanInterestRate}, months=${it.interestRateRevisionAfterMonths}"
+            )
+        }
+
         val stop = System.currentTimeMillis()
         val timeTaken = stop - start
         call.application.log.info("The time to call DB SQL is : $timeTaken")
@@ -408,10 +417,19 @@ fun Route.fundsRoutes(
         val fm = call.receive<FundMembersDto>()
 
         try {
-
+            var existingMember: FundMembersDto? = null
             jdbi.useTransaction<Exception> { handle ->
 
+
+
                 val dao = handle.attach(FundsSql::class.java)
+
+                existingMember =
+                    dao.getFundMembers(fm.fundId)
+                        .firstOrNull {
+                            it.userId == fm.userId
+                        }
+                        ?: throw Exception("Fund member not found")
 
                 val updated = dao.updateFundMember(fm)
 
@@ -427,6 +445,53 @@ fun Route.fundsRoutes(
                         "Financial recalculation failed"
                     )
                 }
+                call.application.launch {
+
+                    when {
+
+                        // Promote
+                        existingMember.role == "MEMBER" &&
+                                (fm.role == "MODERATOR" || fm.role == "PRIMARY_MODERATOR") -> {
+
+                            notificationService.notifyFundMemberPromoted(
+                                fundId = fm.fundId,
+                                userId = fm.userId
+                            )
+                        }
+
+                        // Demote
+                        (existingMember.role == "MODERATOR" ||
+                                existingMember.role == "PRIMARY_MODERATOR") &&
+                                fm.role == "MEMBER" -> {
+
+                            notificationService.notifyFundModeratorRemoved(
+                                fundId = fm.fundId,
+                                userId = fm.userId
+                            )
+                        }
+
+                        // Active → Inactive
+                        existingMember.status == "ACTIVE" &&
+                                fm.status == "INACTIVE" -> {
+
+                            notificationService.notifyFundMemberRemoved(
+                                fundId = fm.fundId,
+                                userId = fm.userId
+                            )
+                        }
+
+                        // Inactive → Active
+                        existingMember.status == "INACTIVE" &&
+                                fm.status == "ACTIVE" -> {
+
+                            notificationService.notifyFundMemberAdded(
+                                fundId = fm.fundId,
+                                userId = fm.userId
+                            )
+                        }
+                    }
+                }
+
             }
 
             call.respondOk(
@@ -553,6 +618,9 @@ fun Route.fundsRoutes(
             recurringDepositAmount = body.fund.recurringDepositAmount,
             fundStatus = body.fund.fundStatus,
             loanInterestRate = body.fund.loanInterestRate,
+            hasVariableInterestRate = body.fund.hasVariableInterestRate,
+            revisedLoanInterestRate = body.fund.revisedLoanInterestRate,
+            interestRateRevisionAfterMonths = body.fund.interestRateRevisionAfterMonths,
             lateFeeRate = body.fund.lateFeeRate,
             monthlyDepDateBy = body.fund.monthlyDepDateBy,
             groupId = body.fund.groupId,

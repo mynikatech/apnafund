@@ -188,7 +188,7 @@ class UserSummaryViewModel : ViewModel() {
             val workflowStatus =
                 if (autoapprove) "APPROVED"
                 else "PENDING_APPROVAL"
-
+            val fund = fundRepository.getFund(fundId)
             val loan = Loans(
                 borrowerId = userId,
                 issuedDate = issueDate,
@@ -196,6 +196,9 @@ class UserSummaryViewModel : ViewModel() {
                 loanAmount = loanAmount,
                 maturityDate = maturityDate,
                 rateOfInterest = rateOfInt,
+                hasVariableInterestRate = fund?.hasVariableInterestRate ?: false,
+                revisedLoanInterestRate = fund?.revisedLoanInterestRate,
+                interestRateRevisionAfterMonths = fund?.interestRateRevisionAfterMonths,
                 status = "ACTIVE",// to implement approval workflow
                 workflowStatus = workflowStatus,
                 fundId = fundId,
@@ -204,8 +207,29 @@ class UserSummaryViewModel : ViewModel() {
             // create loan details as well.
             // calculate total Interest
 
-            val monthlyInt = (loanAmount * rateOfInt * 1 / 12) / 100
-            val totalInt = monthlyInt * period
+            val monthlyInt = (loanAmount * rateOfInt * 1 / 12.0) / 100
+
+            val periodMonths = period.toInt()
+
+            var totalInt = 0.0
+
+            for (monthNo in 0 until periodMonths) {
+
+                val effectiveRate =
+                    if (
+                        loan.hasVariableInterestRate &&
+                        loan.interestRateRevisionAfterMonths != null &&
+                        monthNo >= loan.interestRateRevisionAfterMonths
+                    ) {
+                        loan.revisedLoanInterestRate ?: loan.rateOfInterest
+                    } else {
+                        loan.rateOfInterest
+                    }
+
+                totalInt +=
+                    (loanAmount * effectiveRate / 12.0) / 100.0
+            }
+
             val totalAmt = loanAmount + totalInt
 
             val loanDetails = LoanDetails(

@@ -51,7 +51,7 @@ interface LoanEmisDao {
             WHERE ld.loanId = :loanId"""
     )
     fun getLoanDetailsforLoan(loanId: Int): LoanCmplDetails
-
+/*
     @Query(
         """
     SELECT 
@@ -97,9 +97,9 @@ interface LoanEmisDao {
         fundId: Int,
         month: String,
         year: String
-    ): List<LoanEmiWithMemberNames>
+    ): List<LoanEmiWithMemberNames> */
 
-    @Transaction
+   /* @Transaction
     suspend fun saveOrUpdateAllLoanEmisAndFetch(
         loanEmis: List<LoanEmis>,
         fundId: Int,
@@ -212,7 +212,7 @@ interface LoanEmisDao {
             }
         }
         return getAllLoanEmisForFundForMonthYear(fundId, month, year)
-    }
+    } */
 
     @Query(
         """
@@ -224,7 +224,7 @@ interface LoanEmisDao {
     """
     )
     suspend fun getloanEmisForLoan(loanId: Int, emiMonth: String, emiYear: String): LoanEmis?
-    @Query(
+    /*@Query(
         """
     SELECT 
         e.loanEmiId,
@@ -262,7 +262,7 @@ interface LoanEmisDao {
         ON l.loanId = e.loanId 
     WHERE l.loanId = :loanId 
 """)
-    suspend fun getAllloanEmisForLoan(loanId: Int): List<LoanEmiWithMemberNames>?
+    suspend fun getAllloanEmisForLoan(loanId: Int): List<LoanEmiWithMemberNames>? */
 
 
 

@@ -133,6 +133,7 @@ class AddLoanDialog(
                     binding.buttonSaveLoan.text = getString(R.string.text_save)
                     return@setOnClickListener
                 }
+
                 val isIssueDateBeforeFundStart =
                     ApnaBankDate.compareDates(issueDate, fundStartDate, "dd/mm/yyyy")
                 if (isIssueDateBeforeFundStart <= 0) {
@@ -171,6 +172,16 @@ class AddLoanDialog(
                 // Loan Maturity Date based on the period
                 // equal to issueDate + period
                 val maturityDateStr = ApnaBankDate.calculateMatDate(issueDate, period.toDouble())
+                if (!isLoanWithinFundPeriod(maturityDateStr)) {
+
+                    binding.editTextPeriod.error =
+                        getString(R.string.error_loan_exceeds_fund_maturity)
+                    binding.buttonSaveLoan.isEnabled = true
+                    binding.buttonSaveLoan.text = getString(R.string.text_save)
+                    return@setOnClickListener
+                }
+
+                binding.editTextPeriod.error = null
 
                 onSave(loanAmount, issueDate, period, maturityDateStr, userId)
                 dismiss()
@@ -201,6 +212,30 @@ class AddLoanDialog(
                 .setMessage(context.getString(messageRes))
                 .setPositiveButton(context.getString(R.string.text_button_ok), null)
                 .show()
+        }
+    }
+
+    private fun isLoanWithinFundPeriod(
+        loanMaturityDate: String
+    ): Boolean {
+
+        val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        sdf.isLenient = false
+
+        return try {
+
+            val fundMaturity =
+                sdf.parse(fundMaturityDate)
+
+            val loanMaturity =
+                sdf.parse(loanMaturityDate)
+
+            loanMaturity != null &&
+                    fundMaturity != null &&
+                    !loanMaturity.after(fundMaturity)
+
+        } catch (e: Exception) {
+            false
         }
     }
 

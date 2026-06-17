@@ -101,42 +101,4 @@ interface LoansDao {
     )
     suspend fun isLoanforUserforFund(userId: Int, fundId: Int): Boolean
 
-
-    @Query(
-        """
-    SELECT 
-
-        l.fundId,
-        l.loanId,
-        l.loanNumber,
-        l.borrowerId,
-        l.issuedDate,
-        l.period,
-        l.loanAmount,
-        l.maturityDate,
-        l.rateOfInterest,
-        l.status,
-        l.workflowStatus,
-
-        d.emiInterest,
-        d.currPrincipal,
-        d.currTotalIntPaid,
-        d.totalInterest,
-        d.loanDetailsId,
-
-        u.firstName,
-        u.lastName,
-        u.userId
-
-    FROM loans l
-    INNER JOIN loan_details d ON l.loanId = d.loanId
-    INNER JOIN users u ON l.borrowerId = u.userId
-    WHERE l.fundId = :fundId AND u.userId = :userId
-"""
-    )
-    suspend fun getAllLoanDetailsForFundForUser(
-        fundId: Int, userId: Int
-    ): List<LoanDetailsWithMemberNames>
-
-
 }

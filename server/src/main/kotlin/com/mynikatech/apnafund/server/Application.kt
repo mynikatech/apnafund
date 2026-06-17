@@ -40,6 +40,7 @@ import com.mynikatech.apnafund.server.users.UserFinanceService
 import com.mynikatech.apnafund.server.users.UserManagementService
 import com.mynikatech.apnafund.server.users.UsersSql
 import com.mynikatech.apnafund.server.users.WhatsAppOtpService
+import com.mynikatech.apnafund.server.whatsapp.WhatsAppMessagesSql
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -187,6 +188,7 @@ fun Application.module() {
     val passwordHistoryDao = jdbi.onDemand(PasswordHistorySql::class.java)
     val pinHistoryDao = jdbi.onDemand(PinHistorySql::class.java)
     val approvalDao = jdbi.onDemand(ApprovalSql::class.java)
+    val whatsAppDao = jdbi.onDemand(WhatsAppMessagesSql::class.java)
 
     // ------------------ Messaging ------------------
     val userEventsArn = System.getenv("USER_EVENTS_TOPIC_ARN")
@@ -394,7 +396,8 @@ fun Application.module() {
             approvalDao,
             approvalService,
             aiService,
-            otpService
+            otpService,
+            whatsAppDao
         )
     }
     println(">>> MODULE COMPLETED <<<")

@@ -73,7 +73,7 @@ class FundMembersFragment : Fragment() {
             // Fallback to something to be implemented
 
         }
-        if (Converters.canAddFundMembers(fundId))
+        if (SessionManager.canManageFund(fundId))
             binding.fundMembersFab.visibility = View.VISIBLE
         else
             binding.fundMembersFab.visibility = View.GONE

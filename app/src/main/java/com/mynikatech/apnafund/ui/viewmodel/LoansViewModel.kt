@@ -46,6 +46,7 @@ class LoansViewModel: ViewModel() {
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun saveOrUpdateAllLoansEmiAndFetch(
         loanEmis: List<LoanEmis>,
         fundId: Int,
@@ -72,13 +73,39 @@ class LoansViewModel: ViewModel() {
                 loanAmount = loanAmount,
                 maturityDate = maturityDate,
                 rateOfInterest = existingloan.rateOfInterest,
+                hasVariableInterestRate =
+                    existingloan.hasVariableInterestRate,
+                revisedLoanInterestRate =
+                    existingloan.revisedLoanInterestRate,
+                interestRateRevisionAfterMonths =
+                    existingloan.interestRateRevisionAfterMonths,
                 status = existingloan.status,
                 fundId = existingloan.fundId,
                 loanNumber = existingloan.loanNumber,
                 workflowStatus = existingloan.workflowStatus
             )
             val monthlyInt = (loanAmount * existingloan.rateOfInterest * 1/12)/100
-            val totalInt =  monthlyInt * period
+            val periodMonths = period.toInt()
+
+            var totalInt = 0.0
+
+            for (monthNo in 0 until periodMonths) {
+
+                val effectiveRate =
+                    if (
+                        existingloan.hasVariableInterestRate &&
+                        existingloan.interestRateRevisionAfterMonths != null &&
+                        monthNo >= existingloan.interestRateRevisionAfterMonths
+                    ) {
+                        existingloan.revisedLoanInterestRate ?: existingloan.rateOfInterest
+                    } else {
+                        existingloan.rateOfInterest
+                    }
+
+                totalInt +=
+                    (loanAmount * effectiveRate / 12.0) / 100.0
+            }
+
             val totalAmt = loanAmount + totalInt
 
             val loanDetails = existingloan.loanId?.let {

@@ -23,7 +23,7 @@
     <string name="text_fund_maturity_date">मैच्योरिटी डेट</string>
     <string name="text_fund_period">अवधि:</string>
 
-    <string name="text_deposit_frequency">डिपॉजिट फ्रीक्वेंसी:</string>
+    <string name="text_deposit_frequency">डिफ्रीक्वेंसी</string>
     <string name="text_deposit_amount">डिपॉजिट अमाउंट</string>
 
     <string name="text_group">ग्रुप्स</string>
@@ -75,7 +75,7 @@
     <string name="text_principal">वर्तमान मूल राशि</string>
     <string name="text_issue_date">इश्यू डेट</string>
 
-    <string name="text_period_months">अवधि (महीनों में)</string>
+    <string name="text_period_months">अवधि (महीनों)</string>
     <string name="text_rate_of_interest">ब्याज दर (%)</string>
 
     <string name="text_save_loan">लोन सेव करें</string>
@@ -1044,15 +1044,22 @@
     </string>
 
     <string name="link_monthly_summary">मासिक सारांश</string>
-    <string name="msg_enter_phone_code_to_continue">Enter your Phone and Code to continue</string>
+    <string name="msg_enter_phone_code_to_continue">जारी रखने के लिए अपना मोबाइल नंबर और कोड दर्ज करें</string>
+
     <string name="hint_enter_invite_code">आमंत्रण कोड दर्ज करें</string>
+
     <string name="title_invite_code_info">आमंत्रण कोड</string>
+
     <string name="info_invite_code">
     अपने आमंत्रण संदेश में साझा किया गया आमंत्रण कोड दर्ज करें।
     </string>
+
     <string name="error_invite_code_required">आमंत्रण कोड आवश्यक है</string>
+
     <string name="error_invalid_invite_code">अमान्य आमंत्रण कोड</string>
-    <string name="error_phone_and_pwd_required">Phone Number and Password required</string>
+
+    <string name="error_phone_and_pwd_required">मोबाइल नंबर और पासवर्ड आवश्यक हैं</string>
+
     <string name="msg_forgot_password_phone">
     अपना पंजीकृत मोबाइल नंबर दर्ज करें। सत्यापन कोड आपको WhatsApp पर भेजा जाएगा।
     </string>
@@ -1064,46 +1071,99 @@
     <string name="error_enter_valid_phone">
     कृपया 10 अंकों का सही मोबाइल नंबर दर्ज करें।
     </string>
-    <string name="title_verify_code">Verify Code</string>
+
+    <string name="title_verify_code">कोड सत्यापित करें</string>
 
     <string name="message_verification_code_sent">
-    We sent a 6-digit verification code to:
+    हमने इस नंबर पर 6 अंकों का सत्यापन कोड भेजा है:
     </string>
 
-    <string name="text_verify">Verify</string>
+    <string name="text_verify">सत्यापित करें</string>
 
     <string name="cancel_verification_message">
-    Cancel Verification?
+    क्या सत्यापन रद्द करना चाहते हैं?
     </string>
 
     <string name="message_cancel_verification">
-    If you leave this screen, the verification process will be cancelled.
+    यदि आप इस स्क्रीन को छोड़ते हैं, तो सत्यापन प्रक्रिया रद्द हो जाएगी।
     </string>
 
     <string name="message_cancel_verification_login">
-    If you leave this screen, you will be redirected to Login and must restart verification.
+    यदि आप इस स्क्रीन को छोड़ते हैं, तो आपको लॉगिन स्क्रीन पर भेज दिया जाएगा और सत्यापन प्रक्रिया पुनः शुरू करनी होगी।
     </string>
 
     <string name="successful_verification_message">
-    Verification successful
+    सत्यापन सफल रहा
     </string>
-    <string name="link_show_invite_code">Show Invite Code</string>
-    <string name="title_invite_code">Invite Code</string>
+
+    <string name="link_show_invite_code">आमंत्रण कोड दिखाएँ</string>
+
+    <string name="title_invite_code">आमंत्रण कोड</string>
+
     <string name="message_invite_code_dialog">
-    Group: %1$s
+    समूह: %1$s
 
-    Invite Code: %2$s
+    आमंत्रण कोड: %2$s
 
-    Share this code with members when inviting them.
+    सदस्यों को आमंत्रित करते समय यह कोड साझा करें।
     </string>
-    <string name="button_copy_code">Copy Code</string>
-    <string name="message_invite_code_copied">Invite code copied</string>
-    <string name="button_close">Close</string>
+
+    <string name="button_copy_code">कोड कॉपी करें</string>
+
+    <string name="message_invite_code_copied">आमंत्रण कोड कॉपी किया गया</string>
+
+    <string name="button_close">बंद करें</string>
+
     <string name="error_phone_number_not_available">
-    No phone number is associated with this account. Please contact support.
+    इस खाते से कोई मोबाइल नंबर जुड़ा नहीं है। कृपया सहायता से संपर्क करें।
     </string>
-    <string name="text_not_verified">⚠ Not Verified</string>
-    <string name="text_verified">✓ Verified</string>
-    <string name="text_close">Close</string>
+
+    <string name="text_not_verified">⚠ सत्यापित नहीं</string>
+
+    <string name="text_verified">✓ सत्यापित</string>
+
+    <string name="text_close">बंद करें</string>
+
+    <string name="label_inc_loan_int_after_fixed_duration">
+    निश्चित अवधि के बाद ऋण ब्याज दर बढ़ाएँ?
+    </string>
+
+    <string name="text_revised_loan_interest_rate">
+    संशोधित ऋण ब्याज दर (%)
+    </string>
+
+    <string name="text_interest_revision_after_months">
+    ब्याज दर संशोधन के बाद के महीने
+    </string>
+
+    <string name="text_loan_summary">ऋण %1$s%%</string>
+
+    <string name="text_variable_loan_summary">
+    ऋण %1$s%%→%2$s%% (%3$s महीने)
+    </string>
+
+    <string name="fund_amount_month_with_loan">
+    %1$s/माह • %2$s
+    </string>
+
+    <string name="title_revised_loan_interest_rate_info">
+    संशोधित ऋण ब्याज दर
+    </string>
+
+    <string name="info_revised_loan_interest_rate">
+    यह केवल तब लागू होती है जब परिवर्तनीय ब्याज दर सक्षम हो। यह नई वार्षिक ब्याज दर है जो ऋण जारी होने की तारीख से निर्दिष्ट महीनों के बाद लागू होगी। यह प्रारंभिक ऋण ब्याज दर से अधिक होनी चाहिए।
+    </string>
+
+    <string name="title_interest_rate_revision_months_info">
+    ब्याज दर संशोधन के बाद के महीने
+    </string>
+
+    <string name="info_interest_rate_revision_months">
+    ऋण जारी होने की तारीख के बाद महीनों की संख्या, जिसके बाद संशोधित ब्याज दर प्रभावी होगी। उदाहरण के लिए, यदि 6 दर्ज किया जाता है, तो संशोधित दर 7वें महीने से लागू होगी।
+    </string>
+
+    <string name="error_loan_exceeds_fund_maturity">
+    ऋण की परिपक्वता तिथि फंड की परिपक्वता तिथि से बाद की नहीं हो सकती।
+    </string>
 
 </resources>
