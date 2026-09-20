@@ -12,7 +12,8 @@ param(
     [string] $SecretName = "apnafund/dev/postgres",
     [string] $Region     = "ap-south-1",
     [string] $AwsProfile,
-    [string] $DefaultsFile  # optional override (relative to repo root or absolute)
+    [string] $DefaultsFile,  # optional override (relative to repo root or absolute),
+    [string] $ChangeLogFile = "changelog/db.changelog-ec2master.yaml"
 )
 
 Set-StrictMode -Version Latest
@@ -37,9 +38,16 @@ $RepoRoot = $null
 if (-not $DefaultsFile) {
     $RepoRoot = Find-RepoRoot 6
     if ($RepoRoot) {
+        $isAi = $SecretName -like "*postgres-ai*"
         $defaultsDir = Join-Path $RepoRoot "server\src\main\resources\db"
-        $adminDefaults  = Join-Path $defaultsDir "liquibase.ec2-$Env-admin.properties"
-        $deployDefaults = Join-Path $defaultsDir "liquibase.ec2-$Env-deploy.properties"
+        if ($isAi) {
+            $adminDefaults  = Join-Path $defaultsDir "liquibase.ec2-$Env-ai-admin.properties"
+            $deployDefaults = Join-Path $defaultsDir "liquibase.ec2-$Env-ai-deploy.properties"
+        }
+        else {
+            $adminDefaults  = Join-Path $defaultsDir "liquibase.ec2-$Env-admin.properties"
+            $deployDefaults = Join-Path $defaultsDir "liquibase.ec2-$Env-deploy.properties"
+        }
         $genericDefaults= Join-Path $defaultsDir "liquibase.ec2-$Env.properties"
         $legacyDefaults = Join-Path $defaultsDir "liquibase.$Env.properties"
 
@@ -130,7 +138,7 @@ try {
 }
 
 # --- Build liquibase args and run
-$args = @("--defaultsFile=$tempDefaultsFile", "--changelog-file=changelog/db.changelog-ec2master.yaml", "--search-path=$(Split-Path $DefaultsFile -Parent)", "--log-level=info")
+$args = @("--defaultsFile=$tempDefaultsFile", "--changelog-file=$ChangeLogFile", "--search-path=$(Split-Path $DefaultsFile -Parent)", "--log-level=info")
 if ($Labels) { $args += "--labels=$Labels" }
 if ($Command) { $args += $Command }
 

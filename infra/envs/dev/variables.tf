@@ -41,6 +41,16 @@ variable "postgres_app_password"    {
   sensitive = true
 }
 
+variable "postgres_ai_app_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "postgres_ai_deploy_password" {
+  type      = string
+  sensitive = true
+}
+
 variable "ami_id" {
   description = "AMI to use for the EC2 instance"
   type        = string
@@ -90,6 +100,12 @@ variable "openai_api_key" {
 
 variable "gemini_api_key" {
   description = "Gemini API Key"
+  type        = string
+  sensitive   = true
+}
+
+variable "resend_api_key" {
+  description = "Resend API Key"
   type        = string
   sensitive   = true
 }

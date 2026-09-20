@@ -623,6 +623,9 @@ resource "aws_lambda_function" "email_processor" {
   environment {
     variables = {
       SES_FROM_EMAIL = "support@mynikatech.in"
+      EMAIL_PROVIDER   = "RESEND"
+      RESEND_FROM_EMAIL = "support@mynikatech.in"
+      RESEND_API_KEY   = var.resend_api_key
     }
   }
 }
