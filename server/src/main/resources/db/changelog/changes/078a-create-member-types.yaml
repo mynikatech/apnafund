@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 078a-create-member-types
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/078a-create-member-types.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

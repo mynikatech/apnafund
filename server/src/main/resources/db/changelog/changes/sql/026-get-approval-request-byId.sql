@@ -1,3 +1,14 @@
+DROP FUNCTION IF EXISTS get_approval_by_id(INT);
+
+DROP FUNCTION IF EXISTS get_loan_by_id(INT);
+
+DROP FUNCTION IF EXISTS activate_group(INT);
+
+DROP FUNCTION IF EXISTS reject_group(INT);
+
+ALTER TABLE loans
+ADD COLUMN IF NOT EXISTS "workflowStatus" TEXT DEFAULT 'APPROVED';
+
 CREATE OR REPLACE FUNCTION get_approval_by_id(
     p_approval_id INT
 )

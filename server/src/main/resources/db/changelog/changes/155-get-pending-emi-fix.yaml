@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 155-get-pending-emi-loan-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/155-get-pending-emi-loan-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

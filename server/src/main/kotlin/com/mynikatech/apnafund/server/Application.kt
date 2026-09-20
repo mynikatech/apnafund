@@ -174,6 +174,7 @@ fun Application.module() {
     }
     // ------------------ DAOs ------------------
     val jdbi = Db.jdbi
+    val aiJdbi = Db.aiJdbi
     val usersDao = jdbi.onDemand(UsersSql::class.java)
     val deposistsDao = jdbi.onDemand(DepositsSql::class.java)
     val feedbackDao = jdbi.onDemand(FeedbackSql::class.java)
@@ -189,6 +190,12 @@ fun Application.module() {
     val pinHistoryDao = jdbi.onDemand(PinHistorySql::class.java)
     val approvalDao = jdbi.onDemand(ApprovalSql::class.java)
     val whatsAppDao = jdbi.onDemand(WhatsAppMessagesSql::class.java)
+
+    val aiUsersDao = aiJdbi.onDemand(UsersSql::class.java)
+    val aiFundsDao = aiJdbi.onDemand(FundsSql::class.java)
+    val aiGroupsDao = aiJdbi.onDemand(GroupsSql::class.java)
+    val aiLoansDao = aiJdbi.onDemand(LoansSql::class.java)
+    val aiDepositsDao = aiJdbi.onDemand(DepositsSql::class.java)
 
     // ------------------ Messaging ------------------
     val userEventsArn = System.getenv("USER_EVENTS_TOPIC_ARN")

@@ -1,8 +1,12 @@
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-     WHERE conname = 'uq_deposits_fund_user_month_year'
+        SELECT 1
+        FROM pg_constraint c
+        JOIN pg_namespace n
+            ON n.oid = c.connamespace
+        WHERE c.conname = 'uq_deposits_fund_user_month_year'
+          AND n.nspname = current_schema()
   ) THEN
     ALTER TABLE "deposits"
       ADD CONSTRAINT uq_deposits_fund_user_month_year

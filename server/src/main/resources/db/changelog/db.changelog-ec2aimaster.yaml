@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - property:
+      name: schemaName
+      value: apnafundaidev
+  # Run the EC2-safe baseline first (uses dev schema)
+  - include:
+      file: changelog/baseline/000-initial-baseline-ec2.yaml
+
+  # Then your normal incremental changes (shared across envs)
+  - includeAll:
+     path: changelog/changes
+
+  - includeAll:
+      path: changelog/ai

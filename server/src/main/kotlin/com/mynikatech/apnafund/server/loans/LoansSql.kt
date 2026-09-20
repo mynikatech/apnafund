@@ -185,7 +185,7 @@ interface LoansSql {
 
     @SqlQuery(
         """
-    SELECT close_loan_by_approval(
+    SELECT close_loan(
         :loanId,
         :approvedBy
     )
@@ -196,6 +196,7 @@ interface LoansSql {
         @Bind("approvedBy") approvedBy: Int
     ): Boolean
 
+
     @SqlQuery("""
     SELECT has_pending_loan_closure_request(:loanId)
 """)
@@ -203,5 +204,38 @@ interface LoansSql {
         @Bind("loanId") loanId: Int
     ): Boolean
 
+    @SqlQuery(
+        """
+    SELECT close_loan(
+        :loanId,
+        :approvedBy,
+        :closureSource,
+        :closureDate
+    )
+    """
+    )
+    fun closeLoan(
+        @Bind("loanId") loanId: Int,
+        @Bind("approvedBy") approvedBy: Int,
+        @Bind("closureSource") closureSource: String,
+        @Bind("closureDate") closureDate: String
+    ): Boolean
+
+
+    @SqlQuery(
+        """
+    SELECT *
+    FROM get_pending_loan_emis_for_closure(
+        :loanId,
+        :month,
+        :year
+    )
+    """
+    )
+    fun getPendingLoanEmisForClosure(
+        @Bind("loanId") loanId: Int,
+        @Bind("month") month: Int,
+        @Bind("year") year: Int
+    ): List<PendingLoanEmiDto>
 
 }

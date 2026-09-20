@@ -414,6 +414,7 @@ BEGIN
     SELECT 1
     FROM   pg_constraint
     WHERE  conname = 'uq_fund_members_user_fund'
+     AND conrelid = 'fund_members'::regclass
   ) THEN
     ALTER TABLE fund_members
       ADD CONSTRAINT uq_fund_members_user_fund

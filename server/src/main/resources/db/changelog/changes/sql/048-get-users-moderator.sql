@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS get_users_for_moderator(integer);
+
 CREATE OR REPLACE FUNCTION get_users_for_moderator(p_user_id INT)
 RETURNS TABLE (
     userId INT,
@@ -32,7 +34,7 @@ JOIN group_members gm ON gm."userId" = u."userId"
 WHERE gm."groupId" IN (
     SELECT g."groupId"
     FROM "groups" g
-    WHERE g."moderator" = 57
+    WHERE g."moderator" = p_user_id
 );
 
 $$;

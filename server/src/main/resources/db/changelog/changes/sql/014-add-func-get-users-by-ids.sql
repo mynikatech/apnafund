@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS get_users_basic_by_ids(integer[]);
+
 CREATE OR REPLACE FUNCTION get_users_basic_by_ids(p_user_ids INT[])
 RETURNS TABLE (
     userId INT,

@@ -1,28 +1,3 @@
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_type WHERE typname = 'memberRole'
-    ) THEN
-        CREATE TYPE "memberRole" AS ENUM (
-            'PRIMARY_MODERATOR',
-            'MODERATOR',
-            'MEMBER'
-        );
-    END IF;
-END$$;
-
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_type WHERE typname = 'memberStatus'
-    ) THEN
-        CREATE TYPE "memberStatus" AS ENUM (
-            'ACTIVE',
-            'INACTIVE'
-        );
-    END IF;
-END$$;
-
 ALTER TABLE "group_members"
 ADD COLUMN IF NOT EXISTS "role" "memberRole" DEFAULT 'MEMBER',
 ADD COLUMN IF NOT EXISTS "status" "memberStatus" DEFAULT 'ACTIVE',

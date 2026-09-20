@@ -43,7 +43,7 @@ END $$;
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'uq_group_members_user_group'
+    SELECT 1 FROM pg_constraint WHERE conname = 'uq_group_members_user_group' AND conrelid = 'group_members'::regclass
   ) THEN
     ALTER TABLE group_members
       ADD CONSTRAINT uq_group_members_user_group UNIQUE ("userId","groupId");

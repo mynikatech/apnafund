@@ -1,4 +1,6 @@
 -- All funds for a user
+DROP FUNCTION IF EXISTS get_funds_for_user_for_group(integer,integer);
+
 CREATE OR REPLACE FUNCTION get_funds_for_user_for_group(p_user_id int, p_group_id int)
 RETURNS TABLE (
   "fundId" int, "fundName" text, "fundStartDate" text, "fundMaturityDate" text,

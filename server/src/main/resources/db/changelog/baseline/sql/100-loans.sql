@@ -2,7 +2,7 @@
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'uq_loan_emis_loan_month_year'
+    SELECT 1 FROM pg_constraint WHERE conname = 'uq_loan_emis_loan_month_year'  AND conrelid = 'loan_emi'::regclass
   ) THEN
     ALTER TABLE loan_emi
       ADD CONSTRAINT uq_loan_emis_loan_month_year UNIQUE ("loanId","emiMonth","emiYear");

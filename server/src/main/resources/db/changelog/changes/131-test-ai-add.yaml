@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 131-test_add_ai
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/131-test_add_ai.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 138-delete-loan-add-audit-fix-fund-summary
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/138-delete-loan-add-audit-fix-fund-summary.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

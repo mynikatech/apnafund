@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 156-debug-save-loan
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/156-debug-save-loan.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

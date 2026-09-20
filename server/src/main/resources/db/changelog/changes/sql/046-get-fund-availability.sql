@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS get_fund_availability(integer);
+
 CREATE OR REPLACE FUNCTION get_fund_availability(p_fund_id int)
 RETURNS TABLE (
     total_amount DOUBLE PRECISION,

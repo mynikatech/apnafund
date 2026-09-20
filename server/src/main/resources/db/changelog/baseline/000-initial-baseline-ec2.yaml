@@ -53,7 +53,7 @@ databaseChangeLog:
             path: sql/010-tables.sql
             relativeToChangelogFile: true
             expandExpressions: true
-            splitStatements: true
+            splitStatements: false
             stripComments: false
             endDelimiter: ";"
 

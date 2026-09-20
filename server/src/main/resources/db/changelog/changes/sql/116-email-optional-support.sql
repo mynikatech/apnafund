@@ -1,17 +1,44 @@
 DROP FUNCTION IF EXISTS upsert_user_by_email( TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, BOOLEAN, TEXT, TEXT, TEXT, TEXT, BOOLEAN, INT);
 
-ALTER TABLE users
-ALTER COLUMN "emailId" DROP NOT NULL;
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'users'
+          AND column_name = 'emailId'
+          AND is_nullable = 'NO'
+    ) THEN
+        ALTER TABLE users
+        ALTER COLUMN "emailId" DROP NOT NULL;
+    END IF;
+END $$;
 
-ALTER TABLE users
-ALTER COLUMN "phoneNumber" SET NOT NULL;
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'users'
+          AND column_name = 'phoneNumber'
+          AND is_nullable = 'YES'
+    ) THEN
+        ALTER TABLE users
+        ALTER COLUMN "phoneNumber" SET NOT NULL;
+    END IF;
+END $$;
 
 DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'users_phone_number_unique'
+        FROM pg_constraint c
+        JOIN pg_namespace n
+          ON n.oid = c.connamespace
+        WHERE c.conname = 'users_phone_number_unique'
+          AND n.nspname = current_schema()
     ) THEN
         ALTER TABLE users
         ADD CONSTRAINT users_phone_number_unique

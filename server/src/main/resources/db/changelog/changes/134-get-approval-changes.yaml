@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 134-get-pending-approval-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/134-get-pending-approval-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

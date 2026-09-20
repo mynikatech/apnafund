@@ -19,9 +19,12 @@ ADD COLUMN IF NOT EXISTS "interestRateRevisionAfterMonths" INTEGER;
 DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'chk_variable_interest_rate'
+       SELECT 1
+       FROM pg_constraint c
+       JOIN pg_namespace n
+           ON n.oid = c.connamespace
+       WHERE c.conname = 'chk_variable_interest_rate'
+         AND n.nspname = current_schema()
     ) THEN
 
         ALTER TABLE funds
@@ -43,8 +46,11 @@ DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'chk_loan_variable_interest_rate'
+        FROM pg_constraint c
+        JOIN pg_namespace n
+            ON n.oid = c.connamespace
+        WHERE c.conname = 'chk_loan_variable_interest_rate'
+          AND n.nspname = current_schema()
     ) THEN
 
         ALTER TABLE loans

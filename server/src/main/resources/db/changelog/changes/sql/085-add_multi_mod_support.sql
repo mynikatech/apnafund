@@ -2,6 +2,7 @@
 
 DROP FUNCTION IF EXISTS get_group_members_with_names(INT);
 DROP FUNCTION IF EXISTS get_members_with_names_for_fund(INT);
+DROP FUNCTION IF EXISTS get_group_members_with_names(integer,boolean);
 
 CREATE OR REPLACE FUNCTION get_group_members_with_names(
     p_group_id int,

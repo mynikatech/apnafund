@@ -1,4 +1,3 @@
-DROP INDEX IF EXISTS idx_whatsapp_messages_meta_message_id;
 DROP FUNCTION IF EXISTS add_whatsapp_message(
     INTEGER,
     TEXT,
@@ -19,9 +18,8 @@ DROP FUNCTION IF EXISTS update_whatsapp_message_status(
     TEXT,
     TEXT
 );
-DROP TABLE IF EXISTS whats_app_messages CASCADE;
 
-CREATE TABLE whats_app_messages
+CREATE TABLE IF NOT EXISTS whats_app_messages
 (
         "whatsAppMessageId" SERIAL PRIMARY KEY,
 
@@ -48,7 +46,7 @@ CREATE TABLE whats_app_messages
        "updatedDate" TIMESTAMP
 );
 
-CREATE UNIQUE INDEX idx_whatsapp_messages_meta_message_id
+CREATE UNIQUE INDEX IF NOT EXISTS idx_whatsapp_messages_meta_message_id
 ON whats_app_messages("metaMessageId");
 
 CREATE OR REPLACE FUNCTION add_whatsapp_message

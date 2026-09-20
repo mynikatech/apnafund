@@ -1,5 +1,6 @@
 package com.mynikatech.apnafund.server.loans
 
+import com.mynikatech.apnafund.net.dto.CloseLoanDirectRequest
 import com.mynikatech.apnafund.net.dto.InsertWithLoanDetailsRequest
 import com.mynikatech.apnafund.net.dto.LoanClosureRequestDto
 import com.mynikatech.apnafund.net.dto.LoanDetailsDto
@@ -28,6 +29,9 @@ import io.ktor.server.routing.route
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import io.ktor.server.application.log
+import io.ktor.server.routing.application
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 
 fun Route.loansRoutes(
@@ -390,6 +394,59 @@ fun Route.loansRoutes(
 
         post("/close/direct") {
 
+            val req = call.receive<CloseLoanDirectRequest>()
+            val loanId = req.loanId
+                ?: return@post call.respondError(
+                    HttpStatusCode.BadRequest,
+                    "validation",
+                    "loanId required"
+                )
+
+            val loan = sql.getLoanById(loanId)
+                ?: return@post call.respondError(
+                    HttpStatusCode.NotFound,
+                    "validation",
+                    "Loan not found"
+                )
+
+            val fund = fundSql.getFund(loan.fundId).first()
+            val userId = req.userId
+            val closureDate = req.closureDate
+
+            if (userId != fund.moderator) {
+                return@post call.respondError(
+                    HttpStatusCode.Forbidden,
+                    "auth",
+                    "Only moderator can close loan"
+                )
+            }
+
+            // Direct close
+            sql.closeLoan(
+                loanId = loanId,
+                approvedBy = userId,
+                closureSource = "AUTO_APPROVAL",
+                closureDate = closureDate
+            )
+
+            // Optional audit
+            approvalSql.createAutoApprovedClosure(loanId, userId)
+
+            //  Notify
+            notificationService.notifyLoanClosed(
+                loanId,
+                fund.fundId!!,
+                fund.fundName,
+                users.getUserById(loan.borrowerId),
+                "FORECLOSURE",
+                users.getUserById(userId).fullName
+            )
+
+            call.respondOk(Unit)
+        }
+
+        post("/delete") {
+
             val req = call.receive<Map<String, Int>>()
             val loanId = req["loanId"]
                 ?: return@post call.respondError(
@@ -416,24 +473,83 @@ fun Route.loansRoutes(
                 )
             }
 
-            // Direct close
-            sql.closeLoanByApproval(loanId, userId)
+            val success = sql.deleteLoan(loanId)
 
-            // Optional audit
-            approvalSql.createAutoApprovedClosure(loanId, userId)
-
-            //  Notify
-            notificationService.notifyLoanClosed(
-                loanId,
-                fund.fundId!!,
-                fund.fundName,
-                users.getUserById(loan.borrowerId),
-                "FORECLOSURE",
-                users.getUserById(userId).fullName
-            )
+            if (!success) {
+                return@post call.respondError(
+                    HttpStatusCode.BadRequest,
+                    "validation",
+                    "Loan cannot be deleted because EMI payments exist."
+                )
+            }
 
             call.respondOk(Unit)
         }
+        get("/pending-loan-emis-for-closure") {
+
+            try {
+
+                val loanIdParam = call.request.queryParameters["loanId"]
+                val monthParam = call.request.queryParameters["month"]
+                val yearParam = call.request.queryParameters["year"]
+
+                call.application.log.info(
+                    "PendingLoanEmisForClosure request: loanId={}, month={}, year={}",
+                    loanIdParam,
+                    monthParam,
+                    yearParam
+                )
+
+                val loanId = loanIdParam?.toIntOrNull()
+                    ?: return@get call.respondError(
+                        HttpStatusCode.BadRequest,
+                        "validation",
+                        "loanId required"
+                    )
+
+                val month = monthParam?.toIntOrNull()
+                    ?: return@get call.respondError(
+                        HttpStatusCode.BadRequest,
+                        "validation",
+                        "month required"
+                    )
+
+                val year = yearParam?.toIntOrNull()
+                    ?: return@get call.respondError(
+                        HttpStatusCode.BadRequest,
+                        "validation",
+                        "year required"
+                    )
+
+                val result = sql.getPendingLoanEmisForClosure(
+                    loanId,
+                    month,
+                    year
+                )
+
+                call.application.log.info(
+                    "PendingLoanEmisForClosure returned {} records for loanId={}",
+                    result.size,
+                    loanId
+                )
+
+                call.respondOk(result)
+
+            } catch (e: Exception) {
+
+                call.application.log.error(
+                    "Error fetching pending loan EMIs for closure",
+                    e
+                )
+
+                call.respondError(
+                    HttpStatusCode.InternalServerError,
+                    "server_error",
+                    "Unable to fetch pending loan EMIs."
+                )
+            }
+        }
+
 
         // ---- EMIs ----
         route("emis") {

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 143-save-or-udate-loan-emi-fetch-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/143-save-or-udate-loan-emi-fetch-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

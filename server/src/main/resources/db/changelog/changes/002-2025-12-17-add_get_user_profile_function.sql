@@ -56,4 +56,4 @@ $$;
 
 -- Grant execute permission
 GRANT EXECUTE ON FUNCTION get_user_profile(INTEGER)
-TO apnafund_appdev;
+TO ${app_user};

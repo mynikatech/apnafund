@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 132-type-insert-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/132-type-insert-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

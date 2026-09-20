@@ -1,4 +1,5 @@
 DROP FUNCTION IF EXISTS get_fund_members_with_names_for_fund(INT);
+DROP FUNCTION IF EXISTS get_fund_members_with_names_for_fund(integer,text);
 
 CREATE OR REPLACE FUNCTION get_fund_members_with_names_for_fund(p_fund_id int, p_status TEXT DEFAULT 'ACTIVE')
 RETURNS TABLE (

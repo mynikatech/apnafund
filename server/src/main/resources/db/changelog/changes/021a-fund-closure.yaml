@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 022-Fund-closure-update
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/022-Fund-closure-update.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

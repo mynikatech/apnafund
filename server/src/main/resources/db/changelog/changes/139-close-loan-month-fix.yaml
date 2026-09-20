@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 139-close-loan-date-month-fix
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/139-close-loan-date-month-fix.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

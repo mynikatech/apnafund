@@ -8,6 +8,8 @@ import com.mynikatech.apnafund.server.groups.GroupsSql
 import com.mynikatech.apnafund.server.loans.LoansSql
 import com.mynikatech.apnafund.server.notifications.NotificationService
 import com.mynikatech.apnafund.server.users.UsersSql
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class ApprovalService(
     private val approvalSql: ApprovalSql,
@@ -233,7 +235,10 @@ class ApprovalService(
         )
 
         // Trigger actual closure (IMPORTANT)
-        loansSql.closeLoanByApproval(loanId, approvedBy)
+        loansSql.closeLoan(loanId,
+            approvedBy,
+            closureSource = "REQUEST_APPROVED",
+            closureDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
 
         // Fetch details
         val loan = loansSql.getLoanById(loanId) ?: error("Loan not found")

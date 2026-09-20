@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - changeSet:
+      id: 000-ai-placeholder
+      author: devuser
+      context: never   # ensures it never runs
+      changes:
+        - sql:
+            sql: SELECT 1;

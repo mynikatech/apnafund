@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS save_or_update_all_loan_emis_and_fetch(integer,text,text,jsonb);
+
 CREATE OR REPLACE FUNCTION save_or_update_all_loan_emis_and_fetch(
   p_fund_id int,
   p_month   text,

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 148-get-pending-loan-overloaded
+      author: apnafund
+      changes:
+        - sqlFile:
+            path: sql/148-get-pending-loan-overloaded.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: false

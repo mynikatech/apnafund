@@ -1,7 +1,7 @@
-ALTER TABLE funds
-ADD COLUMN "closedAt" TIMESTAMP NULL,
-ADD COLUMN "closedBy" INT NULL,
-ADD COLUMN "closureReason" TEXT NULL;
+ALTER TABLE IF EXISTS funds
+    ADD COLUMN IF NOT EXISTS "closedAt" TIMESTAMP NULL,
+    ADD COLUMN IF NOT EXISTS "closedBy" INT NULL,
+    ADD COLUMN IF NOT EXISTS "closureReason" TEXT NULL;
 
 CREATE OR REPLACE FUNCTION close_fund(
     p_fund_id INT,
@@ -21,7 +21,7 @@ BEGIN
     WHERE "fundId" = p_fund_id
       AND "fundStatus" = 'ACTIVE';
 
-    RETURN FOUND; -- TRUE if updated, FALSE otherwise
+    RETURN FOUND;
 
 END;
 $$;
