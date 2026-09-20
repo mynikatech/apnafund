@@ -1,16 +1,19 @@
 package com.mynikatech.apnafund.lambda.email
 
+import org.slf4j.LoggerFactory
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.ses.SesClient
 import software.amazon.awssdk.services.ses.model.*
 
-class SesEmailSender {
+class SesEmailSender: EmailSender{
+
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     private val ses = SesClient.builder()
         .region(Region.AP_SOUTH_1)
         .build()
 
-    fun send(to: String, subject: String, body: String) {
+    override fun send(to: String, subject: String, body: String) {
 
         val request = SendEmailRequest.builder()
             .destination(
@@ -30,6 +33,7 @@ class SesEmailSender {
             )
             .source(System.getenv("SES_FROM_EMAIL"))
             .build()
+        logger.info("Sending email via SES to {}", to)
 
         ses.sendEmail(request)
     }

@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund.lambda.email
 
-import com.amazonaws.services.lambda.runtime.*
+import com.amazonaws.services.lambda.runtime.Context
+import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
 import com.mynikatech.apnafund.net.dto.Channel
 import com.mynikatech.apnafund.net.dto.NotificationEvent
@@ -12,19 +13,22 @@ import org.slf4j.LoggerFactory
 class EmailProcessorHandler : RequestHandler<SQSEvent, Unit> {
 
     private val json = Json { ignoreUnknownKeys = true }
-    private val sender = SesEmailSender()
+    private val sender = EmailSenderFactory.create()
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun handleRequest(event: SQSEvent, context: Context) {
         event.records.forEach { record ->
-
             val envelope = json.decodeFromString<SnsEnvelope>(record.body)
             val messageJson = envelope.Message
+
             if (messageJson.contains("\"type\":\"SUPPORT_EMAIL\"")) {
                 handleSupport(json.decodeFromString(messageJson))
             } else {
-                log.info("email message sent | to={} | response={}", messageJson )
-                handleUser(json.decodeFromString(messageJson))
+                val notificationEvent =
+                    json.decodeFromString<NotificationEvent>(messageJson)
+
+                log.info("Processing user email notification")
+                handleUser(notificationEvent)
             }
         }
     }
@@ -35,6 +39,7 @@ class EmailProcessorHandler : RequestHandler<SQSEvent, Unit> {
         val (subject, html) = UserEmailRenderer.render(event)
         val email = event.email
             ?: error("EmailPayload missing for EMAIL channel")
+
         sender.send(
             to = email.to,
             subject = subject,
@@ -52,4 +57,3 @@ class EmailProcessorHandler : RequestHandler<SQSEvent, Unit> {
         )
     }
 }
-
