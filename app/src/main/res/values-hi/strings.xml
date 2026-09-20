@@ -1165,5 +1165,70 @@
     <string name="error_loan_exceeds_fund_maturity">
     ऋण की परिपक्वता तिथि फंड की परिपक्वता तिथि से बाद की नहीं हो सकती।
     </string>
+    <string name="text_available_for_loan">ऋण के लिए उपलब्ध: %1$s</string>
+    <string name="label_delete_loan">ऋण हटाएँ</string>
+    <string name="title_delete_loan">ऋण हटाएँ</string>
+
+    <string name="message_delete_loan">
+    क्या आप वाकई ऋण %1$s को स्थायी रूप से हटाना चाहते हैं?
+
+    इस ऋण पर कोई EMI भुगतान नहीं हुआ है और इससे संबंधित सभी रिकॉर्ड स्थायी रूप से हटा दिए जाएंगे।
+
+    यह कार्य वापस नहीं किया जा सकता।
+    </string>
+    <string name="text_closure_date">समापन तिथि</string>
+    <string name="message_close_loan_confirmation">
+    कृपया ऋण बंद करने की पुष्टि करने से पहले नीचे दिए गए ऋण विवरण की समीक्षा करें।
+    </string>
+
+    <string name="label_emi_month">ईएमआई माह</string>
+
+    <string name="label_prepayment">अग्रिम भुगतान</string>
+
+    <string name="label_total_paid">कुल भुगतान</string>
+
+    <string name="label_interest">ब्याज</string>
+
+    <string name="label_month">माह</string>
+    <string name="title_loan_closure_confirmation">ऋण बंद करने की पुष्टि</string>
+
+    <string name="message_loan_closure_intro">
+    इस जानकारी को सहेजने पर निम्नलिखित ऋण बंद (Closed) हो जाएंगे।
+    </string>
+
+    <string name="label_loan_number">ऋण क्रमांक</string>
+    <string name="label_member">सदस्य</string>
+    <string name="label_outstanding_principal">शेष मूलधन</string>
+    <string name="label_principal_prepayment">मूलधन पूर्व भुगतान</string>
+    <string name="label_current_month_interest">वर्तमान माह का ब्याज</string>
+
+    <string name="message_loan_closure_reason_title">कारण:</string>
+
+    <string name="message_loan_closure_reason">
+    दर्ज किया गया मूलधन पूर्व भुगतान शेष मूलधन के बराबर या उससे अधिक है, इसलिए यह ऋण पूर्ण रूप से चुकाया हुआ माना जाएगा।
+    </string>
+
+    <string name="message_loan_closure_result_title">परिणाम:</string>
+
+    <string name="message_loan_closure_result_1">
+    • इस ऋण की स्थिति "बंद (Closed)" कर दी जाएगी।
+    </string>
+
+    <string name="message_loan_closure_result_2">
+    • इस ऋण पर आगे कोई ब्याज नहीं लगेगा।
+    </string>
+
+    <string name="message_loan_closure_result_3">
+    • यह ऋण सक्रिय ऋणों की सूची में दिखाई नहीं देगा।
+    </string>
+
+    <string name="message_loan_closure_confirm">
+    क्या आप आगे बढ़ना चाहते हैं?
+    </string>
+    <string name="label_interest_for_month">ब्याज (%1$s)</string>
+
+    <string name="text_pending_emi_summary">%1$s (%2$d माह)</string>
+
+    <string name="text_pending_emi_summary_plural">%1$s (%2$d माह)</string>
 
 </resources>

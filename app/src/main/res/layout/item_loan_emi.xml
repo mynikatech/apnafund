@@ -5,21 +5,36 @@
     android:background="?attr/selectableItemBackground"
     android:orientation="horizontal"
     android:padding="12dp">
+    <TextView
+        android:id="@+id/textMonth"
+        android:layout_width="70dp"
+        android:layout_height="wrap_content"
+        android:text="Jan 26"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/textDate"
-        android:layout_width="0dp"
+        android:layout_width="80dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:text="01/04/2025"
         android:textColor="?attr/colorOnSurface"
         android:textSize="14sp" />
 
     <TextView
-        android:id="@+id/textAmount"
-        android:layout_width="0dp"
+        android:id="@+id/textInterest"
+        android:layout_width="75dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:text="₹2,000.00"
+        android:gravity="end"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textPrepayment"
+        android:layout_width="75dp"
+        android:layout_height="wrap_content"
         android:text="₹2,000.00"
         android:gravity="end"
         android:textColor="?attr/colorOnSurface"
@@ -28,11 +43,18 @@
 
     <TextView
         android:id="@+id/textLateFee"
-        android:layout_width="0dp"
+        android:layout_width="75dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:text="₹50"
         android:gravity="end"
         android:textColor="@android:color/holo_red_dark"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/textTotalPaid"
+        android:layout_width="75dp"
+        android:layout_height="wrap_content"
+        android:text="₹50"
+        android:gravity="end"
         android:textSize="14sp" />
 </LinearLayout>

@@ -15,6 +15,7 @@ import com.mynikatech.apnafund.data.model.Loans
 import com.mynikatech.apnafund.net.dto.LoanDetailsWithMemberNamesDto
 import kotlinx.coroutines.launch
 import android.util.Log
+import com.mynikatech.apnafund.net.dto.PendingLoanEmiDto
 
 class LoansViewModel: ViewModel() {
 
@@ -176,14 +177,33 @@ class LoansViewModel: ViewModel() {
         return loanRepository.hasPendingClosureRequest(loanId)
     }
 
-    fun closeLoanDirect(loanId: Int, userId: Int) {
+    fun closeLoanDirect(loanId: Int, closureDate: String, userId: Int) {
         viewModelScope.launch {
             try {
-                loanRepository.closeLoanDirect(loanId, userId)
+                loanRepository.closeLoanDirect(loanId, closureDate, userId)
                 _closeLoanResult.postValue(Result.success(Unit))
             } catch (e: Exception) {
                 _closeLoanResult.postValue(Result.failure(e))
             }
         }
+    }
+
+    fun deleteLoan(loanId: Int, userId: Int) {
+        viewModelScope.launch {
+            try {
+                loanRepository.deleteLoan(loanId, userId)
+                _closeLoanResult.postValue(Result.success(Unit))
+            } catch (e: Exception) {
+                _closeLoanResult.postValue(Result.failure(e))
+            }
+        }
+    }
+
+    suspend fun getPendingLoanEmisForClosure(
+        loanId: Int,
+        month: String,
+        year: String
+    ): List<PendingLoanEmiDto> {
+        return loanRepository.getPendingLoanEmisForClosure(loanId, month, year)
     }
 }

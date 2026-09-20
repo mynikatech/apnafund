@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund.ui.user
 
 import android.app.AlertDialog
+import android.app.DatePickerDialog
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -41,6 +42,7 @@ import com.mynikatech.apnafund.data.model.Groups
 import com.mynikatech.apnafund.data.model.LoanDetailsWithMemberNames
 import com.mynikatech.apnafund.data.model.UserProfile
 import com.mynikatech.apnafund.databinding.DialogAddGroupBinding
+import com.mynikatech.apnafund.databinding.DialogCloseLoanBinding
 import com.mynikatech.apnafund.databinding.FragmentUserSummaryBinding
 import com.mynikatech.apnafund.session.PreferencesHelper
 import com.mynikatech.apnafund.session.SessionManager
@@ -60,6 +62,7 @@ import com.mynikatech.apnafund.util.GroupInputValidator
 import com.mynikatech.apnafund.util.showSuccessSnackbar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 class UserSummaryFragment : Fragment() {
 
@@ -84,6 +87,8 @@ class UserSummaryFragment : Fragment() {
     private var totalDepositAmount: Double? = null
 
     private var totalMaturityAmount: Double? = null
+
+    private var availableAmount: Double? = null
 
     private var userId = -1
 
@@ -540,6 +545,13 @@ class UserSummaryFragment : Fragment() {
             if (fund != null) {
                 fundSharedViewModel.selectFund(fund)
                 fundSharedViewModel.setSelectedFundId(fund.fundId)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val fundAvailability =
+                        userSummaryViewModel.getAllAmountAvailableforFund(fund.fundId)
+
+                    availableAmount = fundAvailability?.availableAmount
+                    updateUserSummary()
+                }
                 binding.textViewFundModeratorValue.text =
                     Converters.formatUserName(fund.moderatorFirstName, fund.moderatorLastName)
                 binding.textViewStartDateValue.text = fund.fundStartDate
@@ -644,7 +656,7 @@ class UserSummaryFragment : Fragment() {
         }
     }
 
-    private fun showDirectClosureConfirmation(loan: LoanDetailsWithMemberNames) {
+    private fun showDirectClosureConfirmation1(loan: LoanDetailsWithMemberNames) {
 
         val message = getString(
             R.string.message_close_loan_direct,
@@ -658,8 +670,66 @@ class UserSummaryFragment : Fragment() {
             .setPositiveButton(getString(R.string.text_close_loan)) { _, _ ->
                 loanViewModel.closeLoanDirect(
                     loan.loanId ?: return@setPositiveButton,
+                    "",
                     SessionManager.userId
                 )
+            }
+            .setNegativeButton(getString(R.string.text_cancel_button), null)
+            .show()
+    }
+
+    private fun showDirectClosureConfirmation(loan: LoanDetailsWithMemberNames) {
+
+        val binding = DialogCloseLoanBinding.inflate(layoutInflater)
+
+        binding.tvMessage.text = getString(R.string.message_close_loan_confirmation)
+        binding.tvLoanNumber.text = loan.loanNumber
+        binding.tvMemberName.text = loan.borrowerName
+        binding.tvPrincipal.text = Converters.formatCurrency(loan.currPrincipal)
+
+        val calendar = Calendar.getInstance()
+
+        binding.etClosureDate.setText(
+            ApnaBankDate.formatDate(calendar.time)
+        )
+
+        binding.etClosureDate.setOnClickListener {
+
+            val datePicker = DatePickerDialog(
+                requireContext(),
+                { _, year, month, dayOfMonth ->
+
+                    calendar.set(year, month, dayOfMonth)
+
+                    binding.etClosureDate.setText(
+                        ApnaBankDate.formatDate(calendar.time)
+                    )
+
+                },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
+            )
+
+            // Don't allow future dates
+            datePicker.datePicker.maxDate = System.currentTimeMillis()
+
+            // TODO: Set minimum date = loan.loanDate
+            // datePicker.datePicker.minDate = ...
+
+            datePicker.show()
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setView(binding.root)
+            .setPositiveButton(getString(R.string.text_close_loan)) { _, _ ->
+
+                loanViewModel.closeLoanDirect(
+                    loan.loanId ?: return@setPositiveButton,
+                    ApnaBankDate.formatDate(calendar.time, "yyyy-MM-dd"),
+                    SessionManager.userId
+                )
+
             }
             .setNegativeButton(getString(R.string.text_cancel_button), null)
             .show()
@@ -706,6 +776,7 @@ class UserSummaryFragment : Fragment() {
 
         val deposit = totalDepositAmount ?: 0.0
         val maturity = totalMaturityAmount ?: 0.0
+        val available = availableAmount ?: 0.0
 
         binding.textViewFundSummaryValue.text =
             getString(
@@ -714,9 +785,19 @@ class UserSummaryFragment : Fragment() {
                 Converters.formatCurrency(maturity)
             )
 
+        binding.textViewFundAvailableValue.text =
+            getString(
+                R.string.text_available_for_loan,
+                Converters.formatCurrency(available)
+            )
+
         if (deposit == 0.0 && maturity == 0.0) {
             binding.textViewFundSummaryValue.text = getString(R.string.text_no_fund_activity)
         }
+        Log.d(
+            "UserSummary",
+            "Deposit=$totalDepositAmount, Maturity=$totalMaturityAmount, Available=$availableAmount"
+        )
     }
 
     private fun showApplyLoanDialog(

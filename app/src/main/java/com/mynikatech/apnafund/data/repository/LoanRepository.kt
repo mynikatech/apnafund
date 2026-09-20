@@ -16,6 +16,7 @@ import com.mynikatech.apnafund.net.LoansApi
 import com.mynikatech.apnafund.net.dto.LoanClosureRequestDto
 import com.mynikatech.apnafund.net.dto.LoanCmplDetailsDto
 import com.mynikatech.apnafund.net.dto.LoanDetailsWithMemberNamesDto
+import com.mynikatech.apnafund.net.dto.PendingLoanEmiDto
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -149,8 +150,24 @@ class LoanRepository(
         return loansApi.hasPendingClosureRequest(loanId)
     }
 
-    suspend fun closeLoanDirect(loanId: Int, userId: Int) {
-        loansApi.closeLoanDirect(loanId, userId)
+    suspend fun closeLoanDirect(loanId: Int, closureDate: String, userId: Int) {
+        loansApi.closeLoanDirect(loanId, closureDate, userId)
+    }
+
+    suspend fun deleteLoan(loanId: Int, userId: Int) {
+        loansApi.deleteLoan(loanId, userId)
+    }
+
+    suspend fun getPendingLoanEmisForClosure(
+        loanId: Int,
+        month: String,
+        year: String
+    ): List<PendingLoanEmiDto> {
+        return loansApi.getPendingLoanEmisForClosure(
+            loanId,
+            month,
+            year
+        )
     }
 
 }

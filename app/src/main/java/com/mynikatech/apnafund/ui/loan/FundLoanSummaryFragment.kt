@@ -1,6 +1,7 @@
 package com.mynikatech.apnafund.ui.loan
 
 import android.app.AlertDialog
+import android.app.DatePickerDialog
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
@@ -30,9 +31,13 @@ import com.mynikatech.apnafund.net.dto.LoanDetailsWithMemberNamesDto
 import com.mynikatech.apnafund.session.SessionManager
 import com.mynikatech.apnafund.ui.viewmodel.LoansViewModel
 import com.mynikatech.apnafund.util.Converters
-import com.mynikatech.apnafund.util.applyStatusStyle
 import com.mynikatech.apnafund.util.showLoanDetailsSummaryDialog
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import com.mynikatech.apnafund.databinding.DialogCloseLoanBinding
+import com.mynikatech.apnafund.util.ApnaBankDate
+import java.util.Calendar
 
 class FundLoanSummaryFragment : Fragment() {
 
@@ -193,6 +198,29 @@ class FundLoanSummaryFragment : Fragment() {
             tv.isSingleLine = true
             tv.maxLines = 1
             tv.ellipsize = TextUtils.TruncateAt.END
+
+            if (i == 0) {
+
+                tv.setTextColor(
+                    MaterialColors.getColor(
+                        tv,
+                        com.google.android.material.R.attr.colorPrimary
+                    )
+                )
+                tv.setTypeface(null, Typeface.BOLD)
+                tv.paint.isUnderlineText = true
+
+                tv.setOnClickListener {
+
+                    val action =
+                        FundLoanSummaryFragmentDirections
+                            .actionFundLoanSummaryFragmentToLoanEmiFragment(
+                                loan.loanId ?: return@setOnClickListener
+                            )
+                    findNavController().navigate(action)
+                }
+            }
+
             if (i == 2) {
                 tv.maxWidth = resources.getDimensionPixelSize(R.dimen.loan_number_col_width)
 
@@ -233,19 +261,28 @@ class FundLoanSummaryFragment : Fragment() {
         val closeButton = Button(requireContext()).apply {
             isAllCaps = false
             textSize = 12f
-            text = if (SessionManager.canManageFund(loan.fundId)) getString(R.string.text_close_loan) else getString(R.string.label_close_loan_request)
+            text =
+                if (SessionManager.canManageFund(loan.fundId)) getString(R.string.text_close_loan) else getString(
+                    R.string.label_close_loan_request
+                )
         }
 
         // Disable if already closed
-        if (loan.status.equals(ApnaBankConstants.STATUS_CLOSED, true) || loan.status.equals(ApnaBankConstants.STATUS_REJECTED, true) ) {
+        if (loan.status.equals(ApnaBankConstants.STATUS_CLOSED, true) || loan.status.equals(
+                ApnaBankConstants.STATUS_REJECTED,
+                true
+            )
+        ) {
             closeButton.isEnabled = false
         }
 
         closeButton.setOnClickListener {
 
             if (loan.status.equals(ApnaBankConstants.STATUS_CLOSED, true)) {
-                Toast.makeText(context,
-                    getString(R.string.error_loan_already_closed), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    getString(R.string.error_loan_already_closed), Toast.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
             if (SessionManager.canManageFund(loan.fundId)) {
@@ -257,6 +294,24 @@ class FundLoanSummaryFragment : Fragment() {
         }
 
         actionLayout.addView(closeButton)
+
+        if (SessionManager.canManageFund(loan.fundId) &&
+            loan.status.equals(ApnaBankConstants.STATUS_ACTIVE, true) &&
+            loan.currTotalIntPaid <= 0.0
+        ) {
+
+            val deleteButton = Button(requireContext()).apply {
+                isAllCaps = false
+                textSize = 12f
+                text = getString(R.string.label_delete_loan)
+            }
+
+            deleteButton.setOnClickListener {
+                showDeleteLoanConfirmation(loan.toEntity())
+            }
+
+            actionLayout.addView(deleteButton)
+        }
 
         row.addView(actionLayout)
 
@@ -296,15 +351,196 @@ class FundLoanSummaryFragment : Fragment() {
         }
     }
 
-    private fun showDirectClosureConfirmation(loan: LoanDetailsWithMemberNames) {
+    private fun showDirectClosureConfirmation1(loan: LoanDetailsWithMemberNames) {
 
-        val message = getString(R.string.message_close_loan_direct, loan.loanNumber,  Converters.formatCurrency(loan.currPrincipal))
+        val message = getString(
+            R.string.message_close_loan_direct,
+            loan.loanNumber,
+            Converters.formatCurrency(loan.currPrincipal)
+        )
 
         AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.title_close_loan_moderator))
             .setMessage(message)
             .setPositiveButton(getString(R.string.text_close_loan)) { _, _ ->
-                loansViewModel.closeLoanDirect(loan.loanId ?: return@setPositiveButton, SessionManager.userId)
+                loansViewModel.closeLoanDirect(
+                    loan.loanId ?: return@setPositiveButton,
+                    "",
+                    SessionManager.userId
+                )
+            }
+            .setNegativeButton(getString(R.string.text_cancel_button), null)
+            .show()
+    }
+
+    private fun showDirectClosureConfirmation(loan: LoanDetailsWithMemberNames) {
+        lifecycleScope.launch {
+            val calendar = Calendar.getInstance()
+
+            val month = (calendar.get(Calendar.MONTH) + 1).toString() // Calendar.MONTH is 0-based
+            val year = calendar.get(Calendar.YEAR).toString()
+
+            val pendingEmis = loansViewModel.getPendingLoanEmisForClosure(
+                loan.loanId ?: return@launch,
+                month,
+                year
+            )
+
+            val totalPendingEmis = pendingEmis.sumOf {
+                (it.emiDepositedAmount ?: 0.0) + (it.lateFee ?: 0.0)
+            }
+            val binding = DialogCloseLoanBinding.inflate(layoutInflater)
+
+            binding.tvMessage.text = getString(R.string.message_close_loan_confirmation)
+            binding.tvLoanNumber.text = loan.loanNumber
+            binding.tvMemberName.text = loan.borrowerName
+            binding.tvPrincipal.text = Converters.formatCurrency(loan.currPrincipal)
+            val pendingMonths = pendingEmis.size
+            binding.tvPendingEmis.text =
+                "${Converters.formatCurrency(totalPendingEmis)} ($pendingMonths month${if (pendingMonths != 1) "s" else ""})"
+            binding.tvPendingEmis.text =
+                if (pendingMonths == 1) {
+                    getString(
+                        R.string.text_pending_emi_summary,
+                        Converters.formatCurrency(totalPendingEmis),
+                        pendingMonths
+                    )
+                } else {
+                    getString(
+                        R.string.text_pending_emi_summary_plural,
+                        Converters.formatCurrency(totalPendingEmis),
+                        pendingMonths
+                    )
+                }
+
+            val expectedCollection =
+                (loan.currPrincipal ?: 0.0) +
+                        totalPendingEmis
+
+            binding.tvExpectedCollection.text =
+                Converters.formatCurrency(expectedCollection)
+
+            binding.etClosureDate.setText(
+                ApnaBankDate.formatDate(calendar.time)
+            )
+            lifecycleScope.launch {
+                refreshClosureSummary(
+                    loan,
+                    calendar,
+                    binding
+                )
+            }
+
+            binding.etClosureDate.setOnClickListener {
+
+                val datePicker = DatePickerDialog(
+                    requireContext(),
+                    { _, year, month, dayOfMonth ->
+
+                        calendar.set(year, month, dayOfMonth)
+
+                        binding.etClosureDate.setText(
+                            ApnaBankDate.formatDate(calendar.time)
+                        )
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            refreshClosureSummary(
+                                loan,
+                                calendar,
+                                binding
+                            )
+                        }
+
+                    },
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+                )
+
+                // Don't allow future dates
+                datePicker.datePicker.maxDate = System.currentTimeMillis()
+
+                // TODO: Set minimum date = loan.loanDate
+                // datePicker.datePicker.minDate = ...
+
+                datePicker.show()
+            }
+
+            AlertDialog.Builder(requireContext())
+                .setView(binding.root)
+                .setPositiveButton(getString(R.string.text_close_loan)) { _, _ ->
+
+                    loansViewModel.closeLoanDirect(
+                        loan.loanId ?: return@setPositiveButton,
+                        ApnaBankDate.formatDate(calendar.time, "yyyy-MM-dd"),
+                        SessionManager.userId
+                    )
+
+                }
+                .setNegativeButton(getString(R.string.text_cancel_button), null)
+                .show()
+        }
+    }
+
+    private suspend fun refreshClosureSummary(
+        loan: LoanDetailsWithMemberNames,
+        calendar: Calendar,
+        binding: DialogCloseLoanBinding
+    ) {
+        val month = (calendar.get(Calendar.MONTH) + 1).toString()
+        val year = calendar.get(Calendar.YEAR).toString()
+
+        val pendingEmis = loansViewModel.getPendingLoanEmisForClosure(
+            loan.loanId ?: return,
+            month,
+            year
+        )
+
+        val totalPendingEmis = pendingEmis.sumOf {
+            (it.emiDepositedAmount ?: 0.0) +
+                    (it.lateFee ?: 0.0)
+        }
+
+        val pendingMonths = pendingEmis.size
+
+        binding.tvPendingEmis.text =
+            if (pendingMonths == 1) {
+                getString(
+                    R.string.text_pending_emi_summary,
+                    Converters.formatCurrency(totalPendingEmis),
+                    pendingMonths
+                )
+            } else {
+                getString(
+                    R.string.text_pending_emi_summary_plural,
+                    Converters.formatCurrency(totalPendingEmis),
+                    pendingMonths
+                )
+            }
+
+        val expectedCollection =
+            (loan.currPrincipal ?: 0.0) + totalPendingEmis
+
+        binding.tvExpectedCollection.text =
+            Converters.formatCurrency(expectedCollection)
+    }
+
+    private fun showDeleteLoanConfirmation(loan: LoanDetailsWithMemberNames) {
+
+        val message = getString(
+            R.string.message_delete_loan,
+            loan.loanNumber
+        )
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.title_delete_loan))
+            .setMessage(message)
+            .setPositiveButton(getString(R.string.label_delete_loan)) { _, _ ->
+
+                loansViewModel.deleteLoan(
+                    loan.loanId ?: return@setPositiveButton,
+                    SessionManager.userId
+                )
+
             }
             .setNegativeButton(getString(R.string.text_cancel_button), null)
             .show()
@@ -318,8 +554,10 @@ class FundLoanSummaryFragment : Fragment() {
             try {
                 val loanId = loan.loanId
                 if (loanId == null) {
-                    Toast.makeText(requireContext(),
-                        getString(R.string.error_invalid_loan), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.error_invalid_loan), Toast.LENGTH_SHORT
+                    ).show()
                     return@launch
                 }
                 val isPending = loansViewModel.hasPendingClosureRequest(loanId)

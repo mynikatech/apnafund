@@ -74,7 +74,7 @@ class LoanAdapter(
             binding.apply {
                 textViewLoanNumberValue.text = loan.loanNumber
 
-                textViewLoanAmountValue.text = Converters.formatCurrency(loan.loanAmount)
+                textViewLoanAmountValue.text = "(${Converters.formatCurrency(loan.loanAmount)})"
                 val totalMonths = loan.period.toInt()
                  val formattedLoanPeriod = Converters.formatLoanPeriod(totalMonths)
                 textViewLoanPeriodValue.text = formattedLoanPeriod

@@ -13,6 +13,7 @@ import android.text.TextPaint
 import android.text.TextWatcher
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
+import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
 import android.util.Log
@@ -33,6 +34,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.mynikatech.apnafund.R
 import com.mynikatech.apnafund.data.model.LoanEmiWithMemberNames
@@ -50,6 +52,8 @@ import com.mynikatech.apnafund.util.ViewTags
 import com.mynikatech.apnafund.util.showLoanDetailsDialog
 import kotlinx.coroutines.launch
 import java.time.LocalDate.now
+import java.time.Month
+import java.time.format.TextStyle
 import java.util.Calendar
 import java.util.Locale
 
@@ -298,7 +302,12 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
         row.setTag(ViewTags.LOAN_ID, loanId)
         val fullName = "${loanEmis.firstName} ${loanEmis.lastName}"
         val loanNumber = "(${loanEmis.loanNumber})"
-        val combinedText = "$fullName\n$loanNumber"
+        val displayLoanNumber = loanEmis.loanNumber
+            ?.split("$")
+            ?.take(2)
+            ?.joinToString("$")
+            ?: ""
+        val combinedText = "$fullName\n$displayLoanNumber"
         val ctx = requireContext()
         val spannable = SpannableString(combinedText).apply {
             val loanStart = fullName.length + 1
@@ -331,15 +340,20 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
             }, loanStart, loanEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         val tvBorrowerName = createTextView("").apply {
-            text = spannable
+            //text = spannable
             isSingleLine = false
-            maxLines = 2
+            maxLines = 3
             movementMethod = LinkMovementMethod.getInstance()
             highlightColor = Color.TRANSPARENT
         }
         tvBorrowerName.layoutParams = TableRow.LayoutParams(
             resources.getDimensionPixelSize(R.dimen.loan_number_col_width),
             TableRow.LayoutParams.WRAP_CONTENT
+        )
+        updateBorrowerDisplay(
+            tvBorrowerName,
+            loanEmis,
+            false
         )
         tvBorrowerName.setOnClickListener {
 
@@ -446,7 +460,56 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                     hasChanges = true
                     binding.buttonSaveLoanEmi.isEnabled = true
                 }
+
+
             })
+            setOnFocusChangeListener { _, hasFocus ->
+
+                if (!hasFocus) {
+
+                    val enteredPrepayment = text.toString().toDoubleOrNull() ?: 0.0
+
+                    if (enteredPrepayment > 0) {
+
+                        val loanId = loanEmis.loanId ?: return@setOnFocusChangeListener
+
+                        lifecycleScope.launch {
+
+                            val pendingEmis = loanViewModel.getPendingLoanEmisForClosure(
+                                loanId,
+                                month.toString(),
+                                year.toString()
+                            )
+
+                            if (pendingEmis.isNotEmpty()) {
+                                showToast("Please clear all previous pending EMIs before making a principal prepayment.")
+                                setText("")
+                                requestFocus()
+                                updateBorrowerDisplay(
+                                    tvBorrowerName,
+                                    loanEmis,
+                                    false
+                                )
+                                return@launch
+                            }
+
+                            val showClosureMessage =
+                                enteredPrepayment == loanEmis.currPrincipal
+                            Log.d(
+                                "LoanEmiEntryFragment",
+                                "Loan will be Closed? = $showClosureMessage"
+                            )
+                            updateBorrowerDisplay(
+                                tvBorrowerName,
+                                loanEmis,
+                                showClosureMessage
+                            )
+                            Log.d("BorrowerDisplay", tvBorrowerName.text.toString())
+                        }
+                    }
+
+                }
+            }
 
         }
 
@@ -639,6 +702,7 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                 )
             )
         }
+        row.minimumHeight = 200
         row.addView(tvBorrowerName)
         row.addView(etEmiAmount)
         row.addView(lateFeeContainer)
@@ -647,6 +711,107 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
         row.addView(btnLoanEmiEdit)
 
         binding.tableLoanEmiEntries.addView(row)
+    }
+
+    private fun updateBorrowerDisplay(
+        textView: TextView,
+        loanEmis: LoanEmiWithMemberNames,
+        showClosureMessage: Boolean
+    ) {
+        val fullName = "${loanEmis.firstName} ${loanEmis.lastName}"
+        val loanNumber = "(${loanEmis.loanNumber})"
+        val displayLoanNumber = loanEmis.loanNumber
+            ?.split("$")
+            ?.take(2)
+            ?.joinToString("$")
+            ?: ""
+        val combinedText = buildString {
+            append(fullName)
+            append("\n")
+            append(displayLoanNumber)
+
+            if (showClosureMessage) {
+                append("\n")
+                append("✓ Closes on Save")
+            }
+        }
+
+        val ctx = textView.context
+
+        val spannable = SpannableString(combinedText)
+
+        // Loan number styling
+        val loanStart = fullName.length + 1
+        val loanEnd = loanStart + displayLoanNumber.length
+
+        spannable.setSpan(
+            RelativeSizeSpan(0.8f),
+            loanStart,
+            loanEnd,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+
+        spannable.setSpan(
+            StyleSpan(Typeface.ITALIC),
+            loanStart,
+            loanEnd,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+
+        // Loan number clickable
+        spannable.setSpan(object : ClickableSpan() {
+            override fun onClick(widget: View) {
+                // widget.context.showLoanDetailsDialog(loanEmis)
+            }
+
+            override fun updateDrawState(ds: TextPaint) {
+                ds.isUnderlineText = false
+                ds.color = MaterialColors.getColor(
+                    ctx,
+                    com.google.android.material.R.attr.colorOnSurface,
+                    Color.BLUE
+                )
+            }
+        }, loanStart, loanEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+        // Closure message styling
+        if (showClosureMessage) {
+
+            val message = "✓ Closes on Save"
+            val start = combinedText.indexOf(message)
+            val end = start + message.length
+
+            spannable.setSpan(
+                RelativeSizeSpan(0.75f),
+                start,
+                end,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+
+            spannable.setSpan(
+                StyleSpan(Typeface.BOLD),
+                start,
+                end,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+
+            spannable.setSpan(
+                ForegroundColorSpan(
+                    MaterialColors.getColor(
+                        ctx,
+                        com.google.android.material.R.attr.colorPrimary,
+                        Color.GREEN
+                    )
+                ),
+                start,
+                end,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+
+        textView.text = spannable
+        textView.movementMethod = LinkMovementMethod.getInstance()
+        textView.highlightColor = Color.TRANSPARENT
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -703,27 +868,39 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                                 return@launch
                             }
                         }
+                        val loansToClose = editedLoanEmis.filter { emi ->
+                            val original = originalLoanEmisMap[emi.loanId] ?: return@filter false
 
-                        updatedLoanEmiList = loanViewModel.saveOrUpdateAllLoansEmiAndFetch(
-                            editedLoanEmis,
-                            fundId,
-                            selectedMonth.toString(),
-                            selectedYear.toString()
-                        )
-                        originalLoanEmis = updatedLoanEmiList
-                        Log.d("AfterSave", "rows=${updatedLoanEmiList.size}")
-                        refreshLoanEmiTableWithData(updatedLoanEmiList)
-                        Snackbar.make(
-                            requireView(),
-                            getString(
-                                R.string.message_saved_updated_loan_emis,
-                                editedLoanEmis.size
-                            ),
-                            Snackbar.LENGTH_SHORT
-                        )
-                            .show()
+                            emi.prepaymentAmount >= original.currPrincipal &&
+                                    original.currPrincipal > 0
+                        }
 
-                        fundSharedViewModel.refreshFunds(fundId)
+                        if (loansToClose.isNotEmpty()) {
+
+                            showLoanClosureConfirmationDialog(
+                                loansToClose,
+                                selectedMonthName,
+                                selectedYear
+                            ) {
+                                lifecycleScope.launch {
+                                    performSave(
+                                        editedLoanEmis,
+                                        fundId,
+                                        selectedMonth,
+                                        selectedYear
+                                    )
+                                }
+                            }
+
+                        } else {
+
+                            performSave(
+                                editedLoanEmis,
+                                fundId,
+                                selectedMonth,
+                                selectedYear
+                            )
+                        }
 
                         hasAnyLoanEmiEdits = false
 
@@ -742,22 +919,41 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
                                 return@launch
                             }
                         }
-                        val updatedLoanEmisList = loanViewModel.saveOrUpdateAllLoansEmiAndFetch(
-                            loanEmis,
-                            fundId,
-                            selectedMonth.toString(),
-                            selectedYear.toString()
-                        )
-                        originalLoanEmis = updatedLoanEmisList
-                        Log.d("AfterSave", "rows=${updatedLoanEmisList.size}")
-                        refreshLoanEmiTableWithData(updatedLoanEmisList)
-                        Snackbar.make(
-                            requireView(),
-                            getString(R.string.message_loan_emis_saved_success),
-                            Snackbar.LENGTH_SHORT
-                        )
-                            .show()
-                        fundSharedViewModel.refreshFunds(fundId)
+
+                        val loansToClose = loanEmis.filter { emi ->
+                            val original = originalLoanEmisMap[emi.loanId] ?: return@filter false
+
+                            emi.prepaymentAmount >= original.currPrincipal &&
+                                    original.currPrincipal > 0
+                        }
+
+                        if (loansToClose.isNotEmpty()) {
+
+                            showLoanClosureConfirmationDialog(
+                                loansToClose,
+                                selectedMonthName,
+                                selectedYear
+                            ) {
+                                lifecycleScope.launch {
+                                    performSave(
+                                        loanEmis,
+                                        fundId,
+                                        selectedMonth,
+                                        selectedYear
+                                    )
+                                }
+                            }
+
+                        } else {
+
+                            performSave(
+                                loanEmis,
+                                fundId,
+                                selectedMonth,
+                                selectedYear
+                            )
+                        }
+
                     }
 
                 } else {
@@ -773,6 +969,124 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
             }
         }
     }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private suspend fun performSave(
+        editedLoanEmis: List<LoanEmis>,
+        fundId: Int,
+        selectedMonth: Int,
+        selectedYear: Int
+    ) {
+
+        val updatedLoanEmiList =
+            loanViewModel.saveOrUpdateAllLoansEmiAndFetch(
+                editedLoanEmis,
+                fundId,
+                selectedMonth.toString(),
+                selectedYear.toString()
+            )
+
+        originalLoanEmis = updatedLoanEmiList
+
+        Log.d("AfterSave", "rows=${updatedLoanEmiList.size}")
+
+        refreshLoanEmiTableWithData(updatedLoanEmiList)
+
+        Snackbar.make(
+            requireView(),
+            getString(
+                R.string.message_saved_updated_loan_emis,
+                editedLoanEmis.size
+            ),
+            Snackbar.LENGTH_SHORT
+        ).show()
+
+        fundSharedViewModel.refreshFunds(fundId)
+
+
+        binding.buttonSaveLoanEmi.isEnabled = true
+    }
+
+    private fun showLoanClosureConfirmationDialog(
+        loansToClose: List<LoanEmis>,
+        selectedMonthName: String,
+        selectedYear: Int,
+        onProceed: () -> Unit
+    ) {
+
+        val message = buildString {
+
+            append(getString(R.string.message_loan_closure_intro))
+            append("\n\n")
+
+            loansToClose.forEachIndexed { index, loan ->
+
+                val monthYear = "$selectedMonthName $selectedYear"
+                val original = originalLoanEmis.firstOrNull {
+                    it.loanId == loan.loanId
+                } ?: return@forEachIndexed
+
+                append("${getString(R.string.label_loan_number)}: ${original.loanNumber}\n")
+                append("${getString(R.string.label_member)}: ${original.firstName} ${original.lastName}\n")
+                append(
+                    "${getString(R.string.label_outstanding_principal)}: ${
+                        Converters.formatCurrency(original.currPrincipal)
+                    }\n"
+                )
+                append(
+                    "${getString(R.string.label_principal_prepayment)}: ${
+                        Converters.formatCurrency(loan.prepaymentAmount)
+                    }\n"
+                )
+                append(
+                    "${getString(
+                        R.string.label_interest_for_month,
+                        monthYear
+                    )}: ${
+                        Converters.formatCurrency(loan.emiDepositedAmount)
+                    }\n"
+                )
+
+                if (index < loansToClose.lastIndex) {
+                    append("\n")
+                    append("----------------------------------------")
+                    append("\n\n")
+                }
+            }
+
+            append("\n")
+            append(getString(R.string.message_loan_closure_reason_title))
+            append("\n")
+            append(getString(R.string.message_loan_closure_reason))
+
+            append("\n\n")
+            append(getString(R.string.message_loan_closure_result_title))
+            append("\n")
+            append(getString(R.string.message_loan_closure_result_1))
+            append("\n")
+            append(getString(R.string.message_loan_closure_result_2))
+            append("\n")
+            append(getString(R.string.message_loan_closure_result_3))
+
+            append("\n\n")
+            append(getString(R.string.message_loan_closure_confirm))
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.title_loan_closure_confirmation)
+            .setMessage(message)
+            .setCancelable(false)
+            .setNegativeButton(R.string.text_cancel_button) { dialog, _ ->
+                dialog.dismiss()
+                binding.buttonSaveLoanEmi.isEnabled = true
+            }
+            .setPositiveButton(R.string.label_continue) { _, _ ->
+                onProceed()
+            }
+            .show()
+
+    }
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun buildLoansEmiList(
@@ -839,26 +1153,40 @@ class LoanEmiEntryFragment : BaseEntryFragment() {
         binding.textMaturityDateValue.text = loan.maturityDate
         binding.textEmiInterestValue.text =
             Converters.formatCurrency(
-                loan.emiInterest)
+                loan.emiInterest
+            )
 
         binding.textLoanAmountValue.text =
-                Converters.formatCurrency(
-                    loan.loanAmount)
+            Converters.formatCurrency(
+                loan.loanAmount
+            )
 
         binding.textOutstandingValue.text =
-                Converters.formatCurrency(
-                    loan.currPrincipal
-                )
+            Converters.formatCurrency(
+                loan.currPrincipal
+            )
         binding.textInterestPendingValue.text =
 
-                Converters.formatCurrency(
-                    loan.emiInterest
-                )
+            Converters.formatCurrency(
+                loan.emiInterest
+            )
 
 
         dialog.setContentView(binding.root)
 
         dialog.show()
+    }
+
+    private suspend fun validatePrepaymentAllowed(
+        loanId: Int,
+        month: Int,
+        year: Int
+    ): Boolean {
+        return loanViewModel.getPendingLoanEmisForClosure(
+            loanId,
+            month.toString(),
+            year.toString()
+        ).isEmpty()
     }
 
 

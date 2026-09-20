@@ -10,6 +10,7 @@ import com.mynikatech.apnafund.net.dto.LoanDetailsWithMemberNamesDto
 import com.mynikatech.apnafund.net.dto.LoanEmiWithMemberNamesDto
 import com.mynikatech.apnafund.net.dto.LoanEmisDto
 import com.mynikatech.apnafund.net.dto.LoansDto
+import com.mynikatech.apnafund.net.dto.PendingLoanEmiDto
 import com.mynikatech.apnafund.net.dto.UserLoanDetailsDto
 import kotlinx.coroutines.flow.Flow
 
@@ -67,6 +68,12 @@ interface LoansApi {
 
     suspend fun requestLoanClosure(loanClosureRequest: LoanClosureRequestDto)
     suspend fun hasPendingClosureRequest(loanId: Int): Boolean
-    suspend fun closeLoanDirect(loanId: Int, userId: Int)
+    suspend fun closeLoanDirect(loanId: Int, closureDate: String, userId: Int)
+    suspend fun deleteLoan(loanId: Int, userId: Int)
+    suspend fun getPendingLoanEmisForClosure(
+        loanId: Int,
+        month: String,
+        year: String
+    ): List<PendingLoanEmiDto>
 
 }

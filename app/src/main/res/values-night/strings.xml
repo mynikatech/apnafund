@@ -750,7 +750,62 @@
     <string name="error_loan_exceeds_fund_maturity">
     Loan maturity date cannot be later than the fund maturity date.
     </string>
+    <string name="text_available_for_loan">Available for Loan: %1$s</string>
+    <string name="label_delete_loan">Delete Loan</string>
+    <string name="title_delete_loan">Delete Loan</string>
 
+    <string name="message_delete_loan">
+    Are you sure you want to permanently delete loan %1$s?
 
+    This loan has no EMI payments and will be permanently removed along with all associated records.
+
+    This action cannot be undone.
+    </string>
+    <string name="text_closure_date">Closure Date</string>
+    <string name="message_close_loan_confirmation">
+    Please review the loan details below before confirming the loan closure.
+    </string>
+    <string name="label_emi_month">EMI Month</string>
+    <string name="label_prepayment">Prepay</string>
+    <string name="label_total_paid">Total Paid</string>
+    <string name="label_interest">Interest</string>
+    <string name="label_month">Month</string>
+    <string name="title_loan_closure_confirmation">Confirm Loan Closure</string>
+
+    <string name="message_loan_closure_intro">
+    As part of this save, the following loan(s) will be marked as closed.
+    </string>
+
+    <string name="label_loan_number">Loan No.</string>
+    <string name="label_member">Member</string>
+    <string name="label_outstanding_principal">Outstanding Principal</string>
+    <string name="label_principal_prepayment">Principal Prepayment</string>
+    <string name="label_current_month_interest">Current Month Interest</string>
+
+    <string name="message_loan_closure_reason_title">Reason:</string>
+    <string name="message_loan_closure_reason">
+    The principal prepayment clears the entire outstanding principal balance.
+    </string>
+
+    <string name="message_loan_closure_result_title">Result:</string>
+
+    <string name="message_loan_closure_result_1">
+    • Loan status will be changed to Closed.
+    </string>
+
+    <string name="message_loan_closure_result_2">
+    • No further interest will accrue on this loan.
+    </string>
+
+    <string name="message_loan_closure_result_3">
+    • The loan will no longer appear in the active loan list.
+    </string>
+
+    <string name="message_loan_closure_confirm">
+    Do you want to continue?
+    </string>
+    <string name="label_interest_for_month">Interest (%1$s)</string>
+    <string name="text_pending_emi_summary">%1$s (%2$d month)</string>
+    <string name="text_pending_emi_summary_plural">%1$s (%2$d months)</string>
 
 </resources>

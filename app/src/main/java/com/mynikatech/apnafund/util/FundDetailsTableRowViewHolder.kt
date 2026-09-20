@@ -11,34 +11,40 @@ import com.mynikatech.apnafund.R
 import com.google.android.material.color.MaterialColors
 
 class FundDetailsTableRowViewHolder(context: Context, applyLoan: Boolean = false) {
-    val tvNo = createTextView(context, Gravity.CENTER)
-    val tvName = createTextView(context, Gravity.START)
-    val tvDepAmt = createTextView(context, Gravity.END)
-    val tvLoanAmt = createTextView(context, Gravity.END)
-    val tvTotPendingAmt = createTextView(context, Gravity.END)
-    val tvTotIntPaid = createTextView(context, Gravity.END)
-    val tvExpMatAmt = createTextView(context, Gravity.END)
+    val tvNo = createTextView(context, Gravity.CENTER,40)
+    val tvName = createTextView(context, Gravity.START,120)
+    val tvDepAmt = createTextView(context, Gravity.END,100)
+    val tvLoanAmt = createTextView(context, Gravity.END,100)
+    val tvTotPendingAmt = createTextView(context, Gravity.END, 110)
+    val tvTotIntPaid = createTextView(context, Gravity.END,110)
+    val tvExpMatAmt = createTextView(context, Gravity.END,120)
     val tvApplyLoan = createImageView(context, "Apply Loan", R.drawable.icon_loan)
 
     val row: TableRow = TableRow(context).apply {
         addView(tvNo)
         addView(tvName)
+        if(applyLoan)
+            addView(tvApplyLoan)
         addView(tvDepAmt)
         addView(tvLoanAmt)
         addView(tvTotPendingAmt)
         addView(tvTotIntPaid)
         addView(tvExpMatAmt)
-        if(applyLoan)
-            addView(tvApplyLoan)
     }
 
     companion object {
         fun createTextView(
             context: Context,
-            gravity: Int
+            gravity: Int,
+            widthDp: Int
         ): TextView {
 
             return TextView(context).apply {
+
+                layoutParams = TableRow.LayoutParams(
+                    (widthDp * resources.displayMetrics.density).toInt(),
+                    TableRow.LayoutParams.WRAP_CONTENT
+                )
 
                 setPadding(8, 8, 8, 8)
 

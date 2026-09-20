@@ -29,12 +29,29 @@ class LoanEmiAdapter(private val loanEmis: List<LoanEmiWithMemberNames>) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(loanEmi: LoanEmiWithMemberNames) {
             binding.apply {
+                textMonth.text = Converters.formatMonthYear(loanEmi.emiMonth, loanEmi.emiYear)
                 textDate.text = loanEmi.emiDepositedDate
-                textAmount.text = Converters.formatCurrency(loanEmi.emiDepositedAmount!!)
+                textInterest.text =
+                    if ((loanEmi.emiDepositedAmount ?: 0.0) > 0)
+                        Converters.formatCurrency(loanEmi.emiDepositedAmount!!)
+                    else
+                        ""
+                textPrepayment.text =
+                    if ((loanEmi.prepaymentAmount ?: 0.0) > 0)
+                        Converters.formatCurrency(loanEmi.prepaymentAmount!!)
+                    else
+                        ""
                 if ((loanEmi.lateFee ?: 0.0) >= 0)
                     textLateFee.text = Converters.formatCurrency(loanEmi.lateFee ?: 0.0)
                 else
                     textLateFee.text = ""
+
+                textTotalPaid.text = Converters.formatCurrency(
+                    (loanEmi.emiDepositedAmount ?: 0.0) +
+                            (loanEmi.prepaymentAmount ?: 0.0) +
+                            (loanEmi.lateFee ?: 0.0)
+                )
+
 
             }
 

@@ -217,6 +217,17 @@
                                 android:textColor="#ffffff"
                                 android:textSize="15sp"
                                 android:textStyle="bold" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:id="@+id/textApplyLoanHeader"
+                                android:background="@drawable/table_cell_shape"
+                                android:gravity="center_vertical"
+                                android:padding="3dp"
+                                android:text="@string/text_apply_loan"
+                                android:textColor="#ffffff"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
 
                             <TextView
                                 android:layout_width="120dp"
@@ -283,16 +294,7 @@
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:background="@drawable/table_cell_shape"
-                                android:gravity="center_vertical"
-                                android:padding="3dp"
-                                android:text="@string/text_apply_loan"
-                                android:textColor="#ffffff"
-                                android:textSize="13sp"
-                                android:textStyle="bold" />
+
                         </TableRow>
                     </TableLayout>
                 </LinearLayout>

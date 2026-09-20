@@ -865,6 +865,8 @@ class FundDetailsFragment : Fragment() {
                 )
 
             val applyLoanPriv = SessionManager.canManageLoanEmi()
+            binding.textApplyLoanHeader.visibility =
+                if (applyLoanPriv) View.VISIBLE else View.GONE
 
             memberSummaries.forEachIndexed { index, member ->
 

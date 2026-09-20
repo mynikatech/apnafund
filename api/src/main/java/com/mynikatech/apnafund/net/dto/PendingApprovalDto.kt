@@ -13,7 +13,7 @@ data class PendingApprovalDto(
     val requesterName: String,
     val createdAt: String,
     val requesterUserId: Int,
-    val requesterEmail: String,
+    val requesterEmail: String? = null,
     val loanNumber: String? = null,
     val requestedAmount: String? = null,
     val loamOutstandingAmount: String? = null,

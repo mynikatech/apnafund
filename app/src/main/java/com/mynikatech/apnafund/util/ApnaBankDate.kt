@@ -257,6 +257,17 @@ class ApnaBankDate {
                 else -> baseMonths
             }
         }
+
+        fun formatDate(date: Date, pattern: String = DATE_PATTERN): String {
+            return SimpleDateFormat(pattern, Locale.getDefault()).format(date)
+        }
+        fun formatDbDate(date: Date): String {
+            return SimpleDateFormat("yyyy-MM-dd", Locale.US).format(date)
+        }
+        fun getCurrentDateAsDate(): Date {
+            return Date()
+        }
+
     }
 
 

@@ -293,7 +293,6 @@
                     android:textStyle="bold"
                     android:gravity="center"
                     android:padding="8dp"/>
-
             </TableRow>
 
         </TableLayout>

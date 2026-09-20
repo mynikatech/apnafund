@@ -195,9 +195,36 @@ class LoansApiKtor(
         client.get("/loans/hasPendingReq/$loanId")
             .unwrap<Boolean>()
 
-    override suspend fun closeLoanDirect(loanId: Int, userId: Int) {
+    override suspend fun closeLoanDirect(
+        loanId: Int,
+        closureDate: String,
+        userId: Int
+    ) {
         client.post("/loans/close/direct") {
+            setBody(
+                CloseLoanDirectRequest(
+                    loanId = loanId,
+                    userId = userId,
+                    closureDate = closureDate
+                )
+            )
+        }
+    }
+
+    override suspend fun deleteLoan(loanId: Int, userId: Int) {
+        client.post("/loans/delete") {
             setBody(mapOf("loanId" to loanId, "userId" to userId))
         }
     }
+
+    override suspend fun getPendingLoanEmisForClosure(
+        loanId: Int,
+        month: String,
+        year: String
+    ): List<PendingLoanEmiDto> =
+        client.get("/loans/pending-loan-emis-for-closure") {
+            parameter("loanId", loanId)
+            parameter("month", month)
+            parameter("year", year)
+        }.unwrap<List<PendingLoanEmiDto>>()
 }
